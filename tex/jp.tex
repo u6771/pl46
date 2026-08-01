@@ -1,0 +1,43 @@
+\documentclass[border=1.5cm]{standalone}
+
+\usepackage{fontspec}
+\newfontfamily\ascii[Path=../build/otf/]{PL46-Ascii.otf}
+\newfontfamily\jp[Path=../build/otf/]{PL46-JP.otf}
+
+\begin{document}
+\begin{tabular}[t]{@{}l@{}}
+{\ascii\scriptsize HIRAGANA:}\\
+{\jp
+\begin{tabular}{@{}lllll@{}}
+あ & い & う & え & お \\
+か & き & く & け & こ \\
+さ & し & す & せ & そ \\
+た & ち & つ & て & と \\
+な & に & ぬ & ね & の \\
+は & ひ & ふ & へ & ほ \\
+ま & み & む & め & も \\
+や &   & ゆ &   & よ \\
+ら & り & る & れ & ろ \\
+わ & ゐ &   & ゑ & を \\
+ん &   &   &   &
+\end{tabular}}
+\end{tabular}%
+\hspace{1.5cm}%
+\begin{tabular}[t]{@{}l@{}}
+{\ascii\scriptsize KATAKANA:}\\
+{\jp
+\begin{tabular}{@{}lllll@{}}
+ア & イ & ウ & エ & オ \\
+カ & キ & ク & ケ & コ \\
+サ & シ & ス & セ & ソ \\
+タ & チ & ツ & テ & ト \\
+ナ & ニ & ヌ & ネ & ノ \\
+ハ & ヒ & フ & ヘ & ホ \\
+マ & ミ & ム & メ & モ \\
+ヤ &   & ユ &   & ヨ \\
+ラ & リ & ル & レ & ロ \\
+ワ & ヰ &   & ヱ & ヲ \\
+ン &   &   &   &
+\end{tabular}}
+\end{tabular}
+\end{document}

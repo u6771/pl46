@@ -1,0 +1,29 @@
+\documentclass[border=1.5cm,varwidth=10cm]{standalone}
+
+\usepackage{fontspec}
+\newfontfamily\ascii[Path=../build/otf/]{PL46-Ascii.otf}
+\newfontfamily\mono[Path=../build/otf/]{PL46-Mono.otf}
+
+\usepackage{lipsum}
+
+\begin{document}
+\setlength{\parindent}{2em}
+
+\noindent
+{\ascii \scriptsize MONO LATIN:}
+
+{\mono \lipsum[1][1-4]}
+
+\vspace{.5cm}
+
+\noindent
+{\ascii \scriptsize MONO GREEK:}
+
+{\mono Αυτό είναι ένα δείγμα ελληνικού κειμένου για τον έλεγχο της γραμματοσειράς, του διαστήματος μεταξύ των γραμμών, του συλλαβισμού και της γενικής διάταξης της σελίδας.}
+\vspace{.5cm}
+
+\noindent
+{\ascii \scriptsize MONO CYRILLIC:}
+
+{\mono Это пример русского текста, предназначенного для проверки оформления документа, выбора шрифта, межстрочного расстояния, переносов слов и расположения текста на странице.}
+\end{document}
