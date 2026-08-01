@@ -1,0 +1,39 @@
+build/
+dist/
+*.egg-info/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.venv/
+*.prof
+
+# Unfinished editor
+/tools/
+/tests/test_editor.py
+/tests/test_editor_settings.py
+/editor.cmd
+/editor_settings.json
+/latinmodern_map.json
+
+# Unfinished specimens and development reports
+/png/
+/reports/
+/tex/math.tex
+/__pdf2png.py
+
+# Reference data not used by the build
+/math_constants/latin_modern_math.json
+/latinmodern_math_variants.json
+
+# Windows source-tree shortcut
+/build.cmd
+
+# XeLaTeX outputs
+/tex/*.pdf
+*.aux
+*.log
+*.synctex.gz
+*.xdv
+*.fls
+*.fdb_latexmk
