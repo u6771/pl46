@@ -1,0 +1,11 @@
+{
+  "name": "upsilon",
+  "unicode": "03C5",
+  "monospace_x_offset": -2,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[0, 4], [0, 1], [1, 0], [3, 0], [4, 1], [4, 4]]
+    }
+  ]
+}

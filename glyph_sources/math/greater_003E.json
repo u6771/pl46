@@ -1,0 +1,11 @@
+{
+  "name": "greater",
+  "unicode": "003E",
+  "monospace_x_offset": -3,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[0, 4], [6, 2], [0, 0]]
+    }
+  ]
+}

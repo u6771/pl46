@@ -1,0 +1,17 @@
+{
+  "name": "because",
+  "unicode": "2235",
+  "monospace_x_offset": -1,
+  "y_offset": 1,
+  "skeleton": [
+    {
+      "centerline": [[0, 2]]
+    },
+    {
+      "centerline": [[2, 2]]
+    },
+    {
+      "centerline": [[1, 0]]
+    }
+  ]
+}

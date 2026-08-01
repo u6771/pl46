@@ -1,0 +1,13 @@
+{
+  "name": "uni23B4.rt",
+  "unicode": null,
+  "monospace_x_offset": 0,
+  "y_offset": 4,
+  "skeleton": [
+    {
+      "centerline": [[0, 4], [8, 4], [8, 0]],
+      "thickness_scale": 1.4,
+      "start_cap": "flat"
+    }
+  ]
+}

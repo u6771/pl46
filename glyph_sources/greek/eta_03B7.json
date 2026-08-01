@@ -1,0 +1,15 @@
+{
+  "name": "eta",
+  "unicode": "03B7",
+  "monospace_x_offset": -2,
+  "y_offset": -2,
+  "skeleton": [
+    {
+      "centerline": [[0, 6], [0, 2]]
+    },
+    {
+      "centerline": [[0, 5], [1, 6], [3, 6], [4, 5], [4, 0]],
+      "start_cap": "flat"
+    }
+  ]
+}

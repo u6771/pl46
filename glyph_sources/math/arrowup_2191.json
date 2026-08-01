@@ -1,0 +1,15 @@
+{
+  "name": "arrowup",
+  "unicode": "2191",
+  "monospace_x_offset": -2,
+  "y_offset": -2,
+  "skeleton": [
+    {
+      "centerline": [[0, 6], [2, 8], [4, 6]]
+    },
+    {
+      "centerline": [[2, 0], [2, 8]],
+      "end_cap": "flat"
+    }
+  ]
+}

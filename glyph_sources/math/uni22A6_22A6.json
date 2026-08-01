@@ -1,0 +1,15 @@
+{
+  "name": "uni22A6",
+  "unicode": "22A6",
+  "monospace_x_offset": -1,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[0, 6], [0, 0]]
+    },
+    {
+      "centerline": [[0, 3], [2, 3]],
+      "start_cap": "flat"
+    }
+  ]
+}

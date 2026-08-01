@@ -1,0 +1,12 @@
+{
+  "name": "U",
+  "unicode": "0055",
+  "monospace_x_offset": -2,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[1, 0], [1, 6], [0, 6], [0, 1], [1, 0], [3, 0], [4, 1], [4, 6]],
+      "start_cap": "flat"
+    }
+  ]
+}

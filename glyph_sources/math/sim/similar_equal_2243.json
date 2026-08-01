@@ -1,0 +1,14 @@
+{
+  "name": "similar_equal",
+  "unicode": "2243",
+  "monospace_x_offset": -3,
+  "y_offset": 1,
+  "skeleton": [
+    {
+      "centerline": [[0, 0], [6, 0]]
+    },
+    {
+      "centerline": [[0, 1], [0, 2], [1, 3], [2, 3], [4, 1], [5, 1], [6, 2], [6, 3]]
+    }
+  ]
+}

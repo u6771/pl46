@@ -1,0 +1,19 @@
+{
+  "name": "Rcommaaccent",
+  "unicode": "0156",
+  "monospace_x_offset": -2,
+  "y_offset": -2,
+  "skeleton": [
+    {
+      "centerline": [[2, 1], [1, 0]]
+    },
+    {
+      "centerline": [[0, 2], [0, 8], [3, 8], [4, 7], [4, 6], [3, 5], [0, 5]],
+      "end_cap": "flat"
+    },
+    {
+      "centerline": [[2, 5], [4, 2]],
+      "start_cap": "flat"
+    }
+  ]
+}

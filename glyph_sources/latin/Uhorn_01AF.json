@@ -1,0 +1,14 @@
+{
+  "name": "Uhorn",
+  "unicode": "01AF",
+  "monospace_x_offset": -2,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[0, 6], [0, 1], [1, 0], [3, 0], [4, 1], [4, 6]]
+    },
+    {
+      "centerline": [[4, 7], [3, 6]]
+    }
+  ]
+}

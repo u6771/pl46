@@ -1,0 +1,11 @@
+{
+  "name": "four",
+  "unicode": "0034",
+  "monospace_x_offset": -2,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[4, 2], [0, 2], [3, 6], [3, 0]]
+    }
+  ]
+}

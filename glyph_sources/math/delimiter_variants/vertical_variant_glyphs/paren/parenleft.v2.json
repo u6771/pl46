@@ -1,0 +1,11 @@
+{
+  "name": "parenleft.v2",
+  "unicode": null,
+  "monospace_x_offset": -1,
+  "y_offset": -4,
+  "skeleton": [
+    {
+      "centerline": [[2, 12], [1, 11], [0, 9], [0, 3], [1, 1], [2, 0]]
+    }
+  ]
+}

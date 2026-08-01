@@ -1,0 +1,17 @@
+{
+  "name": "uni03CA",
+  "unicode": "03CA",
+  "monospace_x_offset": -1,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[1, 4], [1, 1], [2, 0]]
+    },
+    {
+      "centerline": [[0, 6]]
+    },
+    {
+      "centerline": [[2, 6]]
+    }
+  ]
+}

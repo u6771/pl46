@@ -1,0 +1,20 @@
+{
+  "name": "uni2034.st",
+  "unicode": null,
+  "monospace_x_offset": -3,
+  "y_offset": 1,
+  "skeleton": [
+    {
+      "centerline": [[2, 4], [0, 0]],
+      "thickness_scale": 1.4
+    },
+    {
+      "centerline": [[4, 4], [2, 0]],
+      "thickness_scale": 1.4
+    },
+    {
+      "centerline": [[6, 4], [4, 0]],
+      "thickness_scale": 1.4
+    }
+  ]
+}

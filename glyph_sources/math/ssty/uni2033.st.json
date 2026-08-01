@@ -1,0 +1,16 @@
+{
+  "name": "uni2033.st",
+  "unicode": null,
+  "monospace_x_offset": -2,
+  "y_offset": 1,
+  "skeleton": [
+    {
+      "centerline": [[2, 4], [0, 0]],
+      "thickness_scale": 1.4
+    },
+    {
+      "centerline": [[4, 4], [2, 0]],
+      "thickness_scale": 1.4
+    }
+  ]
+}

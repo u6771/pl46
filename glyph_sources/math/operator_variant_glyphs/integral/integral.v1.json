@@ -1,0 +1,12 @@
+{
+  "name": "integral.v1",
+  "unicode": null,
+  "monospace_x_offset": -2,
+  "y_offset": -8,
+  "skeleton": [
+    {
+      "centerline": [[4, 20], [3, 20], [2, 19], [2, 1], [1, 0], [0, 0]],
+      "thickness_scale": 1.6
+    }
+  ]
+}

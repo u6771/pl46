@@ -1,0 +1,19 @@
+{
+  "name": "uni2A11",
+  "unicode": "2A11",
+  "monospace_x_offset": -2,
+  "y_offset": -2,
+  "skeleton": [
+    {
+      "centerline": [[4, 7], [3, 8], [2, 7], [2, 1], [1, 0], [0, 1]],
+      "thickness_scale": 1.6
+    },
+    {
+      "centerline": [[3, 3], [4, 4], [5, 3]]
+    },
+    {
+      "centerline": [[4, 4], [4, 3], [3, 2], [1, 2], [0, 3], [0, 4]],
+      "start_cap": "flat"
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "name": "uni22D8",
+  "unicode": "22D8",
+  "monospace_x_offset": -3,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[2, 4], [0, 2], [2, 0]]
+    },
+    {
+      "centerline": [[4, 4], [2, 2], [4, 0]]
+    },
+    {
+      "centerline": [[6, 4], [4, 2], [6, 0]]
+    }
+  ]
+}

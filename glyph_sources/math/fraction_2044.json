@@ -1,0 +1,11 @@
+{
+  "name": "fraction",
+  "unicode": "2044",
+  "monospace_x_offset": -2,
+  "y_offset": -2,
+  "skeleton": [
+    {
+      "centerline": [[4, 8], [0, 0]]
+    }
+  ]
+}

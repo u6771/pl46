@@ -1,0 +1,13 @@
+{
+  "name": "uni23AD",
+  "unicode": "23AD",
+  "monospace_x_offset": -2,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[2, 4], [2, 2], [0, 0]],
+      "thickness_scale": 1.4,
+      "start_cap": "flat"
+    }
+  ]
+}

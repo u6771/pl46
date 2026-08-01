@@ -1,0 +1,14 @@
+{
+  "name": "brokenbar",
+  "unicode": "00A6",
+  "monospace_x_offset": 0,
+  "y_offset": -2,
+  "skeleton": [
+    {
+      "centerline": [[0, 8], [0, 5]]
+    },
+    {
+      "centerline": [[0, 3], [0, 0]]
+    }
+  ]
+}

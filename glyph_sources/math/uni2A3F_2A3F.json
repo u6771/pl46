@@ -1,0 +1,11 @@
+{
+  "name": "uni2A3F",
+  "unicode": "2A3F",
+  "monospace_x_offset": -2,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[0, 6], [0, 0], [4, 0], [4, 6]]
+    }
+  ]
+}

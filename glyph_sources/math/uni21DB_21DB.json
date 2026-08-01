@@ -1,0 +1,23 @@
+{
+  "name": "uni21DB",
+  "unicode": "21DB",
+  "monospace_x_offset": -4,
+  "y_offset": -2,
+  "skeleton": [
+    {
+      "centerline": [[4, 8], [8, 4], [4, 0]]
+    },
+    {
+      "centerline": [[6, 6], [0, 6]],
+      "start_cap": "flat"
+    },
+    {
+      "centerline": [[8, 4], [0, 4]],
+      "start_cap": "flat"
+    },
+    {
+      "centerline": [[6, 2], [0, 2]],
+      "start_cap": "flat"
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "name": "uni226E",
+  "unicode": "226E",
+  "monospace_x_offset": -3,
+  "y_offset": -2,
+  "skeleton": [
+    {
+      "centerline": [[6, 6], [0, 4], [6, 2]]
+    },
+    {
+      "centerline": [[5, 8], [1, 0]]
+    }
+  ]
+}

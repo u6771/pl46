@@ -1,0 +1,16 @@
+{
+  "name": "semicolon",
+  "unicode": "003B",
+  "monospace_x_offset": -0.5,
+  "y_offset": -1,
+  "skeleton": [
+    {
+      "centerline": [[0, 4], [0, 5], [1, 5], [1, 4], [0, 4]],
+      "filled": true
+    },
+    {
+      "centerline": [[0, 0], [0, 2], [1, 2], [1, 1], [0, 0]],
+      "filled": true
+    }
+  ]
+}

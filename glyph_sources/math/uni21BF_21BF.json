@@ -1,0 +1,11 @@
+{
+  "name": "uni21BF",
+  "unicode": "21BF",
+  "monospace_x_offset": -2,
+  "y_offset": -2,
+  "skeleton": [
+    {
+      "centerline": [[0, 6], [2, 8], [2, 0]]
+    }
+  ]
+}

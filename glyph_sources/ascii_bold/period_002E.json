@@ -1,0 +1,12 @@
+{
+  "name": "period",
+  "unicode": "002E",
+  "monospace_x_offset": -0.5,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[0, 0], [0, 1], [1, 1], [1, 0], [0, 0]],
+      "filled": true
+    }
+  ]
+}

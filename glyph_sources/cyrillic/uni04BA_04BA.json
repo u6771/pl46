@@ -1,0 +1,15 @@
+{
+  "name": "uni04BA",
+  "unicode": "04BA",
+  "monospace_x_offset": -2,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[0, 6], [0, 0]]
+    },
+    {
+      "centerline": [[0, 3], [3, 3], [4, 2], [4, 0]],
+      "start_cap": "flat"
+    }
+  ]
+}

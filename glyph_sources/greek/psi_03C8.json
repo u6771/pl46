@@ -1,0 +1,14 @@
+{
+  "name": "psi",
+  "unicode": "03C8",
+  "monospace_x_offset": -2,
+  "y_offset": -2,
+  "skeleton": [
+    {
+      "centerline": [[0, 6], [0, 3], [1, 2], [3, 2], [4, 3], [4, 6]]
+    },
+    {
+      "centerline": [[2, 8], [2, 0]]
+    }
+  ]
+}

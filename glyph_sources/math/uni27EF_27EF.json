@@ -1,0 +1,11 @@
+{
+  "name": "uni27EF",
+  "unicode": "27EF",
+  "monospace_x_offset": -1,
+  "y_offset": -2,
+  "skeleton": [
+    {
+      "centerline": [[0, 8], [2, 6], [2, 2], [0, 0]]
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "name": "backslash",
+  "unicode": "005C",
+  "monospace_x_offset": -2,
+  "y_offset": -2,
+  "skeleton": [
+    {
+      "centerline": [[0, 8], [4, 0]]
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "name": "proportional",
+  "unicode": "221D",
+  "monospace_x_offset": -3,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[6, 3], [5, 4], [4, 4], [3, 3], [2, 4], [1, 4], [0, 3], [0, 1], [1, 0], [2, 0], [3, 1], [4, 0], [5, 0], [6, 1]]
+    },
+    {
+      "centerline": [[3, 3], [3, 1]],
+      "start_cap": "flat",
+      "end_cap": "flat"
+    }
+  ]
+}

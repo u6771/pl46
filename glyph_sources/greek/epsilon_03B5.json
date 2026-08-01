@@ -1,0 +1,15 @@
+{
+  "name": "epsilon",
+  "unicode": "03B5",
+  "monospace_x_offset": -2,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[4, 3], [3, 4], [1, 4], [0, 3], [1, 2], [0, 1], [1, 0], [3, 0], [4, 1]]
+    },
+    {
+      "centerline": [[1, 2], [3, 2]],
+      "start_cap": "flat"
+    }
+  ]
+}

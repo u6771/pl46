@@ -1,0 +1,12 @@
+{
+  "name": "uni306E",
+  "unicode": "306E",
+  "monospace_x_offset": -2,
+  "y_offset": 1,
+  "skeleton": [
+    {
+      "centerline": [[2, 4], [1, 0], [0, 1], [0, 3], [2, 4], [3, 4], [4, 3], [4, 1], [3, 0]],
+      "start_cap": "flat"
+    }
+  ]
+}

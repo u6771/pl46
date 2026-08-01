@@ -1,0 +1,14 @@
+{
+  "name": "ccaron",
+  "unicode": "010D",
+  "monospace_x_offset": -2,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[4, 3], [3, 4], [1, 4], [0, 3], [0, 1], [1, 0], [3, 0], [4, 1]]
+    },
+    {
+      "centerline": [[1, 6], [2, 5], [3, 6]]
+    }
+  ]
+}

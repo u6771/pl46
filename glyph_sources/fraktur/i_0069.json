@@ -1,0 +1,14 @@
+{
+  "name": "i",
+  "unicode": "0069",
+  "monospace_x_offset": -1,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[0, 3], [1, 4], [1, 0], [2, 1]]
+    },
+    {
+      "centerline": [[1, 6]]
+    }
+  ]
+}

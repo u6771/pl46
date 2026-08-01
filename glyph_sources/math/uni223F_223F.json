@@ -1,0 +1,11 @@
+{
+  "name": "uni223F",
+  "unicode": "223F",
+  "monospace_x_offset": -3,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[0, 2], [0, 3], [1, 4], [2, 4], [3, 3], [3, 1], [4, 0], [5, 0], [6, 1], [6, 2]]
+    }
+  ]
+}

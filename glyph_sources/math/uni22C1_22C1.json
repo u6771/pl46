@@ -1,0 +1,12 @@
+{
+  "name": "uni22C1",
+  "unicode": "22C1",
+  "monospace_x_offset": -3,
+  "y_offset": -2,
+  "skeleton": [
+    {
+      "centerline": [[0, 8], [3, 0], [6, 8]],
+      "thickness_scale": 1.6
+    }
+  ]
+}

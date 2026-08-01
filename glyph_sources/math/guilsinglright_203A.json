@@ -1,0 +1,11 @@
+{
+  "name": "guilsinglright",
+  "unicode": "203A",
+  "monospace_x_offset": -1,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[0, 4], [2, 2], [0, 0]]
+    }
+  ]
+}

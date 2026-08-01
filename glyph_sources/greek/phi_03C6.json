@@ -1,0 +1,11 @@
+{
+  "name": "phi",
+  "unicode": "03C6",
+  "monospace_x_offset": -2,
+  "y_offset": -2,
+  "skeleton": [
+    {
+      "centerline": [[1, 6], [0, 5], [0, 3], [1, 2], [3, 2], [4, 3], [4, 5], [3, 6], [2, 5], [2, 0]]
+    }
+  ]
+}

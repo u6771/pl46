@@ -1,0 +1,12 @@
+{
+  "name": "sigma",
+  "unicode": "03C3",
+  "monospace_x_offset": -2,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[5, 4], [1, 4], [0, 3], [0, 1], [1, 0], [3, 0], [4, 1], [4, 3], [3, 4]],
+      "end_cap": "flat"
+    }
+  ]
+}

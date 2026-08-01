@@ -1,0 +1,20 @@
+{
+  "name": "uni2A04",
+  "unicode": "2A04",
+  "monospace_x_offset": -3,
+  "y_offset": -2,
+  "skeleton": [
+    {
+      "centerline": [[0, 8], [0, 2], [2, 0], [4, 0], [6, 2], [6, 8]],
+      "thickness_scale": 1.6
+    },
+    {
+      "centerline": [[1, 4], [5, 4]],
+      "thickness_scale": 1.6
+    },
+    {
+      "centerline": [[3, 6], [3, 2]],
+      "thickness_scale": 1.6
+    }
+  ]
+}

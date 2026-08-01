@@ -1,0 +1,12 @@
+{
+  "name": "W",
+  "unicode": "0057",
+  "monospace_x_offset": -2,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[0, 0], [0, 6], [1, 6], [1, 1.5], [2, 3], [3, 1.5], [3, 6], [4, 6], [4, 0], [2, 3], [0, 0]],
+      "filled": true
+    }
+  ]
+}

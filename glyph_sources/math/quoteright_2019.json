@@ -1,0 +1,11 @@
+{
+  "name": "quoteright",
+  "unicode": "2019",
+  "monospace_x_offset": 0,
+  "y_offset": 5,
+  "skeleton": [
+    {
+      "centerline": [[1, 1], [0, 0]]
+    }
+  ]
+}

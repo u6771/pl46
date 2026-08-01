@@ -1,0 +1,23 @@
+{
+  "name": "uni21DA",
+  "unicode": "21DA",
+  "monospace_x_offset": -4,
+  "y_offset": -2,
+  "skeleton": [
+    {
+      "centerline": [[4, 8], [0, 4], [4, 0]]
+    },
+    {
+      "centerline": [[2, 6], [8, 6]],
+      "start_cap": "flat"
+    },
+    {
+      "centerline": [[0, 4], [8, 4]],
+      "start_cap": "flat"
+    },
+    {
+      "centerline": [[2, 2], [8, 2]],
+      "start_cap": "flat"
+    }
+  ]
+}

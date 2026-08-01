@@ -1,0 +1,14 @@
+{
+  "name": "quotedblbase",
+  "unicode": "201E",
+  "monospace_x_offset": -1,
+  "y_offset": -1,
+  "skeleton": [
+    {
+      "centerline": [[1, 1], [0, 0]]
+    },
+    {
+      "centerline": [[3, 1], [2, 0]]
+    }
+  ]
+}

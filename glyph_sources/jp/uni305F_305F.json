@@ -1,0 +1,20 @@
+{
+  "name": "uni305F",
+  "unicode": "305F",
+  "monospace_x_offset": -2,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[0, 5], [3, 5]]
+    },
+    {
+      "centerline": [[1, 6], [0, 0]]
+    },
+    {
+      "centerline": [[2, 4], [4, 4]]
+    },
+    {
+      "centerline": [[2, 1], [3, 0], [4, 0]]
+    }
+  ]
+}

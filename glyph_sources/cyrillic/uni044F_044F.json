@@ -1,0 +1,16 @@
+{
+  "name": "uni044F",
+  "unicode": "044F",
+  "monospace_x_offset": -2,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[4, 0], [4, 4], [1, 4], [0, 3], [1, 2], [4, 2]],
+      "end_cap": "flat"
+    },
+    {
+      "centerline": [[2, 2], [0, 0]],
+      "start_cap": "flat"
+    }
+  ]
+}

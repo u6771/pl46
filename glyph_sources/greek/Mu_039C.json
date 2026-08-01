@@ -1,0 +1,11 @@
+{
+  "name": "Mu",
+  "unicode": "039C",
+  "monospace_x_offset": -2,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[0, 0], [0, 6], [2, 3], [4, 6], [4, 0]]
+    }
+  ]
+}

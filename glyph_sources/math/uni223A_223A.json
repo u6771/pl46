@@ -1,0 +1,23 @@
+{
+  "name": "uni223A",
+  "unicode": "223A",
+  "monospace_x_offset": -3,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[0, 2], [6, 2]]
+    },
+    {
+      "centerline": [[0, 4]]
+    },
+    {
+      "centerline": [[6, 4]]
+    },
+    {
+      "centerline": [[0, 0]]
+    },
+    {
+      "centerline": [[6, 0]]
+    }
+  ]
+}

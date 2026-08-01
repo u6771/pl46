@@ -1,0 +1,11 @@
+{
+  "name": "M",
+  "unicode": "004D",
+  "monospace_x_offset": -2,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[0, 1], [1, 0], [2, 6], [2, 0], [3, 6], [3, 0], [4, 1]]
+    }
+  ]
+}

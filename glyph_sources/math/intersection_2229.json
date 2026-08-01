@@ -1,0 +1,11 @@
+{
+  "name": "intersection",
+  "unicode": "2229",
+  "monospace_x_offset": -2,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[0, 0], [0, 4], [1, 5], [3, 5], [4, 4], [4, 0]]
+    }
+  ]
+}

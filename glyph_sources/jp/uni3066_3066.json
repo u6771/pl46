@@ -1,0 +1,11 @@
+{
+  "name": "uni3066",
+  "unicode": "3066",
+  "monospace_x_offset": -2,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[0, 5], [4, 5], [2, 4], [1, 3], [1, 1], [3, 0]]
+    }
+  ]
+}

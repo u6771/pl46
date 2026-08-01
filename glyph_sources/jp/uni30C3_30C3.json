@@ -1,0 +1,17 @@
+{
+  "name": "uni30C3",
+  "unicode": "30C3",
+  "monospace_x_offset": -2,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[0, 4], [1, 2]]
+    },
+    {
+      "centerline": [[2, 4], [2, 2]]
+    },
+    {
+      "centerline": [[4, 4], [3, 1], [1, 0]]
+    }
+  ]
+}

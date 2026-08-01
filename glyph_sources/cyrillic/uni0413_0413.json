@@ -1,0 +1,11 @@
+{
+  "name": "uni0413",
+  "unicode": "0413",
+  "monospace_x_offset": -2,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[4, 6], [0, 6], [0, 0]]
+    }
+  ]
+}

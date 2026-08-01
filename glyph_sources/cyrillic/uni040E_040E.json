@@ -1,0 +1,18 @@
+{
+  "name": "uni040E",
+  "unicode": "040E",
+  "monospace_x_offset": -2,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[4, 6], [4, 1], [3, 0], [1, 0], [0, 1]]
+    },
+    {
+      "centerline": [[0, 8], [1, 7], [3, 7], [4, 8]]
+    },
+    {
+      "centerline": [[4, 3], [3, 2], [1, 2], [0, 3], [0, 6]],
+      "start_cap": "flat"
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "name": "integral",
+  "unicode": "222B",
+  "monospace_x_offset": -2,
+  "y_offset": -2,
+  "skeleton": [
+    {
+      "centerline": [[4, 7], [3, 8], [2, 7], [2, 1], [1, 0], [0, 1]],
+      "thickness_scale": 1.6
+    }
+  ]
+}

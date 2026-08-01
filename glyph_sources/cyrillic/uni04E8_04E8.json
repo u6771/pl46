@@ -1,0 +1,16 @@
+{
+  "name": "uni04E8",
+  "unicode": "04E8",
+  "monospace_x_offset": -2,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[0, 1], [0, 5], [1, 6], [3, 6], [4, 5], [4, 1], [3, 0], [1, 0], [0, 1]]
+    },
+    {
+      "centerline": [[0, 3], [4, 3]],
+      "start_cap": "flat",
+      "end_cap": "flat"
+    }
+  ]
+}

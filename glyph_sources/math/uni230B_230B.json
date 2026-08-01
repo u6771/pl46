@@ -1,0 +1,11 @@
+{
+  "name": "uni230B",
+  "unicode": "230B",
+  "monospace_x_offset": -1,
+  "y_offset": -2,
+  "skeleton": [
+    {
+      "centerline": [[2, 8], [2, 0], [0, 0]]
+    }
+  ]
+}

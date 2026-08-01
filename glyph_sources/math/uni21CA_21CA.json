@@ -1,0 +1,19 @@
+{
+  "name": "uni21CA",
+  "unicode": "21CA",
+  "monospace_x_offset": -4,
+  "y_offset": -2,
+  "skeleton": [
+    {
+      "centerline": [[0, 2], [2, 0], [4, 2], [6, 0], [8, 2]]
+    },
+    {
+      "centerline": [[2, 0], [2, 8]],
+      "start_cap": "flat"
+    },
+    {
+      "centerline": [[6, 0], [6, 8]],
+      "start_cap": "flat"
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "name": "circledivide",
+  "unicode": "2298",
+  "monospace_x_offset": -3,
+  "y_offset": -1,
+  "skeleton": [
+    {
+      "centerline": [[0, 2], [0, 4], [2, 6], [4, 6], [6, 4], [6, 2], [4, 0], [2, 0], [0, 2]]
+    },
+    {
+      "centerline": [[5, 5], [1, 1]],
+      "start_cap": "flat",
+      "end_cap": "flat"
+    }
+  ]
+}

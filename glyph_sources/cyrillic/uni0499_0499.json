@@ -1,0 +1,19 @@
+{
+  "name": "uni0499",
+  "unicode": "0499",
+  "monospace_x_offset": -2,
+  "y_offset": -2,
+  "skeleton": [
+    {
+      "centerline": [[0, 5], [1, 6], [3, 6], [4, 5], [3, 4], [4, 3], [3, 2], [1, 2], [0, 3]]
+    },
+    {
+      "centerline": [[1, 4], [3, 4]],
+      "end_cap": "flat"
+    },
+    {
+      "centerline": [[2, 2], [2, 0]],
+      "start_cap": "flat"
+    }
+  ]
+}

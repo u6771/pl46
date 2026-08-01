@@ -1,0 +1,15 @@
+{
+  "name": "H",
+  "unicode": "0048",
+  "monospace_x_offset": -2,
+  "y_offset": -2,
+  "skeleton": [
+    {
+      "centerline": [[3, 7], [2, 8], [1, 7], [1, 4], [2, 3], [1, 2], [0, 3]]
+    },
+    {
+      "centerline": [[1, 5], [3, 6], [4, 5], [4, 2], [3, 0], [1, 1]],
+      "start_cap": "flat"
+    }
+  ]
+}

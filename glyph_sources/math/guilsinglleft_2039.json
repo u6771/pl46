@@ -1,0 +1,11 @@
+{
+  "name": "guilsinglleft",
+  "unicode": "2039",
+  "monospace_x_offset": -1,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[2, 4], [0, 2], [2, 0]]
+    }
+  ]
+}

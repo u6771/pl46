@@ -1,0 +1,11 @@
+{
+  "name": "grave",
+  "unicode": "0060",
+  "monospace_x_offset": -1,
+  "y_offset": 4,
+  "skeleton": [
+    {
+      "centerline": [[0, 2], [2, 0]]
+    }
+  ]
+}

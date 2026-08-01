@@ -1,0 +1,11 @@
+{
+  "name": "propersubset",
+  "unicode": "2282",
+  "monospace_x_offset": -3,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[6, 4], [1, 4], [0, 3], [0, 1], [1, 0], [6, 0]]
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "name": "uni22E4",
+  "unicode": "22E4",
+  "monospace_x_offset": -2,
+  "y_offset": -2,
+  "skeleton": [
+    {
+      "centerline": [[4, 7], [0, 7], [0, 3], [4, 3]]
+    },
+    {
+      "centerline": [[0, 1], [4, 1]]
+    },
+    {
+      "centerline": [[3, 2], [1, 0]]
+    }
+  ]
+}

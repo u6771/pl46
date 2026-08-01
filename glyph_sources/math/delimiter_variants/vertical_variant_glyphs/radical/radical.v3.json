@@ -1,0 +1,11 @@
+{
+  "name": "radical.v3",
+  "unicode": null,
+  "monospace_x_offset": -3,
+  "y_offset": -5,
+  "skeleton": [
+    {
+      "centerline": [[6, 14], [2, 0], [0, 7]]
+    }
+  ]
+}

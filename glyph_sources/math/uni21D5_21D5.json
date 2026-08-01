@@ -1,0 +1,24 @@
+{
+  "name": "uni21D5",
+  "unicode": "21D5",
+  "monospace_x_offset": -3,
+  "y_offset": -2,
+  "skeleton": [
+    {
+      "centerline": [[0, 5], [3, 8], [6, 5]]
+    },
+    {
+      "centerline": [[0, 3], [3, 0], [6, 3]]
+    },
+    {
+      "centerline": [[2, 7], [2, 1]],
+      "start_cap": "flat",
+      "end_cap": "flat"
+    },
+    {
+      "centerline": [[4, 7], [4, 1]],
+      "start_cap": "flat",
+      "end_cap": "flat"
+    }
+  ]
+}

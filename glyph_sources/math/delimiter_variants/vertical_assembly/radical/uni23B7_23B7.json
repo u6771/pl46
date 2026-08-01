@@ -1,0 +1,12 @@
+{
+  "name": "uni23B7",
+  "unicode": "23B7",
+  "monospace_x_offset": -3,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[3, 16], [3, 0], [0, 12]],
+      "start_cap": "flat"
+    }
+  ]
+}

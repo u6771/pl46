@@ -1,0 +1,19 @@
+{
+  "name": "uni203D",
+  "unicode": "203D",
+  "monospace_x_offset": -2,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[0, 5], [1, 6], [3, 6], [4, 5], [4, 4], [3, 3], [2, 3], [2, 2]]
+    },
+    {
+      "centerline": [[2, 0]]
+    },
+    {
+      "centerline": [[2, 6], [2, 3]],
+      "start_cap": "flat",
+      "end_cap": "flat"
+    }
+  ]
+}

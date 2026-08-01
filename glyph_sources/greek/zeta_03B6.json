@@ -1,0 +1,11 @@
+{
+  "name": "zeta",
+  "unicode": "03B6",
+  "monospace_x_offset": -2,
+  "y_offset": -2,
+  "skeleton": [
+    {
+      "centerline": [[0, 8], [4, 8], [0, 4], [0, 3], [1, 2], [3, 2], [4, 1], [3, 0]]
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "name": "summation",
+  "unicode": "2211",
+  "monospace_x_offset": -3,
+  "y_offset": -2,
+  "skeleton": [
+    {
+      "centerline": [[6, 8], [0, 8], [3, 4], [0, 0], [6, 0]],
+      "thickness_scale": 1.6
+    }
+  ]
+}

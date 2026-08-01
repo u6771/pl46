@@ -1,0 +1,18 @@
+{
+  "name": "uni219F",
+  "unicode": "219F",
+  "monospace_x_offset": -2,
+  "y_offset": -2,
+  "skeleton": [
+    {
+      "centerline": [[0, 6], [2, 8], [4, 6]]
+    },
+    {
+      "centerline": [[0, 4], [2, 6], [4, 4]]
+    },
+    {
+      "centerline": [[2, 8], [2, 0]],
+      "start_cap": "flat"
+    }
+  ]
+}

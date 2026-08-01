@@ -1,0 +1,18 @@
+{
+  "name": "lambda",
+  "unicode": "03BB",
+  "monospace_x_offset": -2,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[1, 6], [4, 0]]
+    },
+    {
+      "centerline": [[0, 6], [1, 6]]
+    },
+    {
+      "centerline": [[2, 4], [0, 0]],
+      "start_cap": "flat"
+    }
+  ]
+}

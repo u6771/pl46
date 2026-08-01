@@ -1,0 +1,17 @@
+{
+  "name": "uni2A00",
+  "unicode": "2A00",
+  "monospace_x_offset": -4,
+  "y_offset": -2,
+  "skeleton": [
+    {
+      "centerline": [[2, 8], [6, 8], [8, 6], [8, 2], [6, 0], [2, 0], [0, 2], [0, 6], [2, 8]],
+      "thickness_scale": 1.6
+    },
+    {
+      "centerline": [[4, 3], [3, 4], [4, 5], [5, 4], [4, 3]],
+      "thickness_scale": 1.6,
+      "filled": true
+    }
+  ]
+}

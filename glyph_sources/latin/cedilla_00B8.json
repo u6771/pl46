@@ -1,0 +1,11 @@
+{
+  "name": "cedilla",
+  "unicode": "00B8",
+  "monospace_x_offset": -1,
+  "y_offset": -2,
+  "skeleton": [
+    {
+      "centerline": [[1, 2], [1, 1], [0, 0]]
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "name": "angleleft",
+  "unicode": "2329",
+  "monospace_x_offset": -1,
+  "y_offset": -2,
+  "skeleton": [
+    {
+      "centerline": [[2, 8], [0, 4], [2, 0]]
+    }
+  ]
+}

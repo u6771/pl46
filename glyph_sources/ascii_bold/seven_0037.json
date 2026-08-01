@@ -1,0 +1,16 @@
+{
+  "name": "seven",
+  "unicode": "0037",
+  "monospace_x_offset": -2,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[0, 6], [3, 6]],
+      "end_cap": "flat"
+    },
+    {
+      "centerline": [[3, 6], [1, 0], [2, 0], [4, 6], [3, 6]],
+      "filled": true
+    }
+  ]
+}

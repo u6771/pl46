@@ -1,0 +1,13 @@
+{
+  "name": "uni23DC.lft",
+  "unicode": null,
+  "monospace_x_offset": -8,
+  "y_offset": 4,
+  "skeleton": [
+    {
+      "centerline": [[0, 0], [2, 2], [6, 4], [8, 4]],
+      "thickness_scale": 1.4,
+      "end_cap": "flat"
+    }
+  ]
+}

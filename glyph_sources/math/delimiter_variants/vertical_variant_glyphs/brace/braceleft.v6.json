@@ -1,0 +1,12 @@
+{
+  "name": "braceleft.v6",
+  "unicode": null,
+  "monospace_x_offset": -2,
+  "y_offset": -8,
+  "skeleton": [
+    {
+      "centerline": [[4, 20], [2, 18], [2, 12], [0, 10], [2, 8], [2, 2], [4, 0]],
+      "thickness_scale": 1.4
+    }
+  ]
+}

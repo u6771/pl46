@@ -1,0 +1,15 @@
+{
+  "name": "uni045A",
+  "unicode": "045A",
+  "monospace_x_offset": -2,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[0, 4], [0, 0]]
+    },
+    {
+      "centerline": [[2, 4], [2, 0], [3, 0], [4, 1], [3, 2], [0, 2]],
+      "end_cap": "flat"
+    }
+  ]
+}

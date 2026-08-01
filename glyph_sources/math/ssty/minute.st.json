@@ -1,0 +1,12 @@
+{
+  "name": "minute.st",
+  "unicode": null,
+  "monospace_x_offset": -1,
+  "y_offset": 1,
+  "skeleton": [
+    {
+      "centerline": [[2, 4], [0, 0]],
+      "thickness_scale": 1.4
+    }
+  ]
+}

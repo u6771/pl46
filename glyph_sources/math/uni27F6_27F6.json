@@ -1,0 +1,15 @@
+{
+  "name": "uni27F6",
+  "unicode": "27F6",
+  "monospace_x_offset": -6,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[10, 4], [12, 2], [10, 0]]
+    },
+    {
+      "centerline": [[0, 2], [12, 2]],
+      "end_cap": "flat"
+    }
+  ]
+}

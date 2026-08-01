@@ -1,0 +1,19 @@
+{
+  "name": "uni2233.v1",
+  "unicode": null,
+  "monospace_x_offset": -2,
+  "y_offset": -8,
+  "skeleton": [
+    {
+      "centerline": [[4, 19], [3, 20], [2, 19], [2, 1], [1, 0], [0, 1]],
+      "thickness_scale": 1.6
+    },
+    {
+      "centerline": [[3, 9], [4, 10], [5, 9]]
+    },
+    {
+      "centerline": [[4, 10], [4, 9], [3, 8], [1, 8], [0, 9], [0, 11], [1, 12], [3, 12], [4, 11]],
+      "start_cap": "flat"
+    }
+  ]
+}

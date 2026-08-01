@@ -1,0 +1,14 @@
+{
+  "name": "semicolon",
+  "unicode": "003B",
+  "monospace_x_offset": -1,
+  "y_offset": -1,
+  "skeleton": [
+    {
+      "centerline": [[1, 5]]
+    },
+    {
+      "centerline": [[1, 1], [0, 0]]
+    }
+  ]
+}

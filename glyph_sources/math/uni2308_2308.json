@@ -1,0 +1,11 @@
+{
+  "name": "uni2308",
+  "unicode": "2308",
+  "monospace_x_offset": -1,
+  "y_offset": -2,
+  "skeleton": [
+    {
+      "centerline": [[2, 8], [0, 8], [0, 0]]
+    }
+  ]
+}

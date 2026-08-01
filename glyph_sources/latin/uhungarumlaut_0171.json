@@ -1,0 +1,21 @@
+{
+  "name": "uhungarumlaut",
+  "unicode": "0171",
+  "monospace_x_offset": -2,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[4, 4], [4, 0]]
+    },
+    {
+      "centerline": [[1, 5], [2, 6]]
+    },
+    {
+      "centerline": [[2, 5], [3, 6]]
+    },
+    {
+      "centerline": [[4, 1], [3, 0], [1, 0], [0, 1], [0, 4]],
+      "start_cap": "flat"
+    }
+  ]
+}

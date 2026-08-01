@@ -1,0 +1,19 @@
+{
+  "name": "arrowdblleft",
+  "unicode": "21D0",
+  "monospace_x_offset": -4,
+  "y_offset": -1,
+  "skeleton": [
+    {
+      "centerline": [[3, 6], [0, 3], [3, 0]]
+    },
+    {
+      "centerline": [[1, 4], [8, 4]],
+      "start_cap": "flat"
+    },
+    {
+      "centerline": [[1, 2], [8, 2]],
+      "start_cap": "flat"
+    }
+  ]
+}

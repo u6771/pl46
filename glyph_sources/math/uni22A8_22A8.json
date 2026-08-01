@@ -1,0 +1,19 @@
+{
+  "name": "uni22A8",
+  "unicode": "22A8",
+  "monospace_x_offset": -2,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[0, 6], [0, 0]]
+    },
+    {
+      "centerline": [[0, 4], [4, 4]],
+      "start_cap": "flat"
+    },
+    {
+      "centerline": [[0, 2], [4, 2]],
+      "start_cap": "flat"
+    }
+  ]
+}

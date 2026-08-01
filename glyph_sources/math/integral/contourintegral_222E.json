@@ -1,0 +1,15 @@
+{
+  "name": "contourintegral",
+  "unicode": "222E",
+  "monospace_x_offset": -2,
+  "y_offset": -2,
+  "skeleton": [
+    {
+      "centerline": [[0, 3], [0, 5], [1, 6], [3, 6], [4, 5], [4, 3], [3, 2], [1, 2], [0, 3]]
+    },
+    {
+      "centerline": [[4, 8], [3, 8], [2, 7], [2, 1], [1, 0], [0, 0]],
+      "thickness_scale": 1.6
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "name": "Oslash",
+  "unicode": "00D8",
+  "monospace_x_offset": -2,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[0, 1], [0, 5], [1, 6], [3, 6], [4, 5], [4, 1], [3, 0], [1, 0], [0, 1]]
+    },
+    {
+      "centerline": [[4, 6], [0, 0]]
+    }
+  ]
+}

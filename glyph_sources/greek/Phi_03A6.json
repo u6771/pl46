@@ -1,0 +1,22 @@
+{
+  "name": "Phi",
+  "unicode": "03A6",
+  "monospace_x_offset": -2,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[0, 6], [4, 6]]
+    },
+    {
+      "centerline": [[0, 0], [4, 0]]
+    },
+    {
+      "centerline": [[0, 2], [0, 4], [1, 5], [3, 5], [4, 4], [4, 2], [3, 1], [1, 1], [0, 2]]
+    },
+    {
+      "centerline": [[2, 6], [2, 0]],
+      "start_cap": "flat",
+      "end_cap": "flat"
+    }
+  ]
+}

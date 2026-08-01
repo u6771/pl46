@@ -1,0 +1,14 @@
+{
+  "name": "divides.ex",
+  "unicode": null,
+  "monospace_x_offset": 0,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[0, 4], [0, 0]],
+      "thickness_scale": 1.4,
+      "start_cap": "flat",
+      "end_cap": "flat"
+    }
+  ]
+}

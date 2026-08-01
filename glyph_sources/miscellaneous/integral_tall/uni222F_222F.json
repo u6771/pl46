@@ -1,0 +1,19 @@
+{
+  "name": "uni222F",
+  "unicode": "222F",
+  "monospace_x_offset": -3.5,
+  "y_offset": -3,
+  "skeleton": [
+    {
+      "centerline": [[4, 9], [3, 10], [2, 9], [2, 1], [1, 0], [0, 1]],
+      "thickness_scale": 1.6
+    },
+    {
+      "centerline": [[3, 1], [4, 0], [5, 1], [5, 9], [6, 10], [7, 9]],
+      "thickness_scale": 1.6
+    },
+    {
+      "centerline": [[0, 4], [0, 6], [1, 7], [6, 7], [7, 6], [7, 4], [6, 3], [1, 3], [0, 4]]
+    }
+  ]
+}

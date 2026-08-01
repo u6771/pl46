@@ -1,0 +1,19 @@
+{
+  "name": "uni27F9",
+  "unicode": "27F9",
+  "monospace_x_offset": -6,
+  "y_offset": -1,
+  "skeleton": [
+    {
+      "centerline": [[9, 6], [12, 3], [9, 0]]
+    },
+    {
+      "centerline": [[0, 4], [11, 4]],
+      "end_cap": "flat"
+    },
+    {
+      "centerline": [[0, 2], [11, 2]],
+      "end_cap": "flat"
+    }
+  ]
+}

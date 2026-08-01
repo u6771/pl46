@@ -1,0 +1,19 @@
+{
+  "name": "Rcaron",
+  "unicode": "0158",
+  "monospace_x_offset": -2,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[1, 8], [2, 7], [3, 8]]
+    },
+    {
+      "centerline": [[0, 0], [0, 6], [3, 6], [4, 5], [4, 4], [3, 3], [0, 3]],
+      "end_cap": "flat"
+    },
+    {
+      "centerline": [[2, 3], [4, 0]],
+      "start_cap": "flat"
+    }
+  ]
+}

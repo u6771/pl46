@@ -1,0 +1,12 @@
+{
+  "name": "parenright.v4",
+  "unicode": null,
+  "monospace_x_offset": -2,
+  "y_offset": -6,
+  "skeleton": [
+    {
+      "centerline": [[0, 16], [2, 14], [4, 10], [4, 6], [2, 2], [0, 0]],
+      "thickness_scale": 1.4
+    }
+  ]
+}

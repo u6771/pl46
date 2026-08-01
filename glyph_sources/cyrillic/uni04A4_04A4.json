@@ -1,0 +1,19 @@
+{
+  "name": "uni04A4",
+  "unicode": "04A4",
+  "monospace_x_offset": -2,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[0, 6], [0, 0]]
+    },
+    {
+      "centerline": [[4, 6], [3, 6], [3, 0]]
+    },
+    {
+      "centerline": [[0, 3], [3, 3]],
+      "start_cap": "flat",
+      "end_cap": "flat"
+    }
+  ]
+}

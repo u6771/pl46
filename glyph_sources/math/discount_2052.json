@@ -1,0 +1,19 @@
+{
+  "name": "discount",
+  "unicode": "2052",
+  "monospace_x_offset": -2,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[1, 4], [0, 5], [1, 6], [2, 5], [1, 4]],
+      "filled": true
+    },
+    {
+      "centerline": [[3, 0], [2, 1], [3, 2], [4, 1], [3, 0]],
+      "filled": true
+    },
+    {
+      "centerline": [[4, 5], [0, 1]]
+    }
+  ]
+}

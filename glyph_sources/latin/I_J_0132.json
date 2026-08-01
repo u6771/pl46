@@ -1,0 +1,22 @@
+{
+  "name": "I_J",
+  "unicode": "0132",
+  "monospace_x_offset": -2,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[0, 6], [2, 6]]
+    },
+    {
+      "centerline": [[0, 0], [2, 0]]
+    },
+    {
+      "centerline": [[4, 6], [4, 1], [3, 0], [2, 1]]
+    },
+    {
+      "centerline": [[1, 6], [1, 0]],
+      "start_cap": "flat",
+      "end_cap": "flat"
+    }
+  ]
+}

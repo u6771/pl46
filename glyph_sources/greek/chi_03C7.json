@@ -1,0 +1,14 @@
+{
+  "name": "chi",
+  "unicode": "03C7",
+  "monospace_x_offset": -2,
+  "y_offset": -2,
+  "skeleton": [
+    {
+      "centerline": [[0, 6], [1, 6], [3, 0], [4, 0]]
+    },
+    {
+      "centerline": [[4, 6], [0, 0]]
+    }
+  ]
+}

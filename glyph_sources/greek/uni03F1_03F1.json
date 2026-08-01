@@ -1,0 +1,12 @@
+{
+  "name": "uni03F1",
+  "unicode": "03F1",
+  "monospace_x_offset": -2,
+  "y_offset": -2,
+  "skeleton": [
+    {
+      "centerline": [[4, 0], [1, 0], [0, 1], [0, 5], [1, 6], [3, 6], [4, 5], [4, 3], [3, 2], [1, 2], [0, 3]],
+      "end_cap": "flat"
+    }
+  ]
+}

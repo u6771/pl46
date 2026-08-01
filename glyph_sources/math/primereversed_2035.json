@@ -1,0 +1,11 @@
+{
+  "name": "primereversed",
+  "unicode": "2035",
+  "monospace_x_offset": -1,
+  "y_offset": 4,
+  "skeleton": [
+    {
+      "centerline": [[0, 2], [1, 0]]
+    }
+  ]
+}

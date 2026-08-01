@@ -1,0 +1,19 @@
+{
+  "name": "uni21A7",
+  "unicode": "21A7",
+  "monospace_x_offset": -2,
+  "y_offset": -2,
+  "skeleton": [
+    {
+      "centerline": [[0, 8], [4, 8]]
+    },
+    {
+      "centerline": [[0, 2], [2, 0], [4, 2]]
+    },
+    {
+      "centerline": [[2, 8], [2, 0]],
+      "start_cap": "flat",
+      "end_cap": "flat"
+    }
+  ]
+}

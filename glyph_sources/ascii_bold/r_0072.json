@@ -1,0 +1,21 @@
+{
+  "name": "r",
+  "unicode": "0072",
+  "monospace_x_offset": -2,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[0, 0], [0, 3], [1, 4], [1, 0], [0, 0]],
+      "filled": true
+    },
+    {
+      "centerline": [[3, 4], [3, 3], [4, 3], [3, 4]],
+      "filled": true
+    },
+    {
+      "centerline": [[1, 4], [3, 4]],
+      "start_cap": "flat",
+      "end_cap": "flat"
+    }
+  ]
+}

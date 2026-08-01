@@ -1,0 +1,14 @@
+{
+  "name": "parallel.v2",
+  "unicode": null,
+  "monospace_x_offset": -1,
+  "y_offset": -4,
+  "skeleton": [
+    {
+      "centerline": [[0, 12], [0, 0]]
+    },
+    {
+      "centerline": [[2, 12], [2, 0]]
+    }
+  ]
+}

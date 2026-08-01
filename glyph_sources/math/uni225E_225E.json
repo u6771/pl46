@@ -1,0 +1,23 @@
+{
+  "name": "uni225E",
+  "unicode": "225E",
+  "monospace_x_offset": -3,
+  "y_offset": 1,
+  "skeleton": [
+    {
+      "centerline": [[0, 2], [6, 2]]
+    },
+    {
+      "centerline": [[0, 0], [6, 0]]
+    },
+    {
+      "centerline": [[1, 5], [1, 3]]
+    },
+    {
+      "centerline": [[1, 4], [2, 5], [3, 4], [4, 5], [5, 4], [5, 3]]
+    },
+    {
+      "centerline": [[3, 4], [3, 3]]
+    }
+  ]
+}

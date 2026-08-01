@@ -1,0 +1,11 @@
+{
+  "name": "propersuperset",
+  "unicode": "2283",
+  "monospace_x_offset": -3,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[0, 4], [5, 4], [6, 3], [6, 1], [5, 0], [0, 0]]
+    }
+  ]
+}

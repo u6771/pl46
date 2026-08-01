@@ -1,0 +1,19 @@
+{
+  "name": "uni04D1",
+  "unicode": "04D1",
+  "monospace_x_offset": -2,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[0, 3], [1, 4], [3, 4], [4, 3], [4, 0]]
+    },
+    {
+      "centerline": [[0, 6], [1, 5], [3, 5], [4, 6]]
+    },
+    {
+      "centerline": [[4, 2], [1, 2], [0, 1], [1, 0], [3, 0], [4, 1]],
+      "start_cap": "flat",
+      "end_cap": "flat"
+    }
+  ]
+}

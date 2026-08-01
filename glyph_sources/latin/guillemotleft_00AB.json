@@ -1,0 +1,14 @@
+{
+  "name": "guillemotleft",
+  "unicode": "00AB",
+  "monospace_x_offset": -2,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[2, 4], [0, 2], [2, 0]]
+    },
+    {
+      "centerline": [[4, 4], [2, 2], [4, 0]]
+    }
+  ]
+}

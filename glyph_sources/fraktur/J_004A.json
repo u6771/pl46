@@ -1,0 +1,14 @@
+{
+  "name": "J",
+  "unicode": "004A",
+  "monospace_x_offset": -2,
+  "y_offset": -2,
+  "skeleton": [
+    {
+      "centerline": [[0, 7], [1, 8], [3, 7], [4, 8]]
+    },
+    {
+      "centerline": [[4, 6], [3, 5], [4, 1], [3, 0], [1, 1], [0, 0]]
+    }
+  ]
+}

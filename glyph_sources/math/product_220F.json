@@ -1,0 +1,12 @@
+{
+  "name": "product",
+  "unicode": "220F",
+  "monospace_x_offset": -3,
+  "y_offset": -2,
+  "skeleton": [
+    {
+      "centerline": [[0, 0], [0, 8], [6, 8], [6, 0]],
+      "thickness_scale": 1.6
+    }
+  ]
+}

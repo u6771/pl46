@@ -1,0 +1,14 @@
+{
+  "name": "ratio",
+  "unicode": "2236",
+  "monospace_x_offset": 0,
+  "y_offset": 1,
+  "skeleton": [
+    {
+      "centerline": [[0, 2]]
+    },
+    {
+      "centerline": [[0, 0]]
+    }
+  ]
+}

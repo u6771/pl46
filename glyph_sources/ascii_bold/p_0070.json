@@ -1,0 +1,26 @@
+{
+  "name": "p",
+  "unicode": "0070",
+  "monospace_x_offset": -2,
+  "y_offset": -2,
+  "skeleton": [
+    {
+      "centerline": [[3, 6], [3, 2], [4, 3], [4, 5], [3, 6]],
+      "filled": true
+    },
+    {
+      "centerline": [[0, 0], [0, 6], [1, 6], [1, 0], [0, 0]],
+      "filled": true
+    },
+    {
+      "centerline": [[1, 6], [3, 6]],
+      "start_cap": "flat",
+      "end_cap": "flat"
+    },
+    {
+      "centerline": [[1, 2], [3, 2]],
+      "start_cap": "flat",
+      "end_cap": "flat"
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "name": "dieresis",
+  "unicode": "00A8",
+  "monospace_x_offset": -1,
+  "y_offset": 6,
+  "skeleton": [
+    {
+      "centerline": [[0, 0]]
+    },
+    {
+      "centerline": [[2, 0]]
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "name": "u1D453",
+  "unicode": "1D453",
+  "monospace_x_offset": -2,
+  "y_offset": -2,
+  "skeleton": [
+    {
+      "centerline": [[4, 8], [3, 8], [2, 7], [2, 1], [1, 0], [0, 0]]
+    },
+    {
+      "centerline": [[1, 5], [3, 5]]
+    }
+  ]
+}

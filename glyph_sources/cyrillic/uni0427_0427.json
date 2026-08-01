@@ -1,0 +1,15 @@
+{
+  "name": "uni0427",
+  "unicode": "0427",
+  "monospace_x_offset": -2,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[4, 6], [4, 0]]
+    },
+    {
+      "centerline": [[0, 6], [0, 4], [1, 3], [4, 3]],
+      "end_cap": "flat"
+    }
+  ]
+}

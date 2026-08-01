@@ -1,0 +1,14 @@
+{
+  "name": "uni2036",
+  "unicode": "2036",
+  "monospace_x_offset": -1,
+  "y_offset": 4,
+  "skeleton": [
+    {
+      "centerline": [[0, 2], [1, 0]]
+    },
+    {
+      "centerline": [[1, 2], [2, 0]]
+    }
+  ]
+}

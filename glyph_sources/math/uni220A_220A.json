@@ -1,0 +1,15 @@
+{
+  "name": "uni220A",
+  "unicode": "220A",
+  "monospace_x_offset": -2,
+  "y_offset": 1,
+  "skeleton": [
+    {
+      "centerline": [[4, 2], [1, 2], [0, 1], [1, 0], [4, 0]]
+    },
+    {
+      "centerline": [[0, 1], [4, 1]],
+      "start_cap": "flat"
+    }
+  ]
+}

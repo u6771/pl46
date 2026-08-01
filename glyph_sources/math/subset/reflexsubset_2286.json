@@ -1,0 +1,14 @@
+{
+  "name": "reflexsubset",
+  "unicode": "2286",
+  "monospace_x_offset": -2,
+  "y_offset": -1,
+  "skeleton": [
+    {
+      "centerline": [[4, 6], [1, 6], [0, 5], [0, 3], [1, 2], [4, 2]]
+    },
+    {
+      "centerline": [[0, 0], [4, 0]]
+    }
+  ]
+}

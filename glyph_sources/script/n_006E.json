@@ -1,0 +1,15 @@
+{
+  "name": "n",
+  "unicode": "006E",
+  "monospace_x_offset": -2,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[0, 2], [1, 4], [1, 2], [2, 4], [3, 3], [3, 0], [4, 2]]
+    },
+    {
+      "centerline": [[1, 2], [0, 0]],
+      "start_cap": "flat"
+    }
+  ]
+}

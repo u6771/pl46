@@ -1,0 +1,13 @@
+{
+  "name": "uni23A3",
+  "unicode": "23A3",
+  "monospace_x_offset": -2,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[0, 8], [0, 0], [4, 0]],
+      "thickness_scale": 1.4,
+      "start_cap": "flat"
+    }
+  ]
+}

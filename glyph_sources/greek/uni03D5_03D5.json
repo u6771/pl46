@@ -1,0 +1,14 @@
+{
+  "name": "uni03D5",
+  "unicode": "03D5",
+  "monospace_x_offset": -2,
+  "y_offset": -2,
+  "skeleton": [
+    {
+      "centerline": [[0, 3], [0, 5], [1, 6], [3, 6], [4, 5], [4, 3], [3, 2], [1, 2], [0, 3]]
+    },
+    {
+      "centerline": [[2, 8], [2, 0]]
+    }
+  ]
+}

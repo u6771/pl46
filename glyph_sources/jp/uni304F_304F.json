@@ -1,0 +1,11 @@
+{
+  "name": "uni304F",
+  "unicode": "304F",
+  "monospace_x_offset": -2,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[3, 6], [0, 3], [3, 0]]
+    }
+  ]
+}

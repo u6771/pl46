@@ -1,0 +1,22 @@
+{
+  "name": "uni21CD",
+  "unicode": "21CD",
+  "monospace_x_offset": -4,
+  "y_offset": -1,
+  "skeleton": [
+    {
+      "centerline": [[3, 6], [0, 3], [3, 0]]
+    },
+    {
+      "centerline": [[1, 4], [8, 4]],
+      "start_cap": "flat"
+    },
+    {
+      "centerline": [[1, 2], [8, 2]],
+      "start_cap": "flat"
+    },
+    {
+      "centerline": [[6, 5], [4, 1]]
+    }
+  ]
+}

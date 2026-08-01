@@ -1,0 +1,23 @@
+{
+  "name": "uni2230.v1",
+  "unicode": null,
+  "monospace_x_offset": -6,
+  "y_offset": -8,
+  "skeleton": [
+    {
+      "centerline": [[2, 7], [0, 9], [0, 11], [2, 13], [10, 13], [12, 11], [12, 9], [10, 7], [2, 7]]
+    },
+    {
+      "centerline": [[5, 20], [4, 20], [3, 19], [3, 1], [2, 0], [1, 0]],
+      "thickness_scale": 1.6
+    },
+    {
+      "centerline": [[8, 20], [7, 20], [6, 19], [6, 1], [5, 0], [4, 0]],
+      "thickness_scale": 1.6
+    },
+    {
+      "centerline": [[11, 20], [10, 20], [9, 19], [9, 1], [8, 0], [7, 0]],
+      "thickness_scale": 1.6
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "name": "bracketleft.v6",
+  "unicode": null,
+  "monospace_x_offset": -2,
+  "y_offset": -8,
+  "skeleton": [
+    {
+      "centerline": [[4, 20], [0, 20], [0, 0], [4, 0]],
+      "thickness_scale": 1.4
+    }
+  ]
+}

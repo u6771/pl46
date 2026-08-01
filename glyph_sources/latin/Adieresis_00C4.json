@@ -1,0 +1,22 @@
+{
+  "name": "Adieresis",
+  "unicode": "00C4",
+  "monospace_x_offset": -2,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[0, 0], [0, 3], [2, 6], [4, 3], [4, 0]]
+    },
+    {
+      "centerline": [[1, 8]]
+    },
+    {
+      "centerline": [[3, 8]]
+    },
+    {
+      "centerline": [[0, 2], [4, 2]],
+      "start_cap": "flat",
+      "end_cap": "flat"
+    }
+  ]
+}

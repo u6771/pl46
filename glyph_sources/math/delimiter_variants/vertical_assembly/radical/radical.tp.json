@@ -1,0 +1,13 @@
+{
+  "name": "radical.tp",
+  "unicode": null,
+  "monospace_x_offset": 0,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[0, 0], [0, 4], [3, 4]],
+      "start_cap": "flat",
+      "end_cap": "flat"
+    }
+  ]
+}

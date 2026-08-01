@@ -1,0 +1,18 @@
+{
+  "name": "tcedilla",
+  "unicode": "0163",
+  "monospace_x_offset": -2,
+  "y_offset": -2,
+  "skeleton": [
+    {
+      "centerline": [[1, 8], [1, 3], [2, 2], [3, 2], [4, 3]]
+    },
+    {
+      "centerline": [[0, 6], [3, 6]]
+    },
+    {
+      "centerline": [[2, 2], [2, 1], [1, 0]],
+      "start_cap": "flat"
+    }
+  ]
+}

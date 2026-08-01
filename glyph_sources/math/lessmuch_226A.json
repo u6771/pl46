@@ -1,0 +1,14 @@
+{
+  "name": "lessmuch",
+  "unicode": "226A",
+  "monospace_x_offset": -3,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[4, 4], [0, 2], [4, 0]]
+    },
+    {
+      "centerline": [[6, 4], [2, 2], [6, 0]]
+    }
+  ]
+}

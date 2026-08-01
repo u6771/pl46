@@ -1,0 +1,30 @@
+{
+  "name": "uni6771",
+  "unicode": "6771",
+  "monospace_x_offset": -2,
+  "y_offset": -1,
+  "skeleton": [
+    {
+      "centerline": [[0, 6], [4, 6]]
+    },
+    {
+      "centerline": [[0, 3], [0, 5], [4, 5], [4, 3], [0, 3]]
+    },
+    {
+      "centerline": [[0, 4], [4, 4]],
+      "start_cap": "flat",
+      "end_cap": "flat"
+    },
+    {
+      "centerline": [[2, 7], [2, 0]]
+    },
+    {
+      "centerline": [[0, 1], [2, 3]],
+      "end_cap": "flat"
+    },
+    {
+      "centerline": [[2, 3], [4, 1]],
+      "start_cap": "flat"
+    }
+  ]
+}

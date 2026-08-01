@@ -1,0 +1,17 @@
+{
+  "name": "ellipsis",
+  "unicode": "2026",
+  "monospace_x_offset": -3,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[0, 0]]
+    },
+    {
+      "centerline": [[3, 0]]
+    },
+    {
+      "centerline": [[6, 0]]
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "name": "zcaron",
+  "unicode": "017E",
+  "monospace_x_offset": -2,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[0, 4], [4, 4], [0, 0], [4, 0]]
+    },
+    {
+      "centerline": [[1, 6], [2, 5], [3, 6]]
+    }
+  ]
+}

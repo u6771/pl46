@@ -1,0 +1,14 @@
+{
+  "name": "uni308F",
+  "unicode": "308F",
+  "monospace_x_offset": -2,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[1, 6], [1, 0]]
+    },
+    {
+      "centerline": [[0, 5], [2, 5], [0, 1], [3, 5], [4, 4], [4, 1], [3, 0]]
+    }
+  ]
+}

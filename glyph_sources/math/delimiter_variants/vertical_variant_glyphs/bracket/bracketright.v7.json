@@ -1,0 +1,12 @@
+{
+  "name": "bracketright.v7",
+  "unicode": null,
+  "monospace_x_offset": -2,
+  "y_offset": -9,
+  "skeleton": [
+    {
+      "centerline": [[0, 22], [4, 22], [4, 0], [0, 0]],
+      "thickness_scale": 1.4
+    }
+  ]
+}

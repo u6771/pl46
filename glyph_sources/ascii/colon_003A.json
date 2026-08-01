@@ -1,0 +1,14 @@
+{
+  "name": "colon",
+  "unicode": "003A",
+  "monospace_x_offset": 0,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[0, 4]]
+    },
+    {
+      "centerline": [[0, 0]]
+    }
+  ]
+}

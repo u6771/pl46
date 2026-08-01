@@ -1,0 +1,11 @@
+{
+  "name": "minus",
+  "unicode": "2212",
+  "monospace_x_offset": -3,
+  "y_offset": 2,
+  "skeleton": [
+    {
+      "centerline": [[0, 0], [6, 0]]
+    }
+  ]
+}

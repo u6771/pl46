@@ -1,0 +1,30 @@
+{
+  "name": "C",
+  "unicode": "0043",
+  "monospace_x_offset": -2,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[1, 0], [0, 1], [0, 5], [1, 6], [1, 0]],
+      "filled": true
+    },
+    {
+      "centerline": [[3, 6], [4, 5], [3, 5], [3, 6]],
+      "filled": true
+    },
+    {
+      "centerline": [[1, 0], [3, 0]],
+      "start_cap": "flat",
+      "end_cap": "flat"
+    },
+    {
+      "centerline": [[1, 6], [3, 6]],
+      "start_cap": "flat",
+      "end_cap": "flat"
+    },
+    {
+      "centerline": [[3, 0], [3, 1], [4, 1], [3, 0]],
+      "filled": true
+    }
+  ]
+}

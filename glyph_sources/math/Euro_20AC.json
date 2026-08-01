@@ -1,0 +1,17 @@
+{
+  "name": "Euro",
+  "unicode": "20AC",
+  "monospace_x_offset": -2,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[4, 5], [3, 6], [2, 6], [1, 5], [1, 1], [2, 0], [3, 0], [4, 1]]
+    },
+    {
+      "centerline": [[0, 4], [3, 4]]
+    },
+    {
+      "centerline": [[0, 2], [3, 2]]
+    }
+  ]
+}

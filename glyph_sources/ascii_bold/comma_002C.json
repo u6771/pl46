@@ -1,0 +1,12 @@
+{
+  "name": "comma",
+  "unicode": "002C",
+  "monospace_x_offset": -0.5,
+  "y_offset": -1,
+  "skeleton": [
+    {
+      "centerline": [[0, 2], [0, 0], [1, 1], [1, 2], [0, 2]],
+      "filled": true
+    }
+  ]
+}

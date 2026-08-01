@@ -1,0 +1,11 @@
+{
+  "name": "braceleft.v1",
+  "unicode": null,
+  "monospace_x_offset": -1,
+  "y_offset": -3,
+  "skeleton": [
+    {
+      "centerline": [[2, 10], [1, 9], [1, 6], [0, 5], [1, 4], [1, 1], [2, 0]]
+    }
+  ]
+}

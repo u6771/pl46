@@ -1,0 +1,19 @@
+{
+  "name": "uni27FB",
+  "unicode": "27FB",
+  "monospace_x_offset": -6,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[2, 4], [0, 2], [2, 0]]
+    },
+    {
+      "centerline": [[12, 4], [12, 0]]
+    },
+    {
+      "centerline": [[0, 2], [12, 2]],
+      "start_cap": "flat",
+      "end_cap": "flat"
+    }
+  ]
+}

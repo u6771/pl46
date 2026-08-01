@@ -1,0 +1,11 @@
+{
+  "name": "nu",
+  "unicode": "03BD",
+  "monospace_x_offset": -2,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[0, 4], [2, 0], [4, 4]]
+    }
+  ]
+}

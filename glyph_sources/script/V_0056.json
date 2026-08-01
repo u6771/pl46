@@ -1,0 +1,11 @@
+{
+  "name": "V",
+  "unicode": "0056",
+  "monospace_x_offset": -2,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[1, 4], [0, 5], [1, 6], [2, 5], [2, 0], [4, 6]]
+    }
+  ]
+}

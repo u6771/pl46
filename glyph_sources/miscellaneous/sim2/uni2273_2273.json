@@ -1,0 +1,14 @@
+{
+  "name": "uni2273",
+  "unicode": "2273",
+  "monospace_x_offset": -3,
+  "y_offset": -2,
+  "skeleton": [
+    {
+      "centerline": [[0, 1], [1, 2], [2, 2], [4, 0], [5, 0], [6, 1]]
+    },
+    {
+      "centerline": [[0, 7], [6, 5], [0, 3]]
+    }
+  ]
+}

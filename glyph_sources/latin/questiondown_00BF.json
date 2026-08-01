@@ -1,0 +1,14 @@
+{
+  "name": "questiondown",
+  "unicode": "00BF",
+  "monospace_x_offset": -2,
+  "y_offset": -2,
+  "skeleton": [
+    {
+      "centerline": [[4, 1], [3, 0], [1, 0], [0, 1], [0, 2], [1, 3], [2, 3], [2, 4]]
+    },
+    {
+      "centerline": [[2, 6]]
+    }
+  ]
+}

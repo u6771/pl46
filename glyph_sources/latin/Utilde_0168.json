@@ -1,0 +1,14 @@
+{
+  "name": "Utilde",
+  "unicode": "0168",
+  "monospace_x_offset": -2,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[0, 6], [0, 1], [1, 0], [3, 0], [4, 1], [4, 6]]
+    },
+    {
+      "centerline": [[1, 7], [1, 8], [3, 7], [3, 8]]
+    }
+  ]
+}

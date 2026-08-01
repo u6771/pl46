@@ -1,0 +1,20 @@
+{
+  "name": "z",
+  "unicode": "007A",
+  "monospace_x_offset": -2,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[0, 4], [3, 4]],
+      "end_cap": "flat"
+    },
+    {
+      "centerline": [[3, 4], [0, 0], [1, 0], [4, 4], [3, 4]],
+      "filled": true
+    },
+    {
+      "centerline": [[1, 0], [4, 0]],
+      "start_cap": "flat"
+    }
+  ]
+}

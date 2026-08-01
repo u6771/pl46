@@ -1,0 +1,24 @@
+{
+  "name": "uni2A01",
+  "unicode": "2A01",
+  "monospace_x_offset": -4,
+  "y_offset": -2,
+  "skeleton": [
+    {
+      "centerline": [[2, 8], [6, 8], [8, 6], [8, 2], [6, 0], [2, 0], [0, 2], [0, 6], [2, 8]],
+      "thickness_scale": 1.6
+    },
+    {
+      "centerline": [[0, 4], [8, 4]],
+      "thickness_scale": 1.6,
+      "start_cap": "flat",
+      "end_cap": "flat"
+    },
+    {
+      "centerline": [[4, 8], [4, 0]],
+      "thickness_scale": 1.6,
+      "start_cap": "flat",
+      "end_cap": "flat"
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "name": "Gcommaaccent",
+  "unicode": "0122",
+  "monospace_x_offset": -2,
+  "y_offset": -2,
+  "skeleton": [
+    {
+      "centerline": [[2, 4], [4, 4], [4, 2]]
+    },
+    {
+      "centerline": [[2, 1], [1, 0]]
+    },
+    {
+      "centerline": [[4, 7], [3, 8], [1, 8], [0, 7], [0, 3], [1, 2], [3, 2], [4, 3]],
+      "end_cap": "flat"
+    }
+  ]
+}

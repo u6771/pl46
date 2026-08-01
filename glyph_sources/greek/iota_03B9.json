@@ -1,0 +1,11 @@
+{
+  "name": "iota",
+  "unicode": "03B9",
+  "monospace_x_offset": 0,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[0, 4], [0, 1], [1, 0]]
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "name": "A",
+  "unicode": "0041",
+  "monospace_x_offset": -2,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[0, 1], [1, 0], [4, 6], [3, 0], [4, 1]]
+    },
+    {
+      "centerline": [[3, 0], [0, 2], [0, 3], [1, 4], [2, 4], [3, 0]],
+      "start_cap": "flat",
+      "end_cap": "flat"
+    }
+  ]
+}

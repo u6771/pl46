@@ -1,0 +1,23 @@
+{
+  "name": "k",
+  "unicode": "006B",
+  "monospace_x_offset": -2,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[1, 5], [2, 6]],
+      "start_cap": "flat"
+    },
+    {
+      "centerline": [[1, 4], [2, 5], [3, 4], [2, 3]],
+      "start_cap": "flat",
+      "end_cap": "flat"
+    },
+    {
+      "centerline": [[0, 3], [3, 3]]
+    },
+    {
+      "centerline": [[1, 6], [1, 0], [2, 1]]
+    }
+  ]
+}

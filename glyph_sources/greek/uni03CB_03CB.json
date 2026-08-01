@@ -1,0 +1,17 @@
+{
+  "name": "uni03CB",
+  "unicode": "03CB",
+  "monospace_x_offset": -2,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[0, 4], [0, 1], [1, 0], [3, 0], [4, 1], [4, 4]]
+    },
+    {
+      "centerline": [[1, 6]]
+    },
+    {
+      "centerline": [[3, 6]]
+    }
+  ]
+}

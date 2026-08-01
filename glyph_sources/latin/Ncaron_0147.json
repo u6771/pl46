@@ -1,0 +1,14 @@
+{
+  "name": "Ncaron",
+  "unicode": "0147",
+  "monospace_x_offset": -2,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[0, 0], [0, 6], [4, 0], [4, 6]]
+    },
+    {
+      "centerline": [[1, 8], [2, 7], [3, 8]]
+    }
+  ]
+}

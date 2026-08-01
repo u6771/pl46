@@ -1,0 +1,14 @@
+{
+  "name": "parallel",
+  "unicode": "2225",
+  "monospace_x_offset": -1,
+  "y_offset": -2,
+  "skeleton": [
+    {
+      "centerline": [[0, 8], [0, 0]]
+    },
+    {
+      "centerline": [[2, 8], [2, 0]]
+    }
+  ]
+}
