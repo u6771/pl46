@@ -1,0 +1,788 @@
+{
+  "min_connector_overlap": 20,
+  "vertical": {
+    "radical": {
+      "variant_glyphs": [
+        "radical.v1",
+        "radical.v2",
+        "radical.v3",
+        "radical.v4"
+      ],
+      "parts": [
+        {
+          "glyph": "uni23B7",
+          "start_connector_extent": 0,
+          "end_connector_extent": 2,
+          "top_scale": 0,
+          "extender": false
+        },
+        {
+          "glyph": "radical.ex",
+          "start_connector_extent": 4,
+          "end_connector_extent": 4,
+          "top_scale": 0,
+          "bottom_scale": 0,
+          "extender": true
+        },
+        {
+          "glyph": "radical.tp",
+          "start_connector_extent": 2,
+          "end_connector_extent": 0,
+          "bottom_scale": 0,
+          "extender": false
+        }
+      ]
+    },
+    "parenleft": {
+      "variant_glyphs": [
+        "parenleft.v1",
+        "parenleft.v2",
+        "parenleft.v3",
+        "parenleft.v4",
+        "parenleft.v5",
+        "parenleft.v6",
+        "parenleft.v7"
+      ],
+      "parts": [
+        {
+          "glyph": "uni239D",
+          "start_connector_extent": 0,
+          "end_connector_extent": 2,
+          "top_scale": 0,
+          "extender": false
+        },
+        {
+          "glyph": "uni239C",
+          "start_connector_extent": 4,
+          "end_connector_extent": 4,
+          "top_scale": 0,
+          "bottom_scale": 0,
+          "extender": true
+        },
+        {
+          "glyph": "uni239B",
+          "start_connector_extent": 2,
+          "end_connector_extent": 0,
+          "bottom_scale": 0,
+          "extender": false
+        }
+      ]
+    },
+    "parenright": {
+      "variant_glyphs": [
+        "parenright.v1",
+        "parenright.v2",
+        "parenright.v3",
+        "parenright.v4",
+        "parenright.v5",
+        "parenright.v6",
+        "parenright.v7"
+      ],
+      "parts": [
+        {
+          "glyph": "uni23A0",
+          "start_connector_extent": 0,
+          "end_connector_extent": 2,
+          "top_scale": 0,
+          "extender": false
+        },
+        {
+          "glyph": "uni239F",
+          "start_connector_extent": 4,
+          "end_connector_extent": 4,
+          "top_scale": 0,
+          "bottom_scale": 0,
+          "extender": true
+        },
+        {
+          "glyph": "uni239E",
+          "start_connector_extent": 2,
+          "end_connector_extent": 0,
+          "bottom_scale": 0,
+          "extender": false
+        }
+      ]
+    },
+    "bracketleft": {
+      "variant_glyphs": [
+        "bracketleft.v1",
+        "bracketleft.v2",
+        "bracketleft.v3",
+        "bracketleft.v4",
+        "bracketleft.v5",
+        "bracketleft.v6",
+        "bracketleft.v7"
+      ],
+      "parts": [
+        {
+          "glyph": "uni23A3",
+          "start_connector_extent": 0,
+          "end_connector_extent": 2,
+          "top_scale": 0,
+          "extender": false
+        },
+        {
+          "glyph": "uni23A2",
+          "start_connector_extent": 4,
+          "end_connector_extent": 4,
+          "top_scale": 0,
+          "bottom_scale": 0,
+          "extender": true
+        },
+        {
+          "glyph": "uni23A1",
+          "start_connector_extent": 2,
+          "end_connector_extent": 0,
+          "bottom_scale": 0,
+          "extender": false
+        }
+      ]
+    },
+    "bracketright": {
+      "variant_glyphs": [
+        "bracketright.v1",
+        "bracketright.v2",
+        "bracketright.v3",
+        "bracketright.v4",
+        "bracketright.v5",
+        "bracketright.v6",
+        "bracketright.v7"
+      ],
+      "parts": [
+        {
+          "glyph": "uni23A6",
+          "start_connector_extent": 0,
+          "end_connector_extent": 2,
+          "top_scale": 0,
+          "extender": false
+        },
+        {
+          "glyph": "uni23A5",
+          "start_connector_extent": 4,
+          "end_connector_extent": 4,
+          "top_scale": 0,
+          "bottom_scale": 0,
+          "extender": true
+        },
+        {
+          "glyph": "uni23A4",
+          "start_connector_extent": 2,
+          "end_connector_extent": 0,
+          "bottom_scale": 0,
+          "extender": false
+        }
+      ]
+    },
+    "braceleft": {
+      "variant_glyphs": [
+        "braceleft.v1",
+        "braceleft.v2",
+        "braceleft.v3",
+        "braceleft.v4",
+        "braceleft.v5",
+        "braceleft.v6",
+        "braceleft.v7"
+      ],
+      "parts": [
+        {
+          "glyph": "uni23A9",
+          "start_connector_extent": 0,
+          "end_connector_extent": 2,
+          "top_scale": 0,
+          "extender": false
+        },
+        {
+          "glyph": "braceleft.ex",
+          "start_connector_extent": 4,
+          "end_connector_extent": 4,
+          "top_scale": 0,
+          "bottom_scale": 0,
+          "extender": true
+        },
+        {
+          "glyph": "uni23A8",
+          "start_connector_extent": 2,
+          "end_connector_extent": 2,
+          "top_scale": 0,
+          "bottom_scale": 0,
+          "extender": false
+        },
+        {
+          "glyph": "braceleft.ex",
+          "start_connector_extent": 4,
+          "end_connector_extent": 4,
+          "top_scale": 0,
+          "bottom_scale": 0,
+          "extender": true
+        },
+        {
+          "glyph": "uni23A7",
+          "start_connector_extent": 2,
+          "end_connector_extent": 0,
+          "bottom_scale": 0,
+          "extender": false
+        }
+      ]
+    },
+    "braceright": {
+      "variant_glyphs": [
+        "braceright.v1",
+        "braceright.v2",
+        "braceright.v3",
+        "braceright.v4",
+        "braceright.v5",
+        "braceright.v6",
+        "braceright.v7"
+      ],
+      "parts": [
+        {
+          "glyph": "uni23AD",
+          "start_connector_extent": 0,
+          "end_connector_extent": 2,
+          "top_scale": 0,
+          "extender": false
+        },
+        {
+          "glyph": "braceright.ex",
+          "start_connector_extent": 4,
+          "end_connector_extent": 4,
+          "top_scale": 0,
+          "bottom_scale": 0,
+          "extender": true
+        },
+        {
+          "glyph": "uni23AC",
+          "start_connector_extent": 2,
+          "end_connector_extent": 2,
+          "top_scale": 0,
+          "bottom_scale": 0,
+          "extender": false
+        },
+        {
+          "glyph": "braceright.ex",
+          "start_connector_extent": 4,
+          "end_connector_extent": 4,
+          "top_scale": 0,
+          "bottom_scale": 0,
+          "extender": true
+        },
+        {
+          "glyph": "uni23AB",
+          "start_connector_extent": 2,
+          "end_connector_extent": 0,
+          "bottom_scale": 0,
+          "extender": false
+        }
+      ]
+    },
+    "bar": {
+      "variant_glyphs": [
+        "divides.v1",
+        "divides.v2",
+        "divides.v3",
+        "divides.v4",
+        "divides.v5",
+        "divides.v6",
+        "divides.v7"
+      ],
+      "parts": [
+        {
+          "glyph": "divides.bt",
+          "start_connector_extent": 0,
+          "end_connector_extent": 2,
+          "top_scale": 0,
+          "extender": false
+        },
+        {
+          "glyph": "divides.ex",
+          "start_connector_extent": 4,
+          "end_connector_extent": 4,
+          "top_scale": 0,
+          "bottom_scale": 0,
+          "extender": true
+        },
+        {
+          "glyph": "divides.tp",
+          "start_connector_extent": 2,
+          "end_connector_extent": 0,
+          "bottom_scale": 0,
+          "extender": false
+        }
+      ]
+    },
+    "divides": {
+      "variant_glyphs": [
+        "divides.v1",
+        "divides.v2",
+        "divides.v3",
+        "divides.v4",
+        "divides.v5",
+        "divides.v6",
+        "divides.v7"
+      ],
+      "parts": [
+        {
+          "glyph": "divides.bt",
+          "start_connector_extent": 0,
+          "end_connector_extent": 2,
+          "top_scale": 0,
+          "extender": false
+        },
+        {
+          "glyph": "divides.ex",
+          "start_connector_extent": 4,
+          "end_connector_extent": 4,
+          "top_scale": 0,
+          "bottom_scale": 0,
+          "extender": true
+        },
+        {
+          "glyph": "divides.tp",
+          "start_connector_extent": 2,
+          "end_connector_extent": 0,
+          "bottom_scale": 0,
+          "extender": false
+        }
+      ]
+    },
+    "parallel": {
+      "variant_glyphs": [
+        "parallel.v1",
+        "parallel.v2",
+        "parallel.v3",
+        "parallel.v4",
+        "parallel.v5",
+        "parallel.v6",
+        "parallel.v7"
+      ],
+      "parts": [
+        {
+          "glyph": "parallel.bt",
+          "start_connector_extent": 0,
+          "end_connector_extent": 2,
+          "top_scale": 0,
+          "extender": false
+        },
+        {
+          "glyph": "parallel.ex",
+          "start_connector_extent": 4,
+          "end_connector_extent": 4,
+          "top_scale": 0,
+          "bottom_scale": 0,
+          "extender": true
+        },
+        {
+          "glyph": "parallel.tp",
+          "start_connector_extent": 2,
+          "end_connector_extent": 0,
+          "bottom_scale": 0,
+          "extender": false
+        }
+      ]
+    },
+    "dblverticalbar": {
+      "variant_glyphs": [
+        "parallel.v1",
+        "parallel.v2",
+        "parallel.v3",
+        "parallel.v4",
+        "parallel.v5",
+        "parallel.v6",
+        "parallel.v7"
+      ],
+      "parts": [
+        {
+          "glyph": "parallel.bt",
+          "start_connector_extent": 0,
+          "end_connector_extent": 2,
+          "top_scale": 0,
+          "extender": false
+        },
+        {
+          "glyph": "parallel.ex",
+          "start_connector_extent": 4,
+          "end_connector_extent": 4,
+          "top_scale": 0,
+          "bottom_scale": 0,
+          "extender": true
+        },
+        {
+          "glyph": "parallel.tp",
+          "start_connector_extent": 2,
+          "end_connector_extent": 0,
+          "bottom_scale": 0,
+          "extender": false
+        }
+      ]
+    },
+    "integral": {
+      "variant_glyphs": [
+        "integral.v1"
+      ]
+    },
+    "uni222C": {
+      "variant_glyphs": [
+        "uni222C.v1"
+      ]
+    },
+    "uni222D": {
+      "variant_glyphs": [
+        "uni222D.v1"
+      ]
+    },
+    "uni2A0C": {
+      "variant_glyphs": [
+        "uni2A0C.v1"
+      ]
+    },
+    "contourintegral": {
+      "variant_glyphs": [
+        "contourintegral.v1"
+      ]
+    },
+    "uni222F": {
+      "variant_glyphs": [
+        "uni222F.v1"
+      ]
+    },
+    "uni2230": {
+      "variant_glyphs": [
+        "uni2230.v1"
+      ]
+    },
+    "uni2231": {
+      "variant_glyphs": [
+        "uni2231.v1"
+      ]
+    },
+    "uni2A11": {
+      "variant_glyphs": [
+        "uni2A11.v1"
+      ]
+    },
+    "uni2232": {
+      "variant_glyphs": [
+        "uni2232.v1"
+      ]
+    },
+    "uni2233": {
+      "variant_glyphs": [
+        "uni2233.v1"
+      ]
+    },
+    "summation": {
+      "variant_glyphs": [
+        "summation.v1"
+      ]
+    },
+    "product": {
+      "variant_glyphs": [
+        "product.v1"
+      ]
+    },
+    "uni2210": {
+      "variant_glyphs": [
+        "uni2210.v1"
+      ]
+    },
+    "uni22C0": {
+      "variant_glyphs": [
+        "uni22C0.v1"
+      ]
+    },
+    "uni22C1": {
+      "variant_glyphs": [
+        "uni22C1.v1"
+      ]
+    },
+    "uni22C2": {
+      "variant_glyphs": [
+        "uni22C2.v1"
+      ]
+    },
+    "uni22C3": {
+      "variant_glyphs": [
+        "uni22C3.v1"
+      ]
+    },
+    "uni2A00": {
+      "variant_glyphs": [
+        "uni2A00.v1"
+      ]
+    },
+    "uni2A01": {
+      "variant_glyphs": [
+        "uni2A01.v1"
+      ]
+    },
+    "uni2A02": {
+      "variant_glyphs": [
+        "uni2A02.v1"
+      ]
+    },
+    "uni2A03": {
+      "variant_glyphs": [
+        "uni2A03.v1"
+      ]
+    },
+    "uni2A04": {
+      "variant_glyphs": [
+        "uni2A04.v1"
+      ]
+    },
+    "uni2A05": {
+      "variant_glyphs": [
+        "uni2A05.v1"
+      ]
+    },
+    "uni2A06": {
+      "variant_glyphs": [
+        "uni2A06.v1"
+      ]
+    }
+  },
+  "horizontal": {
+    "uni23B4": {
+      "variant_glyphs": [
+        "uni23B4.h1",
+        "uni23B4.h2",
+        "uni23B4.h3",
+        "uni23B4.h4",
+        "uni23B4.h5",
+        "uni23B4.h6",
+        "uni23B4.h7"
+      ],
+      "parts": [
+        {
+          "glyph": "uni23B4.lft",
+          "start_connector_extent": 0,
+          "end_connector_extent": 2,
+          "right_scale": 0,
+          "extender": false
+        },
+        {
+          "glyph": "uni23B4.ex",
+          "start_connector_extent": 4,
+          "end_connector_extent": 4,
+          "left_scale": 0,
+          "right_scale": 0,
+          "extender": true
+        },
+        {
+          "glyph": "uni23B4.rt",
+          "start_connector_extent": 2,
+          "end_connector_extent": 0,
+          "left_scale": 0,
+          "extender": false
+        }
+      ]
+    },
+    "uni23B5": {
+      "variant_glyphs": [
+        "uni23B5.h1",
+        "uni23B5.h2",
+        "uni23B5.h3",
+        "uni23B5.h4",
+        "uni23B5.h5",
+        "uni23B5.h6",
+        "uni23B5.h7"
+      ],
+      "parts": [
+        {
+          "glyph": "uni23B5.lft",
+          "start_connector_extent": 0,
+          "end_connector_extent": 2,
+          "right_scale": 0,
+          "extender": false
+        },
+        {
+          "glyph": "uni23B5.ex",
+          "start_connector_extent": 4,
+          "end_connector_extent": 4,
+          "left_scale": 0,
+          "right_scale": 0,
+          "extender": true
+        },
+        {
+          "glyph": "uni23B5.rt",
+          "start_connector_extent": 2,
+          "end_connector_extent": 0,
+          "left_scale": 0,
+          "extender": false
+        }
+      ]
+    },
+    "uni23DC": {
+      "variant_glyphs": [
+        "uni23DC.h1",
+        "uni23DC.h2",
+        "uni23DC.h3",
+        "uni23DC.h4",
+        "uni23DC.h5",
+        "uni23DC.h6",
+        "uni23DC.h7"
+      ],
+      "parts": [
+        {
+          "glyph": "uni23DC.lft",
+          "start_connector_extent": 0,
+          "end_connector_extent": 2,
+          "right_scale": 0,
+          "extender": false
+        },
+        {
+          "glyph": "uni23DC.ex",
+          "start_connector_extent": 4,
+          "end_connector_extent": 4,
+          "left_scale": 0,
+          "right_scale": 0,
+          "extender": true
+        },
+        {
+          "glyph": "uni23DC.rt",
+          "start_connector_extent": 2,
+          "end_connector_extent": 0,
+          "left_scale": 0,
+          "extender": false
+        }
+      ]
+    },
+    "uni23DD": {
+      "variant_glyphs": [
+        "uni23DD.h1",
+        "uni23DD.h2",
+        "uni23DD.h3",
+        "uni23DD.h4",
+        "uni23DD.h5",
+        "uni23DD.h6",
+        "uni23DD.h7"
+      ],
+      "parts": [
+        {
+          "glyph": "uni23DD.lft",
+          "start_connector_extent": 0,
+          "end_connector_extent": 2,
+          "right_scale": 0,
+          "extender": false
+        },
+        {
+          "glyph": "uni23DD.ex",
+          "start_connector_extent": 4,
+          "end_connector_extent": 4,
+          "left_scale": 0,
+          "right_scale": 0,
+          "extender": true
+        },
+        {
+          "glyph": "uni23DD.rt",
+          "start_connector_extent": 2,
+          "end_connector_extent": 0,
+          "left_scale": 0,
+          "extender": false
+        }
+      ]
+    },
+    "uni23DE": {
+      "variant_glyphs": [
+        "uni23DE.h1",
+        "uni23DE.h2",
+        "uni23DE.h3",
+        "uni23DE.h4",
+        "uni23DE.h5",
+        "uni23DE.h6",
+        "uni23DE.h7"
+      ],
+      "parts": [
+        {
+          "glyph": "uni23DE.lft",
+          "start_connector_extent": 0,
+          "end_connector_extent": 2,
+          "right_scale": 0,
+          "extender": false
+        },
+        {
+          "glyph": "uni23DE.ex",
+          "start_connector_extent": 4,
+          "end_connector_extent": 4,
+          "left_scale": 0,
+          "right_scale": 0,
+          "extender": true
+        },
+        {
+          "glyph": "uni23DE.md",
+          "start_connector_extent": 2,
+          "end_connector_extent": 2,
+          "left_scale": 0,
+          "right_scale": 0,
+          "extender": false
+        },
+        {
+          "glyph": "uni23DE.ex",
+          "start_connector_extent": 4,
+          "end_connector_extent": 4,
+          "left_scale": 0,
+          "right_scale": 0,
+          "extender": true
+        },
+        {
+          "glyph": "uni23DE.rt",
+          "start_connector_extent": 2,
+          "end_connector_extent": 0,
+          "left_scale": 0,
+          "extender": false
+        }
+      ]
+    },
+    "uni23DF": {
+      "variant_glyphs": [
+        "uni23DF.h1",
+        "uni23DF.h2",
+        "uni23DF.h3",
+        "uni23DF.h4",
+        "uni23DF.h5",
+        "uni23DF.h6",
+        "uni23DF.h7"
+      ],
+      "parts": [
+        {
+          "glyph": "uni23DF.lft",
+          "start_connector_extent": 0,
+          "end_connector_extent": 2,
+          "right_scale": 0,
+          "extender": false
+        },
+        {
+          "glyph": "uni23DF.ex",
+          "start_connector_extent": 4,
+          "end_connector_extent": 4,
+          "left_scale": 0,
+          "right_scale": 0,
+          "extender": true
+        },
+        {
+          "glyph": "uni23DF.md",
+          "start_connector_extent": 2,
+          "end_connector_extent": 2,
+          "left_scale": 0,
+          "right_scale": 0,
+          "extender": false
+        },
+        {
+          "glyph": "uni23DF.ex",
+          "start_connector_extent": 4,
+          "end_connector_extent": 4,
+          "left_scale": 0,
+          "right_scale": 0,
+          "extender": true
+        },
+        {
+          "glyph": "uni23DF.rt",
+          "start_connector_extent": 2,
+          "end_connector_extent": 0,
+          "left_scale": 0,
+          "extender": false
+        }
+      ]
+    }
+  }
+}

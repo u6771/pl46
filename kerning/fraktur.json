@@ -1,0 +1,203 @@
+{
+  "groups": {
+    "public.kern1.spur": [
+      "a", "i", "l", "m", "n", "u"
+    ],
+    "public.kern1.bowl": [
+      "b", "c", "d", "e", "g", "h", "o", "p", "q", "v", "y", "z"
+    ],
+    "public.kern1.rx": [
+      "r", "x"
+    ],
+    "public.kern1.AU": [
+      "A", "U"
+    ],
+    "public.kern1.FINIAL": [
+      "C", "E", "L", "T", "X" 
+    ],
+    "public.kern2.spur": [
+      "i", "j", "m", "n", "r"
+    ],
+    "public.kern2.spurdbl": [
+      "p", "x"
+    ],
+    "public.kern2.ft": [
+      "f", "t"
+    ],
+    "public.kern2.bowl": [
+      "a", "c", "e", "g", "o", "q"
+    ]
+  },
+  "pairs": [
+    [
+      "public.kern1.spur",
+      "public.kern2.spur",
+      -100
+    ],
+    [
+      "public.kern1.spur",
+      "public.kern2.spurdbl",
+      -50
+    ],
+    [
+      "public.kern1.spur",
+      "z",
+      -100
+    ],
+    [
+      "s",
+      "public.kern2.spur",
+      -50
+    ],
+    [
+      "public.kern1.spur",
+      "s",
+      -50
+    ],
+    [
+      "f",
+      "public.kern2.bowl",
+      -50
+    ],
+    [
+      "f",
+      "public.kern2.spur",
+      -50
+    ],
+    [
+      "f",
+      "public.kern2.spurdbl",
+      -50
+    ],
+    [
+      "f",
+      "z",
+      -50
+    ],
+    [
+      "public.kern1.bowl",
+      "f",
+      -50
+    ],
+    [
+      "public.kern1.rx",
+      "f",
+      -50
+    ],
+    [
+      "public.kern1.spur",
+      "f",
+      -100
+    ],
+    [
+      "t",
+      "public.kern2.spur",
+      -50
+    ],
+    [
+      "t",
+      "public.kern2.spurdbl",
+      -50
+    ],
+    [
+      "t",
+      "z",
+      -50
+    ],
+    [
+      "public.kern1.bowl",
+      "t",
+      -50
+    ],
+    [
+      "public.kern1.rx",
+      "t",
+      -50
+    ],
+    [
+      "public.kern1.spur",
+      "t",
+      -100
+    ],
+    [
+      "public.kern1.spur",
+      "k",
+      -50
+    ],
+    [
+      "f",
+      "k",
+      -50
+    ],
+    [
+      "t",
+      "k",
+      -50
+    ],
+    [
+      "s",
+      "k",
+      -50
+    ],
+    [
+      "public.kern1.AU",
+      "public.kern2.spur",
+      -50
+    ],
+    [
+      "public.kern1.AU",
+      "f",
+      -50
+    ],
+    [
+      "public.kern1.AU",
+      "t",
+      -50
+    ],
+    [
+      "public.kern1.AU",
+      "k",
+      -50
+    ],
+    [
+      "public.kern1.AU",
+      "z",
+      -50
+    ],
+    [
+      "public.kern1.FINIAL",
+      "public.kern2.spur",
+      -50
+    ],
+    [
+      "public.kern1.FINIAL",
+      "public.kern2.spurdbl",
+      -50
+    ],
+    [
+      "public.kern1.FINIAL",
+      "z",
+      -50
+    ],
+    [
+      "public.kern1.FINIAL",
+      "s",
+      -50
+    ],
+    [
+      "public.kern1.FINIAL",
+      "f",
+      -50
+    ],
+    [
+      "public.kern1.FINIAL",
+      "t",
+      -50
+    ],
+    [
+      "public.kern1.FINIAL",
+      "k",
+      -50
+    ]
+  ]
+}

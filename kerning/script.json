@@ -1,0 +1,48 @@
+{
+  "groups": {
+    "public.kern1.uppercase": [
+      "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"
+    ],
+    "public.kern1.lowercase": [
+      "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"
+    ],
+    "public.kern2.uppercase": [
+      "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"
+    ],
+    "public.kern2.lowercase": [
+      "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"
+    ]
+  },
+  "pairs": [
+    [
+      "public.kern1.uppercase",
+      "public.kern2.lowercase",
+      -50
+    ],
+	[
+      "public.kern1.lowercase",
+      "public.kern2.lowercase",
+      -100
+    ],
+    [
+      "F",
+      "public.kern2.lowercase",
+      -100
+    ],
+    [
+      "T",
+      "public.kern2.lowercase",
+      -100
+    ],
+    [
+      "B",
+      "public.kern2.lowercase",
+      0
+    ],	
+    [
+      "D",
+      "public.kern2.lowercase",
+      0
+    ]	
+  ]
+}

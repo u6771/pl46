@@ -1,0 +1,42 @@
+{
+  "family": "PL46",
+  "style": "Mono",
+  "units_per_em": 1000,
+  "ascender": 800,
+  "descender": -200,
+  "cap_height": 650,
+  "x_height": 450,
+  "grid": 100,
+  "thickness": 50,
+  "monospace_width": 600,
+  "source_rules": [
+    {
+      "source_directory": "notdef",
+      "include_unencoded": true
+    },
+    {
+      "source_directory": "ascii"
+    },
+    {
+      "source_directory": "latin"
+    },
+    {
+      "source_directory": "greek"
+    },
+    {
+      "source_directory": "cyrillic"
+    },
+    {
+      "source_directory": "math",
+      "unicode_ranges": [
+        ["2010", "20C0"]
+      ]
+    },
+    {
+      "source_directory": "uni6771",
+      "unicode_ranges": [
+        ["6771", "6771"]
+      ]
+    }
+  ]
+}
