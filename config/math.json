@@ -1,44 +1,106 @@
 {
-  "parenleft": {
-    "left_spacing": 50
+  "parenleft@variants": {
+    "left_adjustment": 50
   },
-  "parenright": {
-    "right_spacing": 50
+  "parenright@variants": {
+    "right_adjustment": 50
   },
-  "bracketleft": {
-    "left_spacing": 50
+  "bracketleft@variants": {
+    "left_adjustment": 50
   },
-  "bracketright": {
-    "right_spacing": 50
+  "bracketright@variants": {
+    "right_adjustment": 50
   },
-  "braceleft": {
-    "left_spacing": 50
+  "braceleft@variants": {
+    "left_adjustment": 50
   },
-  "braceright": {
-    "right_spacing": 50
+  "braceright@variants": {
+    "right_adjustment": 50
   },
-  "bar": {
-    "left_spacing": 50,
-    "right_spacing": 50
+  "uni2308": {
+    "left_adjustment": 50
   },
-  "dblverticalbar": {
-    "left_spacing": 50,
-    "right_spacing": 50
+  "uni2309": {
+    "right_adjustment": 50
   },
-  "radical": {
-    "right_spacing": -175
+  "uni230A": {
+    "left_adjustment": 50
+  },
+  "uni230B": {
+    "right_adjustment": 50
+  },
+  "uni231C": {
+    "left_adjustment": 50
+  },
+  "uni231D": {
+    "right_adjustment": 50
+  },
+  "uni231E": {
+    "left_adjustment": 50
+  },
+  "uni231F": {
+    "right_adjustment": 50
+  },
+  "angleleft": {
+    "left_adjustment": 50
+  },
+  "angleright": {
+    "right_adjustment": 50
+  },
+  "uni27E6": {
+    "left_adjustment": 50
+  },
+  "uni27E7": {
+    "right_adjustment": 50
+  },
+  "uni27E8": {
+    "left_adjustment": 50
+  },
+  "uni27E9": {
+    "right_adjustment": 50
+  },
+  "uni27EA": {
+    "left_adjustment": 50
+  },
+  "uni27EB": {
+    "right_adjustment": 50
+  },
+  "uni27EE": {
+    "left_adjustment": 50
+  },
+  "uni27EF": {
+    "right_adjustment": 50
+  },
+  "bar@variants": {
+    "left_adjustment": 50,
+    "right_adjustment": 50
+  },
+  "divides@variants": {
+    "left_adjustment": 50,
+    "right_adjustment": 50
+  },
+  "parallel@variants": {
+    "left_adjustment": 50,
+    "right_adjustment": 50
+  },
+  "dblverticalbar@variants": {
+    "left_adjustment": 50,
+    "right_adjustment": 50
+  },
+  "radical@variants": {
+    "right_adjustment": -200
   },
   "multiply": {
-    "left_spacing": 100,
-    "right_spacing": 100
+    "left_adjustment": 100,
+    "right_adjustment": 100
   },
   "uni0300": {
-    "right_spacing": 100
+    "right_adjustment": 100
   },
   "uni0301": {
-    "left_spacing": 100
+    "left_adjustment": 100
   },
   "uni0326": {
-    "right_spacing": 100
+    "right_adjustment": 100
   }
 }
