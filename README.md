@@ -69,19 +69,62 @@ The assembler processes `source_rules` in order. It selects encoded glyphs by
 optional Unicode mapping, and then checks both glyph-name and Unicode conflicts.
 A later rule may remove conflicting entries only with `replace_existing: true`.
 
-An optional mapping replaces only a selected `GlyphSource`'s name and Unicode by
-creating another immutable value with the same design data. `AssembledFont`
-contains the selected real glyphs, simple generated-glyph copy records,
+An optional mapping replaces only a selected `GlyphSource`'s name and Unicode.
+Every selected source, mapped or unchanged, crosses the assembly boundary into
+an immutable `AssembledGlyph` with the same fields and shared design data.
+`AssembledFont` contains those selected real glyphs, simple generated-glyph copy
+records,
 `FontInfo`, `GlyphParameters`, the resolved output stem, and point radius scale.
 Source rules, generator names, and configuration filenames do not cross the
 assemble boundary.
 
 ## Plan stage
 
-Glyph config files are parsed before planning into immutable
-`GlyphSpacingOverride` objects. `plan_font()` performs no file I/O: it receives an
-`AssembledFont` and the already-loaded overrides, then resolves every remaining
-metric and transform decision.
+Glyph config files are parsed before planning into immutable `GlyphAdjustment`
+objects. Version 1 supports optional additive `left_adjustment` and
+`right_adjustment` fields. These are independent of, and added to, the font-wide
+`left_spacing` and `right_spacing` meta values. `plan_font()` performs no file
+I/O: it receives an `AssembledFont` and the already-loaded adjustments, then
+resolves every remaining metric and transform decision.
+
+A config key is either a real glyph name or a MATH group selector of the form
+`base@group`. The supported groups are:
+
+| Group | Selected target | Axes |
+| --- | --- | --- |
+| `variant_glyphs` | the base and all of its discrete variants | vertical and horizontal |
+| `parts` | the base's assembly parts, excluding the base | vertical only |
+| `variants` | `variant_glyphs` and `parts` together | vertical assemblies only |
+
+For example:
+
+```json
+{
+  "parenleft@variant_glyphs": {
+    "left_adjustment": 50,
+    "right_adjustment": 50
+  },
+  "parenleft@parts": {
+    "left_adjustment": 25,
+    "right_adjustment": 25
+  }
+}
+```
+
+Part spacing adjustments belong to the vertical construction layout rather than
+to individual part glyphs. The current left/right spacing component cannot
+target horizontal assembly parts, though the selector remains available for
+future components that support them. No assembly part may be configured directly
+by glyph name. A construction without an assembly cannot use `parts` or
+`variants`.
+
+Configuration order never establishes precedence. A concrete glyph and a group
+may not overlap, and overlapping groups on the same base are rejected except for
+the disjoint `variant_glyphs` and `parts` pair. When several constructions share
+variant glyphs or parts, all owner constructions must be assigned the same
+effective group adjustment; equal assignments coalesce and unequal or missing
+assignments are rejected. A directly named shared discrete variant is exempt
+from this owner-closure rule because the shared real glyph is explicit.
 
 Kerning files follow the same boundary. The loader parses them into immutable
 `KerningData`; planning verifies every group member and pair side against the
@@ -111,9 +154,10 @@ When `use_scaled_edge_thickness` is enabled, each edge radius uses the greatest
 `thickness_scale` among strokes touching that edge. Empty proportional glyphs use
 `x_extent * grid + spacing`. When `monospace_width` is present, ordinary glyphs
 use `monospace_width + left_spacing + right_spacing`; when it is absent, the
-font is proportional. The same font-wide spacing is added to every monospace
-glyph, so all advances remain equal. Per-glyph spacing overrides are not allowed
-for monospace builds.
+font is proportional. The same font-wide spacing is added to every ordinary
+monospace glyph, so their advances remain equal. The current left and right
+glyph-adjustment fields are not allowed for ordinary glyphs in monospace builds;
+non-ordinary MATH roles continue to use proportional metrics and may use them.
 
 Planning first groups every real glyph into exactly one role: ordinary, vertical
 variant glyph, horizontal variant glyph, vertical assembly part, or horizontal
