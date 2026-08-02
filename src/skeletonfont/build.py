@@ -6,6 +6,7 @@ from pathlib import Path
 from .assembler import GlyphCatalog, assemble_font
 from .compiler import compile_font, save_otf
 from .loader import (
+    load_accent_glyphs,
     load_font_meta,
     load_glyph_config,
     load_kerning_data,
@@ -33,6 +34,11 @@ def build_font(
         if meta.glyph_config_file is None
         else load_glyph_config(project_directory, meta.glyph_config_file)
     )
+    accent_glyphs = (
+        frozenset()
+        if meta.accent_file is None
+        else load_accent_glyphs(project_directory, meta.accent_file)
+    )
     kerning = (
         None
         if meta.kerning_file is None
@@ -46,6 +52,7 @@ def build_font(
     plan = plan_font(
         assembled,
         glyph_config=glyph_config,
+        accent_glyphs=accent_glyphs,
         kerning=kerning,
         math_data=math_data,
     )

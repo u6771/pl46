@@ -10,6 +10,7 @@ from unittest.mock import patch
 from skeletonfont.assembler import GlyphCatalog, assemble_font
 from skeletonfont.errors import PlanError, ProjectDataError
 from skeletonfont.loader import (
+    load_accent_glyphs,
     load_font_meta,
     load_glyph_config,
     load_kerning_data,
@@ -157,10 +158,16 @@ class FontPlannerTests(unittest.TestCase):
         cls.math_data = load_math_data(
             PROJECT_DIRECTORY, cls.meta.math_config
         )
+        assert cls.meta.accent_file is not None
+        cls.accent_glyphs = load_accent_glyphs(
+            PROJECT_DIRECTORY,
+            cls.meta.accent_file,
+        )
         cls.math_plan = plan_font(
             cls.assembled_math,
             cls.math_config,
             math_data=cls.math_data,
+            accent_glyphs=cls.accent_glyphs,
         )
 
     def test_math_font_plan_has_resolved_glyphs_and_output(self) -> None:
@@ -194,6 +201,10 @@ class FontPlannerTests(unittest.TestCase):
         self.assertEqual(len(math_plan.horizontal_variant_records), 6)
         self.assertIn("parenleft", math_plan.extended_shapes)
         self.assertEqual(
+            dict(math_plan.italic_corrections),
+            dict(self.math_data.italic_corrections),
+        )
+        self.assertEqual(
             [
                 (record.glyph_name, record.full_advance)
                 for record in math_plan.vertical_variant_records["parenleft"]
@@ -209,6 +220,62 @@ class FontPlannerTests(unittest.TestCase):
                 ("parenleft.v7", 2270),
             ],
         )
+
+    def test_math_italics_correction_rejects_unknown_glyphs(self) -> None:
+        data = replace(
+            self.math_data,
+            italic_corrections=MappingProxyType({"missing": 10}),
+        )
+
+        with self.assertRaisesRegex(PlanError, "unknown glyphs"):
+            plan_font(self.assembled_math, math_data=data)
+
+    def test_accent_glyphs_have_zero_advance_and_authored_origin(self) -> None:
+        tilde = self.math_plan.real_glyphs["tildecomb"]
+
+        self.assertEqual(tilde.width, 0)
+        self.assertEqual(
+            tilde.strokes[0].centerline,
+            (
+                (-100.0, 525.0),
+                (-100.0, 625.0),
+                (100.0, 525.0),
+                (100.0, 625.0),
+            ),
+        )
+
+    def test_accent_glyphs_reject_spacing_adjustments(self) -> None:
+        with self.assertRaisesRegex(PlanError, "accent glyph"):
+            plan_font(
+                self.assembled_math,
+                adjustment_config({"tildecomb": adjustment(left=10)}),
+                math_data=self.math_data,
+                accent_glyphs=self.accent_glyphs,
+            )
+
+    def test_accent_glyphs_must_exist_and_have_one_role(self) -> None:
+        with self.assertRaisesRegex(PlanError, "unknown real glyphs"):
+            plan_font(
+                self.assembled_math,
+                math_data=self.math_data,
+                accent_glyphs=frozenset({"missing"}),
+            )
+
+        overlapping = replace(
+            self.math_data,
+            vertical_variant_glyphs=MappingProxyType(
+                {
+                    **self.math_data.vertical_variant_glyphs,
+                    "tildecomb": (),
+                }
+            ),
+        )
+        with self.assertRaisesRegex(PlanError, "multiple planning roles"):
+            plan_font(
+                self.assembled_math,
+                math_data=overlapping,
+                accent_glyphs=self.accent_glyphs,
+            )
 
     def test_monospace_variant_alternates_use_proportional_metrics(self) -> None:
         parameters = replace(
@@ -504,7 +571,7 @@ class FontPlannerTests(unittest.TestCase):
             horizontal_assemblies=MappingProxyType({}),
         )
 
-        with self.assertRaisesRegex(PlanError, "multiple construction roles"):
+        with self.assertRaisesRegex(PlanError, "multiple planning roles"):
             plan_font(self.assembled_math, math_data=data)
 
     def test_shared_vertical_parts_are_transformed_once_per_glyph(self) -> None:

@@ -49,6 +49,28 @@ class BuildPipelineTests(unittest.TestCase):
                 font["MATH"].table.MathConstants.AxisHeight.Value,
                 225,
             )
+            italics_correction = (
+                font["MATH"]
+                .table.MathGlyphInfo.MathItalicsCorrectionInfo
+            )
+            serialized_italic_corrections = dict(
+                zip(
+                    italics_correction.Coverage.glyphs,
+                    (
+                        value.Value
+                        for value in italics_correction.ItalicsCorrection
+                    ),
+                    strict=True,
+                )
+            )
+            self.assertEqual(
+                serialized_italic_corrections["contourintegral.v1"],
+                200,
+            )
+            self.assertEqual(
+                set(serialized_italic_corrections.values()),
+                {200},
+            )
 
             scripts = {
                 record.ScriptTag: record.Script
@@ -96,6 +118,20 @@ class BuildPipelineTests(unittest.TestCase):
                     "MATH"
                 ].table.MathGlyphInfo.ExtendedShapeCoverage.glyphs,
             )
+            font.close()
+
+    def test_accent_metrics_apply_without_math(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            output_path = build_font(
+                PROJECT_DIRECTORY,
+                "mono",
+                output_directory=Path(temporary_directory),
+            )
+
+            font = TTFont(output_path)
+            self.assertNotIn("MATH", font)
+            self.assertEqual(font["hmtx"].metrics["tildecomb"][0], 0)
+            self.assertEqual(font["hmtx"].metrics["circumflexcmb"][0], 0)
             font.close()
 
 

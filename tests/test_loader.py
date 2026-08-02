@@ -11,14 +11,17 @@ from skeletonfont.errors import ProjectDataError
 from skeletonfont.loader import (
     META_FIELD_ORDER,
     _parse_math_variants_axis,
+    load_accent_glyphs,
     load_build_list,
     load_font_meta,
     load_glyph_source,
     load_kerning_data,
     load_math_data,
     parse_font_meta,
+    parse_accent_glyphs,
     parse_glyph_source,
     parse_math_constants,
+    parse_math_italics_correction,
     parse_math_ssty,
     parse_stroke_record,
 )
@@ -75,6 +78,10 @@ class FontMetaLoaderTests(unittest.TestCase):
             "math.json",
         )
         self.assertEqual(meta.math_config.ssty_file, "math.json")
+        self.assertEqual(
+            meta.math_config.italics_correction_file,
+            "math.json",
+        )
 
     def test_model_names_express_source_rule_behavior(self) -> None:
         meta = load_font_meta(PROJECT_DIRECTORY, "math")
@@ -89,6 +96,7 @@ class FontMetaLoaderTests(unittest.TestCase):
             ("italic_latin", "italic_greek"),
         )
         self.assertEqual(meta.glyph_config_file, "math.json")
+        self.assertEqual(meta.accent_file, "math.json")
         self.assertEqual(meta.output_stem, "PL46-Math")
         self.assertTrue(meta.glyph_parameters.use_scaled_edge_thickness)
         self.assertEqual(math_rule.source_directory, "math")
@@ -137,6 +145,7 @@ class FontMetaLoaderTests(unittest.TestCase):
             "use_scaled_edge_thickness",
             "glyph_generators",
             "glyph_config_file",
+            "accent_file",
             "kerning_file",
             "output_stem",
             "math_config",
@@ -161,6 +170,7 @@ class FontMetaLoaderTests(unittest.TestCase):
         )
         self.assertEqual(meta.glyph_generators, ())
         self.assertIsNone(meta.glyph_config_file)
+        self.assertIsNone(meta.accent_file)
         self.assertIsNone(meta.kerning_file)
         self.assertEqual(meta.output_stem, "PL46-Ascii")
         self.assertIsNone(meta.math_config)
@@ -419,6 +429,31 @@ class GlyphSourceLoaderTests(unittest.TestCase):
             )
 
 
+class AccentLoaderTests(unittest.TestCase):
+    def test_accent_glyphs_are_unique_valid_names(self) -> None:
+        accents = load_accent_glyphs(PROJECT_DIRECTORY, "math.json")
+
+        self.assertEqual(
+            accents,
+            frozenset({"tildecomb", "circumflexcmb"}),
+        )
+
+    def test_accent_file_rejects_empty_duplicate_and_invalid_names(self) -> None:
+        invalid_values = (
+            [],
+            ["tildecomb", "tildecomb"],
+            ["tildecomb", "bad@selector"],
+            ["tildecomb", 1],
+        )
+        for value in invalid_values:
+            with self.subTest(value=value):
+                with self.assertRaises(ProjectDataError):
+                    parse_accent_glyphs(
+                        value,
+                        source_path=Path("accent.json"),
+                    )
+
+
 class KerningLoaderTests(unittest.TestCase):
     def test_kerning_groups_and_pairs_are_typed_and_read_only(self) -> None:
         kerning = load_kerning_data(PROJECT_DIRECTORY, "fraktur.json")
@@ -437,6 +472,18 @@ class KerningLoaderTests(unittest.TestCase):
 
 
 class MathDataLoaderTests(unittest.TestCase):
+    def test_missing_italics_correction_file_produces_empty_data(self) -> None:
+        meta = load_font_meta(PROJECT_DIRECTORY, "math")
+        assert meta.math_config is not None
+
+        data = load_math_data(
+            PROJECT_DIRECTORY,
+            replace(meta.math_config, italics_correction_file=None),
+        )
+
+        self.assertIsNone(data.italics_correction_source_path)
+        self.assertEqual(dict(data.italic_corrections), {})
+
     def test_missing_variants_file_produces_empty_flattened_data(self) -> None:
         meta = load_font_meta(PROJECT_DIRECTORY, "math")
         assert meta.math_config is not None
@@ -461,6 +508,11 @@ class MathDataLoaderTests(unittest.TestCase):
         self.assertEqual(data.constants["AxisHeight"], 225)
         self.assertEqual(data.ssty["minute"], ("minute.st",))
         self.assertEqual(
+            data.italic_corrections["contourintegral.v1"],
+            200,
+        )
+        self.assertEqual(set(data.italic_corrections.values()), {200})
+        self.assertEqual(
             data.vertical_variant_glyphs["parenleft"][:2],
             ("parenleft.v1", "parenleft.v2"),
         )
@@ -479,6 +531,44 @@ class MathDataLoaderTests(unittest.TestCase):
         )
         with self.assertRaises(TypeError):
             data.constants["AxisHeight"] = 0  # type: ignore[index]
+        with self.assertRaises(TypeError):
+            data.italic_corrections["contourintegral"] = 0  # type: ignore[index]
+
+    def test_math_italics_correction_values_are_exact_and_read_only(self) -> None:
+        parsed = parse_math_italics_correction(
+            {"A": 10, "contourintegral.v1": 200},
+            source_path=Path("italics_correction.json"),
+        )
+
+        self.assertEqual(
+            dict(parsed),
+            {"A": 10, "contourintegral.v1": 200},
+        )
+        with self.assertRaises(TypeError):
+            parsed["A"] = 20  # type: ignore[index]
+
+    def test_math_italics_correction_rejects_invalid_data(self) -> None:
+        with self.assertRaisesRegex(ProjectDataError, "cannot be empty"):
+            parse_math_italics_correction(
+                {},
+                source_path=Path("italics_correction.json"),
+            )
+
+        for name in ("", "A@variant_glyphs"):
+            with self.subTest(name=name):
+                with self.assertRaises(ProjectDataError):
+                    parse_math_italics_correction(
+                        {name: 10},
+                        source_path=Path("italics_correction.json"),
+                    )
+
+        for value in (-1, True, 1.5, "200"):
+            with self.subTest(value=value):
+                with self.assertRaises(ProjectDataError):
+                    parse_math_italics_correction(
+                        {"A": value},
+                        source_path=Path("italics_correction.json"),
+                    )
 
     def test_constants_require_the_exact_schema(self) -> None:
         with self.assertRaisesRegex(ProjectDataError, "Missing"):
@@ -672,6 +762,8 @@ class MathDataLoaderTests(unittest.TestCase):
                     base: list(alternates)
                     for base, alternates in data.ssty.items()
                 }
+            if path.parent.name == "math_italics_correction":
+                return dict(data.italic_corrections)
             return {"vertical": {}, "horizontal": {}}
 
         with patch("skeletonfont.loader.read_json", side_effect=fake_read_json):

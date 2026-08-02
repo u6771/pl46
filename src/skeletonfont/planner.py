@@ -34,6 +34,7 @@ _EDGE_TOLERANCE = 1e-9
 _POINT_TOLERANCE = 1e-9
 _GlyphRole = Literal[
     "ordinary",
+    "accent",
     "vertical_variant_glyph",
     "horizontal_variant_glyph",
     "vertical_part",
@@ -515,6 +516,47 @@ def _ssty_feature(
     )
 
 
+def _plan_accent_glyphs(
+    glyphs: Mapping[str, AssembledGlyph],
+    parameters: GlyphParameters,
+) -> Mapping[str, RealGlyphPlan]:
+    """Plan zero-advance combining accents around their authored origin."""
+
+    return MappingProxyType(
+        {
+            name: RealGlyphPlan(
+                name=glyph.name,
+                codepoint=glyph.codepoint,
+                source_path=glyph.source_path,
+                width=0,
+                strokes=_transformed_strokes(
+                    glyph.skeleton,
+                    grid=parameters.grid,
+                    radius=parameters.radius,
+                    grid_x_offset=glyph.monospace_x_offset,
+                    grid_y_offset=glyph.y_offset,
+                    font_x_shift=0,
+                    font_y_shift=parameters.y_shift + parameters.radius,
+                ),
+            )
+            for name, glyph in glyphs.items()
+        }
+    )
+
+
+def _validate_italic_corrections(
+    italic_corrections: Mapping[str, int],
+    glyph_names: set[str],
+) -> Mapping[str, int]:
+    missing = set(italic_corrections) - glyph_names
+    if missing:
+        raise PlanError(
+            "Math italic corrections reference unknown glyphs: "
+            f"{sorted(missing)}"
+        )
+    return italic_corrections
+
+
 def _construction_members(
     constructions: Mapping[str, tuple[str, ...]],
 ) -> set[str]:
@@ -536,6 +578,7 @@ def _part_members(
 
 def _group_glyphs_by_role(
     glyphs: Mapping[str, AssembledGlyph],
+    accent_glyphs: frozenset[str],
     vertical_variant_glyphs: Mapping[str, tuple[str, ...]],
     horizontal_variant_glyphs: Mapping[str, tuple[str, ...]],
     vertical_assemblies: Mapping[str, MathGlyphAssemblyData],
@@ -543,6 +586,7 @@ def _group_glyphs_by_role(
 ) -> Mapping[_GlyphRole, Mapping[str, AssembledGlyph]]:
     glyph_names = set(glyphs)
     role_members: tuple[tuple[_GlyphRole, set[str]], ...] = (
+        ("accent", set(accent_glyphs)),
         (
             "vertical_variant_glyph",
             _construction_members(vertical_variant_glyphs),
@@ -561,11 +605,12 @@ def _group_glyphs_by_role(
     missing = referenced - glyph_names
     if missing:
         raise PlanError(
-            f"Math constructions reference unknown real glyphs: {sorted(missing)}"
+            f"Glyph roles reference unknown real glyphs: {sorted(missing)}"
         )
 
     grouped: dict[_GlyphRole, dict[str, AssembledGlyph]] = {
         "ordinary": {},
+        "accent": {},
         "vertical_variant_glyph": {},
         "horizontal_variant_glyph": {},
         "vertical_part": {},
@@ -575,7 +620,7 @@ def _group_glyphs_by_role(
         memberships = [role for role, members in role_members if name in members]
         if len(memberships) > 1:
             raise PlanError(
-                f"Math glyph {name!r} belongs to multiple construction roles: "
+                f"Glyph {name!r} belongs to multiple planning roles: "
                 f"{memberships}."
             )
         role: _GlyphRole = memberships[0] if memberships else "ordinary"
@@ -794,6 +839,11 @@ def _resolve_glyph_spacing_adjustments(
             raise PlanError(
                 f"Glyph {glyph_name!r} is a horizontal assembly part and "
                 "cannot receive spacing adjustments."
+            )
+        if role == "accent":
+            raise PlanError(
+                f"Combining accent glyph {glyph_name!r} cannot receive "
+                "left or right spacing adjustments."
             )
         if (
             role == "ordinary"
@@ -1311,6 +1361,7 @@ def plan_font(
     | None = None,
     kerning: KerningData | None = None,
     math_data: MathData | None = None,
+    accent_glyphs: frozenset[str] | None = None,
 ) -> FontPlan:
     """Resolve all glyph metrics and centerline transforms without file I/O."""
 
@@ -1336,6 +1387,7 @@ def plan_font(
     )
     glyphs_by_role = _group_glyphs_by_role(
         assembled_font.real_glyphs,
+        frozenset() if accent_glyphs is None else accent_glyphs,
         vertical_variant_glyphs,
         horizontal_variant_glyphs,
         vertical_assemblies,
@@ -1359,6 +1411,10 @@ def plan_font(
         glyphs_by_role["ordinary"],
         parameters,
         resolved_spacing_adjustments.real_glyph_spacing_by_name,
+    )
+    accent_glyph_plans = _plan_accent_glyphs(
+        glyphs_by_role["accent"],
+        parameters,
     )
     vertical_variant_glyph_plans = _plan_vertical_variant_glyphs(
         glyphs_by_role["vertical_variant_glyph"],
@@ -1392,6 +1448,10 @@ def plan_font(
         (
             "ordinary",
             ordinary_glyph_plans,
+        ),
+        (
+            "accent",
+            accent_glyph_plans,
         ),
         (
             "vertical_variant_glyph",
@@ -1439,6 +1499,10 @@ def plan_font(
             extended_shapes=(
                 frozenset(vertical_variant_records)
                 | frozenset(vertical_assembly_plans.assembly_plans)
+            ),
+            italic_corrections=_validate_italic_corrections(
+                math_data.italic_corrections,
+                glyph_names,
             ),
         )
 

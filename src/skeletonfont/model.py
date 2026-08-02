@@ -67,6 +67,7 @@ class MathConfig:
     constants_file: str
     variants_file: str | None
     ssty_file: str | None
+    italics_correction_file: str | None
 
 
 @dataclass(frozen=True, slots=True)
@@ -97,6 +98,8 @@ class MathData:
     constants: Mapping[str, int]
     ssty_source_path: Path | None
     ssty: Mapping[str, tuple[str, ...]]
+    italics_correction_source_path: Path | None
+    italic_corrections: Mapping[str, int]
     min_connector_overlap: int
     vertical_variant_glyphs: Mapping[str, tuple[str, ...]]
     horizontal_variant_glyphs: Mapping[str, tuple[str, ...]]
@@ -142,6 +145,7 @@ class FontMeta:
     source_rules: tuple[SourceRule, ...]
     glyph_generators: tuple[str, ...]
     glyph_config_file: str | None
+    accent_file: str | None
     kerning_file: str | None
     output_stem: str
     math_config: MathConfig | None
@@ -280,6 +284,7 @@ class MathPlan:
     vertical_assemblies: Mapping[str, MathGlyphAssemblyPlan]
     horizontal_assemblies: Mapping[str, MathGlyphAssemblyPlan]
     extended_shapes: frozenset[str]
+    italic_corrections: Mapping[str, int]
 
 
 @dataclass(frozen=True, slots=True)

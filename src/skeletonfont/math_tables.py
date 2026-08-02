@@ -118,6 +118,7 @@ def apply_math_table(font: TTFont, plan: MathPlan) -> None:
         buildMathTable(
             font,
             constants=dict(plan.constants),
+            italicsCorrections=dict(plan.italic_corrections) or None,
             extendedShapes=set(plan.extended_shapes),
             minConnectorOverlap=plan.min_connector_overlap,
             vertGlyphVariants=vertical or None,

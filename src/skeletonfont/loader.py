@@ -55,6 +55,7 @@ META_FIELD_ORDER = (
     "source_rules",
     "glyph_generators",
     "glyph_config_file",
+    "accent_file",
     "kerning_file",
     "math_config",
 )
@@ -108,6 +109,7 @@ _MATH_FIELDS = {
     "constants_file",
     "ssty_file",
     "variants_file",
+    "italics_correction_file",
 }
 
 _GLYPH_CONFIG_FIELDS = {
@@ -482,6 +484,10 @@ def _parse_math_config(
             data.get("ssty_file"),
             location=f"{location}.ssty_file",
         ),
+        italics_correction_file=_optional_json_filename(
+            data.get("italics_correction_file"),
+            location=f"{location}.italics_correction_file",
+        ),
     )
 
 
@@ -622,6 +628,10 @@ def parse_font_meta(
             data.get("glyph_config_file"),
             location=f"{location}.glyph_config_file",
         ),
+        accent_file=_optional_json_filename(
+            data.get("accent_file"),
+            location=f"{location}.accent_file",
+        ),
         kerning_file=_optional_json_filename(
             data.get("kerning_file"),
             location=f"{location}.kerning_file",
@@ -705,6 +715,27 @@ def parse_math_ssty(
                 f"{location} contains duplicate alternate glyphs."
             )
         result[base] = alternates
+    return MappingProxyType(result)
+
+
+def parse_math_italics_correction(
+    value: object,
+    *,
+    source_path: Path,
+) -> Mapping[str, int]:
+    """Parse per-glyph OpenType MATH italic corrections."""
+
+    data = _object(value, location=str(source_path))
+    if not data:
+        raise ProjectDataError(f"{source_path} cannot be empty.")
+
+    result: dict[str, int] = {}
+    for raw_name, raw_correction in data.items():
+        name = _safe_name(raw_name, location=f"{source_path} glyph name")
+        result[name] = _nonnegative_integer(
+            raw_correction,
+            location=f"{source_path}.{name}",
+        )
     return MappingProxyType(result)
 
 
@@ -904,6 +935,22 @@ def load_math_data(
         else parse_math_ssty(read_json(ssty_path), source_path=ssty_path)
     )
 
+    italics_correction_path = (
+        None
+        if config.italics_correction_file is None
+        else project_directory
+        / "math_italics_correction"
+        / config.italics_correction_file
+    )
+    italic_corrections = (
+        MappingProxyType({})
+        if italics_correction_path is None
+        else parse_math_italics_correction(
+            read_json(italics_correction_path),
+            source_path=italics_correction_path,
+        )
+    )
+
     variants_path = (
         None
         if config.variants_file is None
@@ -962,6 +1009,8 @@ def load_math_data(
         constants=constants,
         ssty_source_path=ssty_path,
         ssty=ssty,
+        italics_correction_source_path=italics_correction_path,
+        italic_corrections=italic_corrections,
         min_connector_overlap=min_connector_overlap,
         vertical_variant_glyphs=vertical_variant_glyphs,
         horizontal_variant_glyphs=horizontal_variant_glyphs,
@@ -1070,6 +1119,33 @@ def load_kerning_data(
     name = normalize_json_filename(filename, location="Kerning filename")
     path = project_directory / "kerning" / name
     return parse_kerning_data(read_json(path), source_path=path)
+
+
+def parse_accent_glyphs(
+    value: object,
+    *,
+    source_path: Path,
+) -> frozenset[str]:
+    """Parse the glyphs that use combining-accent metrics."""
+
+    items = _array(value, location=str(source_path))
+    if not items:
+        raise ProjectDataError(f"{source_path} cannot be empty.")
+    names = tuple(
+        _safe_name(item, location=f"{source_path}[{index}]")
+        for index, item in enumerate(items)
+    )
+    if len(names) != len(set(names)):
+        raise ProjectDataError(f"{source_path} contains duplicate glyph names.")
+    return frozenset(names)
+
+
+def load_accent_glyphs(
+    project_directory: Path,
+    filename: str,
+) -> frozenset[str]:
+    path = project_directory / "accent" / filename
+    return parse_accent_glyphs(read_json(path), source_path=path)
 
 
 def parse_glyph_config(
