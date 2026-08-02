@@ -49,12 +49,12 @@ The load stage produces a small set of immutable objects:
   `GlyphParameters` contains the grid, radius, spacing, and other values used
   to resolve glyph geometry. `FontMeta` combines them with the ordered source
   rules and filenames needed only while loading and assembling a build.
-- `MathConfig` contains filenames only. Constants, ssty substitutions, discrete
-  variant glyphs, and assemblies are loaded into immutable `MathData` instead
-  of being carried through as raw dictionaries. One optional `variants_file`
-  selects the unified `math_variants/*.json` input; `MathData` directly stores
-  its vertical/horizontal variant-glyph mappings, vertical/horizontal assembly
-  mappings, and `min_connector_overlap` without wrapper dataclasses.
+- `MathConfig` contains filenames only. Constants, ssty substitutions, italic
+  corrections, discrete variant glyphs, and assemblies are loaded into
+  immutable `MathData` instead of being carried through as raw dictionaries.
+  Optional `italics_correction_file` and `variants_file` fields select
+  `math_italics_correction/*.json` and `math_variants/*.json` inputs
+  respectively.
   Omitting `math_config`, setting it to `null`, or using an empty object disables
   MATH. A non-empty object enables it, so there is no separate `enabled` switch.
 
@@ -86,6 +86,23 @@ objects. Version 1 supports optional additive `left_adjustment` and
 `left_spacing` and `right_spacing` meta values. `plan_font()` performs no file
 I/O: it receives an `AssembledFont` and the already-loaded adjustments, then
 resolves every remaining metric and transform decision.
+
+An optional top-level `accent_file` selects an `accent/*.json` array of exact
+glyph names. It is independent of MATH and may be used by proportional or
+monospace builds:
+
+```json
+[
+  "tildecomb",
+  "circumflexcmb"
+]
+```
+
+Planning separates these glyphs from the ordinary role. An accent receives zero
+advance width, and its authored `monospace_x_offset` places its outline around
+the combining origin. Accent membership is mutually exclusive with vertical or
+horizontal variant and assembly-part roles. Unknown names, duplicate input
+names, role overlap, and left/right spacing adjustments on accents are rejected.
 
 A config key is either a real glyph name or a MATH group selector of the form
 `base@group`. The supported groups are:
@@ -252,6 +269,22 @@ for the `math` script. One alternate uses a single substitution; two alternates
 use an alternate substitution. ufo2ft therefore compiles GSUB together with the
 font rather than requiring a later GSUB rewrite.
 
+An optional `math_italics_correction/*.json` file maps exact glyph names to
+non-negative italic-correction values in font units. It deliberately has no
+group-selector syntax; every glyph that needs a value, including a discrete
+size variant, is listed explicitly:
+
+```json
+{
+  "contourintegral": 200,
+  "contourintegral.v1": 200
+}
+```
+
+Loading validates names and values, and planning rejects references to glyphs
+that are not present in the build. The mapping is then written directly to
+`MathItalicsCorrectionInfo`.
+
 The cubic geometry layer expands each `StrokePlan` independently. Open
 centerlines use cubic round joins and independently selectable round or flat end
 caps. An isolated point becomes a cubic circle using `point_radius_scale`; a
@@ -283,9 +316,9 @@ the planned glyph names instead of applying production-name renaming, and leaves
 the input UFO unchanged. Encoded glyphs receive GIDs in ascending Unicode order;
 unencoded glyphs follow in glyph-name order. This makes GID assignment independent
 of source-rule, source-file, and planning-branch order. For a math build,
-constants, resolved vertical and horizontal variant records, and optional glyph
-assemblies are added directly to the returned `TTFont`; a `math/dflt` GSUB
-script is retained or created as needed.
+constants, italic corrections, resolved vertical and horizontal variant
+records, and optional glyph assemblies are added directly to the returned
+`TTFont`; a `math/dflt` GSUB script is retained or created as needed.
 Connector extents are converted from grid units to font-unit lengths during
 planning, before `buildMathTable()` receives them. `save_otf()` then serializes
 the font once to the final output path. UFO output remains an optional debugging
@@ -345,7 +378,7 @@ keep their relative position; they are not written merely to show a default.
 | Geometry | `grid`, `thickness`, `point_radius_scale`, `y_shift`, `use_scaled_edge_thickness` |
 | Horizontal metrics | `monospace_width`, `left_spacing`, `right_spacing` |
 | Glyph set | `source_rules`, `glyph_generators` |
-| Additional data | `glyph_config_file`, `kerning_file`, `math_config` |
+| Additional data | `glyph_config_file`, `accent_file`, `kerning_file`, `math_config` |
 
 The following fields are required and must always be written:
 
@@ -363,9 +396,10 @@ All other meta fields are optional:
 | `monospace_width` | absent; the font uses proportional metrics |
 | `left_spacing`, `right_spacing` | `0` |
 | `glyph_generators` | no generators |
-| `glyph_config_file`, `kerning_file` | no file |
+| `glyph_config_file`, `accent_file`, `kerning_file` | no file |
 | `math_config` | MATH disabled |
 
 The nullable fields `output_stem`, `glyph_generators`, `glyph_config_file`,
-`kerning_file`, and `math_config` may also be written explicitly as `null`, though
+`accent_file`, `kerning_file`, and `math_config` may also be written explicitly
+as `null`, though
 omitting them is preferred when the default is intended.
