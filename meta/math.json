@@ -51,9 +51,11 @@
     "italic_greek"
   ],
   "glyph_config_file": "math.json",
+  "accent_file": "math.json",
   "math_config": {
     "constants_file": "math.json",
     "variants_file": "math.json",
-    "ssty_file": "math.json"
+    "ssty_file": "math.json",
+    "italics_correction_file": "math.json"
   }
 }

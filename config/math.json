@@ -93,14 +93,5 @@
   "multiply": {
     "left_adjustment": 100,
     "right_adjustment": 100
-  },
-  "uni0300": {
-    "right_adjustment": 100
-  },
-  "uni0301": {
-    "left_adjustment": 100
-  },
-  "uni0326": {
-    "right_adjustment": 100
   }
 }

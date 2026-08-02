@@ -59,5 +59,6 @@
         ]
       ]
     }
-  ]
+  ],
+  "accent_file": "math.json"
 }
