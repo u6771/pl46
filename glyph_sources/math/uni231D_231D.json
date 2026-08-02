@@ -1,0 +1,11 @@
+{
+  "name": "uni231D",
+  "unicode": "231D",
+  "monospace_x_offset": -1,
+  "y_offset": 4,
+  "skeleton": [
+    {
+      "centerline": [[0, 2], [2, 2], [2, 0]]
+    }
+  ]
+}

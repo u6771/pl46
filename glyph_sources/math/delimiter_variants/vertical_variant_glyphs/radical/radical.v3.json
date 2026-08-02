@@ -5,7 +5,8 @@
   "y_offset": -5,
   "skeleton": [
     {
-      "centerline": [[6, 14], [2, 0], [0, 7]]
+      "centerline": [[7, 14], [6, 14], [2, 0], [0, 7]],
+      "start_cap": "flat"
     }
   ]
 }
