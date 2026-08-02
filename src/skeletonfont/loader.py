@@ -13,9 +13,12 @@ from .model import (
     CapStyle,
     FontInfo,
     FontMeta,
+    GlyphAdjustment,
+    GlyphAdjustmentGroup,
+    GlyphAdjustmentSelector,
     GlyphParameters,
     GlyphSource,
-    GlyphSpacingOverride,
+    GlyphSpacingAdjustment,
     KerningData,
     KerningPair,
     MathAssemblyPartData,
@@ -108,8 +111,14 @@ _MATH_FIELDS = {
 }
 
 _GLYPH_CONFIG_FIELDS = {
-    "left_spacing",
-    "right_spacing",
+    "left_adjustment",
+    "right_adjustment",
+}
+
+_GLYPH_CONFIG_GROUP_KINDS = {
+    "variant_glyphs",
+    "parts",
+    "variants",
 }
 
 _KERNING_FIELDS = {
@@ -1067,37 +1076,68 @@ def parse_glyph_config(
     value: object,
     *,
     source_path: Path,
-) -> Mapping[str, GlyphSpacingOverride]:
-    """Parse additive per-glyph spacing overrides."""
+) -> Mapping[GlyphAdjustmentSelector, GlyphAdjustment]:
+    """Parse build-time adjustments selected by glyph or MATH group."""
 
     raw = _object(value, location=str(source_path))
-    result: dict[str, GlyphSpacingOverride] = {}
+    result: dict[GlyphAdjustmentSelector, GlyphAdjustment] = {}
 
-    for raw_name, raw_override in raw.items():
-        name = _safe_name(
-            raw_name,
-            location=f"{source_path} glyph name",
-        )
-        location = f"{source_path}.{name}"
-        override = _object(raw_override, location=location)
+    for raw_name, raw_adjustment in raw.items():
+        if not isinstance(raw_name, str):
+            raise ProjectDataError(
+                f"{source_path} glyph config key must be a string."
+            )
+        if "@" not in raw_name:
+            base_name = _safe_name(
+                raw_name,
+                location=f"{source_path} glyph name",
+            )
+            selector = GlyphAdjustmentSelector(base_name, None)
+        else:
+            if raw_name.count("@") != 1:
+                raise ProjectDataError(
+                    f"{source_path} glyph selector {raw_name!r} must contain "
+                    "exactly one '@'."
+                )
+            base, group_kind = raw_name.split("@")
+            _safe_name(base, location=f"{source_path} selector base")
+            if group_kind not in _GLYPH_CONFIG_GROUP_KINDS:
+                raise ProjectDataError(
+                    f"{source_path} glyph selector {raw_name!r} has unknown "
+                    f"group kind {group_kind!r}."
+                )
+            selector = GlyphAdjustmentSelector(
+                base,
+                cast(GlyphAdjustmentGroup, group_kind),
+            )
+        location = f"{source_path}.{raw_name}"
+        adjustment = _object(raw_adjustment, location=location)
         _reject_unknown_fields(
-            override,
+            adjustment,
             _GLYPH_CONFIG_FIELDS,
             location=location,
         )
-        if not override:
-            raise ProjectDataError(
-                f"{location} has no spacing adjustment."
+        if not adjustment:
+            raise ProjectDataError(f"{location} has no adjustment.")
+        result[selector] = GlyphAdjustment(
+            spacing=GlyphSpacingAdjustment(
+                left=(
+                    None
+                    if "left_adjustment" not in adjustment
+                    else _number(
+                        adjustment["left_adjustment"],
+                        location=f"{location}.left_adjustment",
+                    )
+                ),
+                right=(
+                    None
+                    if "right_adjustment" not in adjustment
+                    else _number(
+                        adjustment["right_adjustment"],
+                        location=f"{location}.right_adjustment",
+                    )
+                ),
             )
-        result[name] = GlyphSpacingOverride(
-            left_spacing=_number(
-                override.get("left_spacing", 0),
-                location=f"{location}.left_spacing",
-            ),
-            right_spacing=_number(
-                override.get("right_spacing", 0),
-                location=f"{location}.right_spacing",
-            ),
         )
 
     return MappingProxyType(result)
@@ -1106,8 +1146,8 @@ def parse_glyph_config(
 def load_glyph_config(
     project_directory: Path,
     filename: str,
-) -> Mapping[str, GlyphSpacingOverride]:
-    """Load additive per-glyph spacing overrides from one config file."""
+) -> Mapping[GlyphAdjustmentSelector, GlyphAdjustment]:
+    """Load glyph adjustments from one config file."""
 
     normalized_filename = normalize_json_filename(
         filename,

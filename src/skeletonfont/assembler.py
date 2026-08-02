@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from dataclasses import replace
 from pathlib import Path
 from types import MappingProxyType
 
@@ -10,6 +9,7 @@ from .loader import load_glyph_source_directory
 from .mappings import get_mapping, glyph_name_for_codepoint
 from .model import (
     AssembledFont,
+    AssembledGlyph,
     FontMeta,
     GeneratedGlyph,
     GlyphSource,
@@ -61,16 +61,34 @@ def _matches_rule(glyph: GlyphSource, rule: SourceRule) -> bool:
     )
 
 
+def _assembled_glyph(
+    source: GlyphSource,
+    *,
+    name: str,
+    codepoint: int | None,
+) -> AssembledGlyph:
+    return AssembledGlyph(
+        name=name,
+        codepoint=codepoint,
+        monospace_x_offset=source.monospace_x_offset,
+        y_offset=source.y_offset,
+        x_extent=source.x_extent,
+        y_extent=source.y_extent,
+        skeleton=source.skeleton,
+        source_path=source.source_path,
+    )
+
+
 def _selected_glyphs(
     source_glyphs: Mapping[str, GlyphSource],
     rule: SourceRule,
-) -> tuple[GlyphSource, ...]:
+) -> tuple[AssembledGlyph, ...]:
     mapping = (
         None
         if rule.mapping_name is None
         else get_mapping(rule.mapping_name)
     )
-    selected: list[GlyphSource] = []
+    selected: list[AssembledGlyph] = []
     produced_names: set[str] = set()
 
     for glyph in source_glyphs.values():
@@ -78,7 +96,11 @@ def _selected_glyphs(
             continue
 
         if mapping is None:
-            entry = glyph
+            entry = _assembled_glyph(
+                glyph,
+                name=glyph.name,
+                codepoint=glyph.codepoint,
+            )
         else:
             if glyph.codepoint is None:
                 continue
@@ -92,7 +114,7 @@ def _selected_glyphs(
                     f"glyph name {target_name!r}."
                 )
             produced_names.add(target_name)
-            entry = replace(
+            entry = _assembled_glyph(
                 glyph,
                 name=target_name,
                 codepoint=target_codepoint,
@@ -102,7 +124,7 @@ def _selected_glyphs(
     return tuple(selected)
 
 
-def _describe(entry: GlyphSource) -> str:
+def _describe(entry: AssembledGlyph) -> str:
     return f"{entry.name!r} from {entry.source_path}"
 
 
@@ -117,14 +139,14 @@ def _remove_entry(by_name, by_codepoint, entry):
 
 
 def _merge_entry(
-    by_name: dict[str, GlyphSource],
-    by_codepoint: dict[int, GlyphSource],
-    entry: GlyphSource,
+    by_name: dict[str, AssembledGlyph],
+    by_codepoint: dict[int, AssembledGlyph],
+    entry: AssembledGlyph,
     *,
     replace_existing: bool,
     source_directory: str,
 ) -> None:
-    conflicts: dict[str, GlyphSource] = {}
+    conflicts: dict[str, AssembledGlyph] = {}
     name_conflict = by_name.get(entry.name)
     if name_conflict is not None:
         conflicts[name_conflict.name] = name_conflict
@@ -156,8 +178,8 @@ def _merge_entry(
 
 
 def _apply_generators(
-    real_glyphs_by_name: Mapping[str, GlyphSource],
-    real_glyphs_by_codepoint: Mapping[int, GlyphSource],
+    real_glyphs_by_name: Mapping[str, AssembledGlyph],
+    real_glyphs_by_codepoint: Mapping[int, AssembledGlyph],
     generator_names: tuple[str, ...],
 ) -> tuple[GeneratedGlyph, ...]:
     generated: list[GeneratedGlyph] = []
@@ -197,8 +219,8 @@ def _apply_generators(
 def assemble_font(meta: FontMeta, catalog: GlyphCatalog) -> AssembledFont:
     """Apply ordered source rules and generators to produce one glyph set."""
 
-    by_name: dict[str, GlyphSource] = {}
-    by_codepoint: dict[int, GlyphSource] = {}
+    by_name: dict[str, AssembledGlyph] = {}
+    by_codepoint: dict[int, AssembledGlyph] = {}
 
     for rule in meta.source_rules:
         source_glyphs = catalog.load(rule.source_directory)

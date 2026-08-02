@@ -36,6 +36,20 @@ class GlyphSource:
 
 
 @dataclass(frozen=True, slots=True)
+class AssembledGlyph:
+    """A real glyph after source selection and optional remapping."""
+
+    name: str
+    codepoint: int | None
+    monospace_x_offset: float
+    y_offset: float
+    x_extent: float
+    y_extent: float | None
+    skeleton: tuple[StrokeRecord, ...]
+    source_path: Path
+
+
+@dataclass(frozen=True, slots=True)
 class SourceRule:
     """Select and optionally remap glyphs from one source directory."""
 
@@ -150,16 +164,40 @@ class AssembledFont:
     glyph_parameters: GlyphParameters
     output_stem: str
     point_radius_scale: float
-    real_glyphs: Mapping[str, GlyphSource]
+    real_glyphs: Mapping[str, AssembledGlyph]
     generated_glyphs: tuple[GeneratedGlyph, ...]
 
 
-@dataclass(frozen=True, slots=True)
-class GlyphSpacingOverride:
-    """Additive spacing adjustments for one proportional glyph."""
+GlyphAdjustmentGroup = Literal["variant_glyphs", "parts", "variants"]
 
-    left_spacing: float
-    right_spacing: float
+
+@dataclass(frozen=True, slots=True)
+class GlyphAdjustmentSelector:
+    """One exact-glyph or MATH-construction group selector."""
+
+    base_name: str
+    group: GlyphAdjustmentGroup | None
+
+    @property
+    def text(self) -> str:
+        if self.group is None:
+            return self.base_name
+        return f"{self.base_name}@{self.group}"
+
+
+@dataclass(frozen=True, slots=True)
+class GlyphSpacingAdjustment:
+    """Optional additive changes to a glyph's left and right spacing."""
+
+    left: float | None = None
+    right: float | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class GlyphAdjustment:
+    """Build-time adjustment components selected for glyphs or groups."""
+
+    spacing: GlyphSpacingAdjustment | None = None
 
 
 @dataclass(frozen=True, slots=True)

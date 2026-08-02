@@ -9,6 +9,7 @@ from skeletonfont.assembler import GlyphCatalog, assemble_font
 from skeletonfont.errors import AssemblyError
 from skeletonfont.loader import load_font_meta
 from skeletonfont.mappings import get_mapping
+from skeletonfont.model import AssembledGlyph, GlyphSource
 
 
 PROJECT_DIRECTORY = Path(__file__).resolve().parents[1]
@@ -52,7 +53,7 @@ class FontAssemblerTests(unittest.TestCase):
             "bold": (97, 96),
             "fraktur": (97, 96),
             "jp": (275, 274),
-            "math": (1198, 1033),
+            "math": (1204, 1039),
             "mono": (578, 577),
             "monobold": (549, 548),
             "script": (97, 96),
@@ -91,6 +92,8 @@ class FontAssemblerTests(unittest.TestCase):
             if glyph.codepoint == 0x1D504
         )
         self.assertEqual(fraktur_a.name, "u1D504")
+        self.assertIsInstance(original_fraktur_a, GlyphSource)
+        self.assertIsInstance(fraktur_a, AssembledGlyph)
         self.assertEqual(fraktur_a.codepoint, 0x1D504)
         self.assertEqual(original_fraktur_a.name, "A")
         self.assertEqual(original_fraktur_a.codepoint, 0x0041)
@@ -113,10 +116,34 @@ class FontAssemblerTests(unittest.TestCase):
             for glyph in assembled.real_glyphs.values()
             if glyph.codepoint == 0x003D
         )
-        self.assertIs(equal, self.catalog.load("math")["equal"])
+        equal_source = self.catalog.load("math")["equal"]
+        self.assertIsInstance(equal, AssembledGlyph)
+        self.assertIsInstance(equal_source, GlyphSource)
+        self.assertIsNot(equal, equal_source)
+        self.assertIs(equal.skeleton, equal_source.skeleton)
+        self.assertEqual(equal.codepoint, equal_source.codepoint)
         self.assertIn("glyph_sources", str(equal.source_path))
         self.assertIn("math", equal.source_path.parts)
         self.assertEqual(len(assembled.generated_glyphs), 108)
+
+    def test_every_selected_source_crosses_assembly_type_boundary(self) -> None:
+        assembled = assemble_font(
+            load_font_meta(PROJECT_DIRECTORY, "ascii"),
+            self.catalog,
+        )
+
+        self.assertTrue(
+            all(
+                isinstance(glyph, AssembledGlyph)
+                for glyph in assembled.real_glyphs.values()
+            )
+        )
+        self.assertTrue(
+            all(
+                name == glyph.name
+                for name, glyph in assembled.real_glyphs.items()
+            )
+        )
 
     def test_unicode_range_is_applied_before_merge(self) -> None:
         meta = load_font_meta(PROJECT_DIRECTORY, "ascii")
@@ -166,14 +193,14 @@ class FontAssemblerTests(unittest.TestCase):
         encoded_only = assemble_font(without_unencoded, self.catalog)
         all_math = assemble_font(with_unencoded, self.catalog)
 
-        self.assertEqual(len(encoded_only.real_glyphs), 422)
-        self.assertEqual(len(all_math.real_glyphs), 586)
+        self.assertEqual(len(encoded_only.real_glyphs), 428)
+        self.assertEqual(len(all_math.real_glyphs), 592)
         self.assertEqual(
             sum(
                 glyph.codepoint is not None
                 for glyph in all_math.real_glyphs.values()
             ),
-            421,
+            427,
         )
 
     def test_conflict_requires_replace_existing(self) -> None:

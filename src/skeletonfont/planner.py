@@ -9,10 +9,12 @@ from typing import Literal
 from .errors import PlanError
 from .model import (
     AssembledFont,
+    AssembledGlyph,
     FontPlan,
     GlyphParameters,
-    GlyphSource,
-    GlyphSpacingOverride,
+    GlyphAdjustment,
+    GlyphAdjustmentSelector,
+    GlyphSpacingAdjustment,
     KerningData,
     MathAssemblyPartData,
     MathAssemblyPartPlan,
@@ -69,6 +71,43 @@ class _AssemblyPlans:
     assembly_plans: Mapping[str, MathGlyphAssemblyPlan]
 
 
+@dataclass(frozen=True, slots=True)
+class _SpacingAdjustmentSource:
+    adjustment: GlyphSpacingAdjustment
+    selector: GlyphAdjustmentSelector
+
+
+@dataclass(frozen=True, slots=True)
+class _ResolvedGlyphSpacingAdjustments:
+    real_glyph_spacing_by_name: Mapping[str, GlyphSpacingAdjustment]
+    vertical_part_spacing_by_base: Mapping[str, GlyphSpacingAdjustment]
+
+
+_EMPTY_SPACING_ADJUSTMENT = GlyphSpacingAdjustment()
+
+
+def _effective_spacing_adjustment(
+    adjustment: GlyphSpacingAdjustment,
+) -> tuple[float, float]:
+    return (
+        0.0 if adjustment.left is None else adjustment.left,
+        0.0 if adjustment.right is None else adjustment.right,
+    )
+
+
+def _adjusted_spacing(
+    parameters: GlyphParameters,
+    adjustment: GlyphSpacingAdjustment,
+) -> tuple[float, float]:
+    left_adjustment, right_adjustment = _effective_spacing_adjustment(
+        adjustment
+    )
+    return (
+        parameters.left_spacing + left_adjustment,
+        parameters.right_spacing + right_adjustment,
+    )
+
+
 def _rounded_width(value: float, *, glyph_name: str) -> int:
     if not math.isfinite(value) or value < 0:
         raise PlanError(
@@ -78,7 +117,7 @@ def _rounded_width(value: float, *, glyph_name: str) -> int:
 
 
 def _measure_glyph_axis(
-    glyph: GlyphSource,
+    glyph: AssembledGlyph,
     *,
     axis: _Axis,
     start_scale: float | None = None,
@@ -219,12 +258,11 @@ def _transformed_strokes(
 
 
 def _plan_proportional_real_glyph(
-    glyph: GlyphSource,
+    glyph: AssembledGlyph,
     parameters: GlyphParameters,
-    spacing: GlyphSpacingOverride,
+    adjustment: GlyphSpacingAdjustment,
 ) -> RealGlyphPlan:
-    left_spacing = parameters.left_spacing + spacing.left_spacing
-    right_spacing = parameters.right_spacing + spacing.right_spacing
+    left_spacing, right_spacing = _adjusted_spacing(parameters, adjustment)
     if not glyph.skeleton:
         return RealGlyphPlan(
             name=glyph.name,
@@ -275,14 +313,11 @@ def _plan_proportional_real_glyph(
     )
 
 
-def _plan_ordinary_glyph(
-    glyph: GlyphSource,
+def _plan_monospace_real_glyph(
+    glyph: AssembledGlyph,
     parameters: GlyphParameters,
-    spacing: GlyphSpacingOverride,
 ) -> RealGlyphPlan:
-    if parameters.monospace_width is None:
-        return _plan_proportional_real_glyph(glyph, parameters, spacing)
-
+    assert parameters.monospace_width is not None
     left_spacing = parameters.left_spacing
     right_spacing = parameters.right_spacing
     return RealGlyphPlan(
@@ -306,9 +341,9 @@ def _plan_ordinary_glyph(
 
 
 def _plan_variant_glyph(
-    glyph: GlyphSource,
+    glyph: AssembledGlyph,
     parameters: GlyphParameters,
-    spacing: GlyphSpacingOverride,
+    adjustment: GlyphSpacingAdjustment,
     *,
     axis: _Axis,
 ) -> tuple[RealGlyphPlan, int]:
@@ -339,8 +374,7 @@ def _plan_variant_glyph(
             end_scale=authored_x_scale,
         )
     )
-    left_spacing = parameters.left_spacing + spacing.left_spacing
-    right_spacing = parameters.right_spacing + spacing.right_spacing
+    left_spacing, right_spacing = _adjusted_spacing(parameters, adjustment)
     glyph_plan = RealGlyphPlan(
         name=glyph.name,
         codepoint=glyph.codepoint,
@@ -379,17 +413,23 @@ def _plan_variant_glyph(
 
 
 def _plan_ordinary_glyphs(
-    glyphs: Mapping[str, GlyphSource],
+    glyphs: Mapping[str, AssembledGlyph],
     parameters: GlyphParameters,
-    spacing_by_name: Mapping[str, GlyphSpacingOverride],
+    adjustment_by_name: Mapping[str, GlyphSpacingAdjustment],
 ) -> Mapping[str, RealGlyphPlan]:
-    empty_spacing = GlyphSpacingOverride(0.0, 0.0)
+    if parameters.monospace_width is not None:
+        return MappingProxyType(
+            {
+                name: _plan_monospace_real_glyph(glyph, parameters)
+                for name, glyph in glyphs.items()
+            }
+        )
     return MappingProxyType(
         {
-            name: _plan_ordinary_glyph(
+            name: _plan_proportional_real_glyph(
                 glyph,
                 parameters,
-                spacing_by_name.get(name, empty_spacing),
+                adjustment_by_name.get(name, _EMPTY_SPACING_ADJUSTMENT),
             )
             for name, glyph in glyphs.items()
         }
@@ -397,20 +437,19 @@ def _plan_ordinary_glyphs(
 
 
 def _plan_variant_glyphs(
-    glyphs: Mapping[str, GlyphSource],
+    glyphs: Mapping[str, AssembledGlyph],
     parameters: GlyphParameters,
-    spacing_by_name: Mapping[str, GlyphSpacingOverride],
+    adjustment_by_name: Mapping[str, GlyphSpacingAdjustment],
     *,
     axis: _Axis,
 ) -> _VariantGlyphPlans:
-    empty_spacing = GlyphSpacingOverride(0.0, 0.0)
     planned_glyphs: dict[str, RealGlyphPlan] = {}
     full_advances: dict[str, int] = {}
     for name, glyph in glyphs.items():
         plan, full_advance = _plan_variant_glyph(
             glyph,
             parameters,
-            spacing_by_name.get(name, empty_spacing),
+            adjustment_by_name.get(name, _EMPTY_SPACING_ADJUSTMENT),
             axis=axis,
         )
         planned_glyphs[name] = plan
@@ -422,27 +461,27 @@ def _plan_variant_glyphs(
 
 
 def _plan_vertical_variant_glyphs(
-    glyphs: Mapping[str, GlyphSource],
+    glyphs: Mapping[str, AssembledGlyph],
     parameters: GlyphParameters,
-    spacing_by_name: Mapping[str, GlyphSpacingOverride],
+    adjustment_by_name: Mapping[str, GlyphSpacingAdjustment],
 ) -> _VariantGlyphPlans:
     return _plan_variant_glyphs(
         glyphs,
         parameters,
-        spacing_by_name,
+        adjustment_by_name,
         axis=1,
     )
 
 
 def _plan_horizontal_variant_glyphs(
-    glyphs: Mapping[str, GlyphSource],
+    glyphs: Mapping[str, AssembledGlyph],
     parameters: GlyphParameters,
-    spacing_by_name: Mapping[str, GlyphSpacingOverride],
+    adjustment_by_name: Mapping[str, GlyphSpacingAdjustment],
 ) -> _VariantGlyphPlans:
     return _plan_variant_glyphs(
         glyphs,
         parameters,
-        spacing_by_name,
+        adjustment_by_name,
         axis=0,
     )
 
@@ -496,12 +535,12 @@ def _part_members(
 
 
 def _group_glyphs_by_role(
-    glyphs: Mapping[str, GlyphSource],
+    glyphs: Mapping[str, AssembledGlyph],
     vertical_variant_glyphs: Mapping[str, tuple[str, ...]],
     horizontal_variant_glyphs: Mapping[str, tuple[str, ...]],
     vertical_assemblies: Mapping[str, MathGlyphAssemblyData],
     horizontal_assemblies: Mapping[str, MathGlyphAssemblyData],
-) -> Mapping[_GlyphRole, Mapping[str, GlyphSource]]:
+) -> Mapping[_GlyphRole, Mapping[str, AssembledGlyph]]:
     glyph_names = set(glyphs)
     role_members: tuple[tuple[_GlyphRole, set[str]], ...] = (
         (
@@ -525,7 +564,7 @@ def _group_glyphs_by_role(
             f"Math constructions reference unknown real glyphs: {sorted(missing)}"
         )
 
-    grouped: dict[_GlyphRole, dict[str, GlyphSource]] = {
+    grouped: dict[_GlyphRole, dict[str, AssembledGlyph]] = {
         "ordinary": {},
         "vertical_variant_glyph": {},
         "horizontal_variant_glyph": {},
@@ -546,6 +585,242 @@ def _group_glyphs_by_role(
             role: MappingProxyType(entries)
             for role, entries in grouped.items()
         }
+    )
+
+
+def _resolve_glyph_spacing_adjustments(
+    spacing_config: Mapping[GlyphAdjustmentSelector, GlyphSpacingAdjustment],
+    glyphs_by_role: Mapping[_GlyphRole, Mapping[str, AssembledGlyph]],
+    parameters: GlyphParameters,
+    vertical_variant_glyphs: Mapping[str, tuple[str, ...]],
+    horizontal_variant_glyphs: Mapping[str, tuple[str, ...]],
+    vertical_assemblies: Mapping[str, MathGlyphAssemblyData],
+    horizontal_assemblies: Mapping[str, MathGlyphAssemblyData],
+) -> _ResolvedGlyphSpacingAdjustments:
+    """Resolve order-independent spacing adjustments by glyph and layout."""
+
+    role_by_name = {
+        name: role
+        for role, glyphs in glyphs_by_role.items()
+        for name in glyphs
+    }
+    exact_entries: dict[str, _SpacingAdjustmentSource] = {}
+    variant_group_spacing_by_construction: dict[
+        tuple[_Axis, str],
+        _SpacingAdjustmentSource,
+    ] = {}
+    part_group_spacing_by_construction: dict[
+        tuple[_Axis, str],
+        _SpacingAdjustmentSource,
+    ] = {}
+
+    def assign_variant(
+        key: tuple[_Axis, str],
+        source: _SpacingAdjustmentSource,
+    ) -> None:
+        previous = variant_group_spacing_by_construction.get(key)
+        if previous is not None:
+            raise PlanError(
+                f"Math construction {key[1]!r} receives overlapping variant "
+                f"spacing adjustments from {previous.selector.text!r} and "
+                f"{source.selector.text!r}."
+            )
+        variant_group_spacing_by_construction[key] = source
+
+    def assign_parts(
+        key: tuple[_Axis, str],
+        source: _SpacingAdjustmentSource,
+    ) -> None:
+        previous = part_group_spacing_by_construction.get(key)
+        if previous is not None:
+            raise PlanError(
+                f"Math assembly {key[1]!r} receives overlapping part "
+                f"spacing adjustments from {previous.selector.text!r} and "
+                f"{source.selector.text!r}."
+            )
+        part_group_spacing_by_construction[key] = source
+
+    for selector in sorted(spacing_config, key=lambda item: item.text):
+        adjustment = spacing_config[selector]
+        source = _SpacingAdjustmentSource(adjustment, selector)
+        if selector.group is None:
+            exact_entries[selector.base_name] = source
+            continue
+        base = selector.base_name
+        group_kind = selector.group
+
+        construction_keys: list[tuple[_Axis, str]] = []
+        if base in vertical_variant_glyphs:
+            construction_keys.append((1, base))
+        if base in horizontal_variant_glyphs:
+            construction_keys.append((0, base))
+        if not construction_keys:
+            raise PlanError(
+                f"Glyph selector {selector.text!r} references no MATH "
+                "construction."
+            )
+        if len(construction_keys) > 1:
+            raise PlanError(
+                f"Glyph selector {selector.text!r} has an ambiguous MATH "
+                "axis."
+            )
+        key = construction_keys[0]
+        axis, _base = key
+
+        if group_kind in ("parts", "variants"):
+            if axis == 0:
+                raise PlanError(
+                    "Spacing adjustments cannot target horizontal assembly "
+                    f"parts selected by {selector.text!r}."
+                )
+            if base not in vertical_assemblies:
+    
+                raise PlanError(
+                    f"Glyph selector {selector.text!r} requires a "
+                    f"vertical assembly with parts."
+                )
+            assign_parts(key, source)
+        if group_kind in ("variant_glyphs", "variants"):
+            assign_variant(key, source)
+
+    variant_owners: dict[str, set[tuple[_Axis, str]]] = {}
+    for axis, constructions in (
+        (1, vertical_variant_glyphs),
+        (0, horizontal_variant_glyphs),
+    ):
+        for base, alternates in constructions.items():
+            key = (axis, base)
+            for glyph_name in (base, *alternates):
+                variant_owners.setdefault(glyph_name, set()).add(key)
+
+    part_owners: dict[str, set[str]] = {}
+    for base, construction in vertical_assemblies.items():
+        for part in construction.parts:
+            part_owners.setdefault(part.glyph_name, set()).add(base)
+
+    for key, source in variant_group_spacing_by_construction.items():
+        axis, base = key
+        constructions = (
+            vertical_variant_glyphs
+            if axis == 1
+            else horizontal_variant_glyphs
+        )
+        for glyph_name in (base, *constructions[base]):
+            for owner_key in sorted(variant_owners[glyph_name]):
+                owner = variant_group_spacing_by_construction.get(owner_key)
+                if owner is None:
+                    raise PlanError(
+                        f"Glyph selector {source.selector.text!r} contains "
+                        f"shared variant glyph {glyph_name!r}; owner "
+                        f"construction {owner_key[1]!r} must receive the "
+                        "same spacing adjustment."
+                    )
+                if _effective_spacing_adjustment(owner.adjustment) != (
+                    _effective_spacing_adjustment(source.adjustment)
+                ):
+                    raise PlanError(
+                        f"Shared variant glyph {glyph_name!r} receives "
+                        "incompatible spacing adjustments from "
+                        f"{source.selector.text!r} and "
+                        f"{owner.selector.text!r}."
+                    )
+
+    for (axis, base), source in part_group_spacing_by_construction.items():
+        assert axis == 1
+        for part in vertical_assemblies[base].parts:
+            for owner_base in sorted(part_owners[part.glyph_name]):
+                owner = part_group_spacing_by_construction.get(
+                    (1, owner_base)
+                )
+                if owner is None:
+                    raise PlanError(
+                        f"Glyph selector {source.selector.text!r} contains "
+                        f"shared part {part.glyph_name!r}; owner assembly "
+                        f"{owner_base!r} must receive the same spacing "
+                        "adjustment."
+                    )
+                if _effective_spacing_adjustment(owner.adjustment) != (
+                    _effective_spacing_adjustment(source.adjustment)
+                ):
+                    raise PlanError(
+                        f"Shared assembly part {part.glyph_name!r} receives "
+                        "incompatible spacing adjustments from "
+                        f"{source.selector.text!r} and "
+                        f"{owner.selector.text!r}."
+                    )
+
+    adjustment_by_name: dict[str, GlyphSpacingAdjustment] = {}
+    source_by_name: dict[str, str] = {}
+    for (axis, base), source in (
+        variant_group_spacing_by_construction.items()
+    ):
+        constructions = (
+            vertical_variant_glyphs
+            if axis == 1
+            else horizontal_variant_glyphs
+        )
+        for glyph_name in (base, *constructions[base]):
+            previous = adjustment_by_name.get(glyph_name)
+            if previous is not None:
+                if _effective_spacing_adjustment(
+                    previous
+                ) != _effective_spacing_adjustment(source.adjustment):
+                    raise PlanError(
+                        f"Shared variant glyph {glyph_name!r} receives "
+                        "incompatible spacing adjustments from "
+                        f"{source_by_name[glyph_name]!r} and "
+                        f"{source.selector.text!r}."
+                    )
+                continue
+            adjustment_by_name[glyph_name] = source.adjustment
+            source_by_name[glyph_name] = source.selector.text
+
+    for glyph_name, source in exact_entries.items():
+        role = role_by_name.get(glyph_name)
+        if role is None:
+            raise PlanError(
+                f"Glyph config references a name not planned as a real "
+                f"glyph: {glyph_name!r}."
+            )
+        if role == "vertical_part":
+            owners = sorted(part_owners.get(glyph_name, ()))
+            raise PlanError(
+                f"Glyph {glyph_name!r} is a vertical assembly part and "
+                "cannot receive an independent spacing adjustment; "
+                "configure its "
+                f"owner assemblies instead: {owners}."
+            )
+        if role == "horizontal_part":
+            raise PlanError(
+                f"Glyph {glyph_name!r} is a horizontal assembly part and "
+                "cannot receive spacing adjustments."
+            )
+        if (
+            role == "ordinary"
+            and parameters.monospace_width is not None
+        ):
+            raise PlanError(
+                f"Monospace ordinary glyph {glyph_name!r} cannot receive "
+                "left or right spacing adjustments."
+            )
+        if glyph_name in adjustment_by_name:
+            raise PlanError(
+                f"Glyph {glyph_name!r} is configured both directly and "
+                f"through {source_by_name[glyph_name]!r}."
+            )
+        adjustment_by_name[glyph_name] = source.adjustment
+
+    return _ResolvedGlyphSpacingAdjustments(
+        real_glyph_spacing_by_name=MappingProxyType(adjustment_by_name),
+        vertical_part_spacing_by_base=MappingProxyType(
+            {
+                base: source.adjustment
+                for (axis, base), source in (
+                    part_group_spacing_by_construction.items()
+                )
+                if axis == 1
+            }
+        ),
     )
 
 
@@ -737,9 +1012,10 @@ def _vertical_layout(
 
 def _plan_vertical_assemblies(
     constructions: Mapping[str, MathGlyphAssemblyData],
-    glyphs: Mapping[str, GlyphSource],
+    glyphs: Mapping[str, AssembledGlyph],
     parameters: GlyphParameters,
     minimum_overlap: int,
+    adjustment_by_base: Mapping[str, GlyphSpacingAdjustment],
 ) -> _AssemblyPlans:
     if not constructions:
         empty = MappingProxyType({})
@@ -778,17 +1054,19 @@ def _plan_vertical_assemblies(
             for glyph_name in uses_by_glyph_name
         }
     )
-    layouts_by_base = MappingProxyType(
-        {
-            base: _vertical_layout(
-                construction.parts,
-                bounds_by_glyph_name,
-                left_spacing=parameters.left_spacing,
-                right_spacing=parameters.right_spacing,
-            )
-            for base, construction in constructions.items()
-        }
-    )
+    layouts: dict[str, _VerticalLayout] = {}
+    for base, construction in constructions.items():
+        left_spacing, right_spacing = _adjusted_spacing(
+            parameters,
+            adjustment_by_base.get(base, _EMPTY_SPACING_ADJUSTMENT),
+        )
+        layouts[base] = _vertical_layout(
+            construction.parts,
+            bounds_by_glyph_name,
+            left_spacing=left_spacing,
+            right_spacing=right_spacing,
+        )
+    layouts_by_base = MappingProxyType(layouts)
 
     vertical_layout_by_glyph_name: dict[str, _VerticalLayout] = {}
     for glyph_name, entries in uses_by_glyph_name.items():
@@ -910,7 +1188,7 @@ def _plan_vertical_assemblies(
 
 def _plan_horizontal_assemblies(
     constructions: Mapping[str, MathGlyphAssemblyData],
-    glyphs: Mapping[str, GlyphSource],
+    glyphs: Mapping[str, AssembledGlyph],
     parameters: GlyphParameters,
     minimum_overlap: int,
 ) -> _AssemblyPlans:
@@ -1029,7 +1307,8 @@ def _validate_kerning(
 
 def plan_font(
     assembled_font: AssembledFont,
-    glyph_config: Mapping[str, GlyphSpacingOverride] | None = None,
+    glyph_config: Mapping[GlyphAdjustmentSelector, GlyphAdjustment]
+    | None = None,
     kerning: KerningData | None = None,
     math_data: MathData | None = None,
 ) -> FontPlan:
@@ -1037,16 +1316,6 @@ def plan_font(
 
     parameters = assembled_font.glyph_parameters
     config = {} if glyph_config is None else glyph_config
-    if parameters.monospace_width is not None and config:
-        raise PlanError(
-            "Monospace builds cannot use proportional glyph spacing overrides."
-        )
-    unused_names = set(config) - set(assembled_font.real_glyphs)
-    if unused_names:
-        raise PlanError(
-            "Glyph config contains names not planned as real glyphs: "
-            f"{sorted(unused_names)}"
-        )
     glyph_names = set(assembled_font.real_glyphs)
     glyph_names.update(
         glyph.target_name for glyph in assembled_font.generated_glyphs
@@ -1072,20 +1341,34 @@ def plan_font(
         vertical_assemblies,
         horizontal_assemblies,
     )
+    spacing_config = {
+        selector: adjustment.spacing
+        for selector, adjustment in config.items()
+        if adjustment.spacing is not None
+    }
+    resolved_spacing_adjustments = _resolve_glyph_spacing_adjustments(
+        spacing_config,
+        glyphs_by_role,
+        parameters,
+        vertical_variant_glyphs,
+        horizontal_variant_glyphs,
+        vertical_assemblies,
+        horizontal_assemblies,
+    )
     ordinary_glyph_plans = _plan_ordinary_glyphs(
         glyphs_by_role["ordinary"],
         parameters,
-        config,
+        resolved_spacing_adjustments.real_glyph_spacing_by_name,
     )
     vertical_variant_glyph_plans = _plan_vertical_variant_glyphs(
         glyphs_by_role["vertical_variant_glyph"],
         parameters,
-        config,
+        resolved_spacing_adjustments.real_glyph_spacing_by_name,
     )
     horizontal_variant_glyph_plans = _plan_horizontal_variant_glyphs(
         glyphs_by_role["horizontal_variant_glyph"],
         parameters,
-        config,
+        resolved_spacing_adjustments.real_glyph_spacing_by_name,
     )
     minimum_overlap = (
         0 if math_data is None else math_data.min_connector_overlap
@@ -1095,6 +1378,7 @@ def plan_font(
         glyphs_by_role["vertical_part"],
         parameters,
         minimum_overlap,
+        resolved_spacing_adjustments.vertical_part_spacing_by_base,
     )
     horizontal_assembly_plans = _plan_horizontal_assemblies(
         horizontal_assemblies,

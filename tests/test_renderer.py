@@ -39,7 +39,7 @@ class FontRendererTests(unittest.TestCase):
     def test_font_info_and_notdef_are_rendered(self) -> None:
         font = self.font
 
-        self.assertEqual(len(font), 1198)
+        self.assertEqual(len(font), 1204)
         self.assertEqual(font.info.familyName, "PL46")
         self.assertEqual(font.info.styleName, "Math")
         self.assertEqual(font.info.unitsPerEm, 1000)

@@ -4,6 +4,7 @@ import unittest
 from dataclasses import replace
 from pathlib import Path
 from types import MappingProxyType
+from typing import cast
 from unittest.mock import patch
 
 from skeletonfont.assembler import GlyphCatalog, assemble_font
@@ -16,13 +17,17 @@ from skeletonfont.loader import (
     parse_glyph_config,
 )
 from skeletonfont.model import (
-    GlyphSpacingOverride,
+    GlyphAdjustment,
+    GlyphAdjustmentGroup,
+    GlyphAdjustmentSelector,
+    GlyphSpacingAdjustment,
     MathAssemblyPartData,
     MathGlyphAssemblyData,
     StrokeRecord,
 )
 from skeletonfont.planner import (
     _measure_glyph_axis,
+    _plan_variant_glyph,
     _transform_stroke,
     _transformed_strokes,
     plan_font,
@@ -37,21 +42,45 @@ def assembled_font(build_name: str):
     return assemble_font(meta, GlyphCatalog(PROJECT_DIRECTORY))
 
 
+def adjustment(
+    left: float | None = None,
+    right: float | None = None,
+) -> GlyphAdjustment:
+    return GlyphAdjustment(GlyphSpacingAdjustment(left, right))
+
+
+def selector(value: str) -> GlyphAdjustmentSelector:
+    if "@" not in value:
+        return GlyphAdjustmentSelector(value, None)
+    base_name, group = value.split("@")
+    assert group in ("variant_glyphs", "parts", "variants")
+    return GlyphAdjustmentSelector(
+        base_name,
+        cast(GlyphAdjustmentGroup, group),
+    )
+
+
+def adjustment_config(
+    entries: dict[str, GlyphAdjustment],
+) -> dict[GlyphAdjustmentSelector, GlyphAdjustment]:
+    return {selector(name): value for name, value in entries.items()}
+
+
 class GlyphConfigLoaderTests(unittest.TestCase):
-    def test_math_spacing_overrides_are_typed_and_read_only(self) -> None:
+    def test_math_adjustments_are_typed_and_read_only(self) -> None:
         config = load_glyph_config(PROJECT_DIRECTORY, "math.json")
 
-        self.assertEqual(len(config), 13)
+        self.assertEqual(len(config), 33)
         self.assertEqual(
-            config["parenleft"],
-            GlyphSpacingOverride(50.0, 0.0),
+            config[selector("parenleft@variants")],
+            adjustment(left=50.0),
         )
         self.assertEqual(
-            config["bar"],
-            GlyphSpacingOverride(50.0, 50.0),
+            config[selector("bar@variants")],
+            adjustment(left=50.0, right=50.0),
         )
         with self.assertRaises(TypeError):
-            config["A"] = GlyphSpacingOverride(0, 0)  # type: ignore[index]
+            config[selector("A")] = GlyphAdjustment()  # type: ignore[index]
 
     def test_unknown_glyph_config_field_is_rejected(self) -> None:
         with self.assertRaisesRegex(ProjectDataError, "width"):
@@ -60,8 +89,52 @@ class GlyphConfigLoaderTests(unittest.TestCase):
                 source_path=Path("config.json"),
             )
 
+    def test_group_selectors_are_parsed_without_resolving_math_data(self) -> None:
+        config = parse_glyph_config(
+            {
+                "parenleft@variant_glyphs": {"left_adjustment": 10},
+                "parenleft@parts": {"right_adjustment": 20},
+                "parenleft@variants": {
+                    "left_adjustment": 30,
+                    "right_adjustment": 40,
+                },
+                "uni23B4@parts": {"left_adjustment": 50},
+            },
+            source_path=Path("config.json"),
+        )
+
+        self.assertEqual(
+            config[selector("parenleft@parts")],
+            adjustment(right=20),
+        )
+        self.assertEqual(
+            config[selector("uni23B4@parts")],
+            adjustment(left=50),
+        )
+
+    def test_group_selector_syntax_is_validated(self) -> None:
+        for selector in (
+            "@parts",
+            "parenleft@",
+            "parenleft@unknown",
+            "parenleft@parts@variants",
+        ):
+            with self.subTest(selector=selector):
+                with self.assertRaises(ProjectDataError):
+                    parse_glyph_config(
+                        {selector: {"left_adjustment": 10}},
+                        source_path=Path("config.json"),
+                    )
+
+    def test_legacy_spacing_adjustment_fields_are_rejected(self) -> None:
+        with self.assertRaisesRegex(ProjectDataError, "left_spacing"):
+            parse_glyph_config(
+                {"A": {"left_spacing": 10}},
+                source_path=Path("config.json"),
+            )
+
     def test_empty_glyph_config_entry_is_rejected(self) -> None:
-        with self.assertRaisesRegex(ProjectDataError, "no spacing"):
+        with self.assertRaisesRegex(ProjectDataError, "no adjustment"):
             parse_glyph_config(
                 {"A": {}},
                 source_path=Path("config.json"),
@@ -97,7 +170,7 @@ class FontPlannerTests(unittest.TestCase):
         self.assertEqual(plan.point_radius_scale, 1.6)
         self.assertEqual(
             len(plan.real_glyphs) + len(plan.generated_glyphs),
-            1198,
+            1204,
         )
         self.assertEqual(
             sum(
@@ -105,7 +178,7 @@ class FontPlannerTests(unittest.TestCase):
                 for glyph in plan.real_glyphs.values()
             )
             + len(plan.generated_glyphs),
-            1033,
+            1039,
         )
         self.assertEqual(plan.real_glyphs[".notdef"].width, 600)
         self.assertTrue(plan.real_glyphs[".notdef"].strokes)
@@ -174,7 +247,6 @@ class FontPlannerTests(unittest.TestCase):
 
         plan = plan_font(
             self.assembled_math,
-            self.math_config,
             math_data=math_data,
         )
         assert plan.math is not None
@@ -244,7 +316,6 @@ class FontPlannerTests(unittest.TestCase):
 
         plan = plan_font(
             self.assembled_math,
-            self.math_config,
             math_data=math_data,
         )
         math_plan = plan.math
@@ -252,8 +323,8 @@ class FontPlannerTests(unittest.TestCase):
 
         paren_part = plan.real_glyphs["parenleft.v1"]
         radical_part = plan.real_glyphs["radical.v1"]
-        self.assertEqual(paren_part.width, 800)
-        self.assertEqual(radical_part.width, 800)
+        self.assertEqual(paren_part.width, 900)
+        self.assertEqual(radical_part.width, 900)
         self.assertEqual(
             paren_part.strokes[0].centerline[0],
             (500.0, 700.0),
@@ -317,7 +388,6 @@ class FontPlannerTests(unittest.TestCase):
         with self.assertRaisesRegex(PlanError, "missing.part"):
             plan_font(
                 self.assembled_math,
-                self.math_config,
                 math_data=missing_data,
             )
 
@@ -343,7 +413,6 @@ class FontPlannerTests(unittest.TestCase):
         with self.assertRaisesRegex(PlanError, "overlap itself"):
             plan_font(
                 self.assembled_math,
-                self.math_config,
                 math_data=no_overlap_data,
             )
 
@@ -371,7 +440,6 @@ class FontPlannerTests(unittest.TestCase):
         with self.assertRaisesRegex(PlanError, "missing.v1"):
             plan_font(
                 self.assembled_math,
-                self.math_config,
                 math_data=missing_variant,
             )
 
@@ -814,10 +882,337 @@ class FontPlannerTests(unittest.TestCase):
         self.assertEqual(space.width, 550)
         self.assertEqual(space.strokes, ())
 
-    def test_glyph_spacing_override_is_applied_once(self) -> None:
+    def test_glyph_adjustment_is_applied_once(self) -> None:
         parenleft = self.math_plan.real_glyphs["parenleft"]
 
         self.assertEqual(parenleft.width, 450)
+
+    def test_variant_glyph_group_adjusts_base_and_discrete_variants(self) -> None:
+        baseline = plan_font(
+            self.assembled_math,
+            math_data=self.math_data,
+        )
+        adjusted = plan_font(
+            self.assembled_math,
+            adjustment_config(
+                {"parenleft@variant_glyphs": adjustment(40, 30)}
+            ),
+            math_data=self.math_data,
+        )
+        names = (
+            "parenleft",
+            *self.math_data.vertical_variant_glyphs["parenleft"],
+        )
+
+        for name in names:
+            self.assertEqual(
+                adjusted.real_glyphs[name].width,
+                baseline.real_glyphs[name].width + 70,
+            )
+        assert baseline.math is not None
+        assert adjusted.math is not None
+        self.assertEqual(
+            adjusted.math.vertical_variant_records["parenleft"],
+            baseline.math.vertical_variant_records["parenleft"],
+        )
+
+    def test_vertical_part_group_adjusts_layout_but_not_base(self) -> None:
+        baseline = plan_font(
+            self.assembled_math,
+            math_data=self.math_data,
+        )
+        adjusted = plan_font(
+            self.assembled_math,
+            adjustment_config({"parenleft@parts": adjustment(40, 30)}),
+            math_data=self.math_data,
+        )
+        part_names = {
+            part.glyph_name
+            for part in self.math_data.vertical_assemblies["parenleft"].parts
+        }
+
+        self.assertEqual(
+            adjusted.real_glyphs["parenleft"],
+            baseline.real_glyphs["parenleft"],
+        )
+        for name in part_names:
+            self.assertEqual(
+                adjusted.real_glyphs[name].width,
+                baseline.real_glyphs[name].width + 70,
+            )
+        assert baseline.math is not None
+        assert adjusted.math is not None
+        self.assertEqual(
+            adjusted.math.vertical_assemblies["parenleft"],
+            baseline.math.vertical_assemblies["parenleft"],
+        )
+
+    def test_variants_group_combines_discrete_and_part_adjustments(self) -> None:
+        baseline = plan_font(
+            self.assembled_math,
+            math_data=self.math_data,
+        )
+        adjusted = plan_font(
+            self.assembled_math,
+            adjustment_config({"parenleft@variants": adjustment(25, 15)}),
+            math_data=self.math_data,
+        )
+        names = {
+            "parenleft",
+            *self.math_data.vertical_variant_glyphs["parenleft"],
+            *(
+                part.glyph_name
+                for part in self.math_data.vertical_assemblies[
+                    "parenleft"
+                ].parts
+            ),
+        }
+
+        for name in names:
+            self.assertEqual(
+                adjusted.real_glyphs[name].width,
+                baseline.real_glyphs[name].width + 40,
+            )
+
+    def test_horizontal_groups_allow_only_discrete_variants(self) -> None:
+        baseline = plan_font(
+            self.assembled_math,
+            math_data=self.math_data,
+        )
+        adjusted = plan_font(
+            self.assembled_math,
+            adjustment_config(
+                {"uni23B4@variant_glyphs": adjustment(left=20)}
+            ),
+            math_data=self.math_data,
+        )
+        names = (
+            "uni23B4",
+            *self.math_data.horizontal_variant_glyphs["uni23B4"],
+        )
+        for name in names:
+            self.assertEqual(
+                adjusted.real_glyphs[name].width,
+                baseline.real_glyphs[name].width + 20,
+            )
+        assert baseline.math is not None
+        assert adjusted.math is not None
+        self.assertEqual(
+            adjusted.math.horizontal_variant_records["uni23B4"],
+            baseline.math.horizontal_variant_records["uni23B4"],
+        )
+
+        for group_kind in ("parts", "variants"):
+            with self.subTest(group_kind=group_kind):
+                with self.assertRaisesRegex(PlanError, "horizontal"):
+                    plan_font(
+                        self.assembled_math,
+                        adjustment_config(
+                            {
+                                f"uni23B4@{group_kind}": adjustment(
+                                    left=20
+                                )
+                            }
+                        ),
+                        math_data=self.math_data,
+                    )
+
+    def test_part_groups_require_an_existing_vertical_assembly(self) -> None:
+        data = replace(
+            self.math_data,
+            vertical_assemblies=MappingProxyType(
+                {
+                    base: assembly
+                    for base, assembly in self.math_data.vertical_assemblies.items()
+                    if base != "parenleft"
+                }
+            ),
+        )
+
+        for group_kind in ("parts", "variants"):
+            with self.subTest(group_kind=group_kind):
+                with self.assertRaisesRegex(PlanError, "requires a vertical"):
+                    plan_font(
+                        self.assembled_math,
+                        adjustment_config(
+                            {
+                                f"parenleft@{group_kind}": adjustment(
+                                    left=10
+                                )
+                            }
+                        ),
+                        math_data=data,
+                    )
+
+        plan_font(
+            self.assembled_math,
+            adjustment_config(
+                {"parenleft@variant_glyphs": adjustment(left=10)}
+            ),
+            math_data=data,
+        )
+
+    def test_group_adjustments_require_math_data_and_known_bases(self) -> None:
+        value = adjustment(left=10)
+        for selector_name, math_data in (
+            ("parenleft@variant_glyphs", None),
+            ("missing@variant_glyphs", self.math_data),
+        ):
+            with self.subTest(selector=selector_name):
+                with self.assertRaisesRegex(PlanError, "no MATH construction"):
+                    plan_font(
+                        self.assembled_math,
+                        adjustment_config({selector_name: value}),
+                        math_data=math_data,
+                    )
+
+    def test_direct_part_and_group_overlap_adjustments_are_rejected(self) -> None:
+        value = adjustment(left=10)
+        invalid_configs = (
+            {
+                "parenleft@variant_glyphs": value,
+                "parenleft": value,
+            },
+            {
+                "parenleft@variants": value,
+                "parenleft@parts": value,
+            },
+            {"uni239C": value},
+            {"uni23B4.ex": value},
+        )
+
+        for config in invalid_configs:
+            with self.subTest(config=config):
+                with self.assertRaises(PlanError):
+                    plan_font(
+                        self.assembled_math,
+                        adjustment_config(config),
+                        math_data=self.math_data,
+                    )
+
+    def test_shared_owner_groups_require_complete_equal_adjustments(self) -> None:
+        equal = adjustment(left=20)
+        config = adjustment_config(
+            {
+                "bar@variants": equal,
+                "divides@variants": adjustment(20, 0),
+            }
+        )
+        baseline = plan_font(
+            self.assembled_math,
+            math_data=self.math_data,
+        )
+
+        with patch(
+            "skeletonfont.planner._plan_variant_glyph",
+            wraps=_plan_variant_glyph,
+        ) as variant_planner:
+            adjusted = plan_font(
+                self.assembled_math,
+                config,
+                math_data=self.math_data,
+            )
+        reversed_plan = plan_font(
+            self.assembled_math,
+            dict(reversed(tuple(config.items()))),
+            math_data=self.math_data,
+        )
+
+        planned_names = [
+            call.args[0].name for call in variant_planner.call_args_list
+        ]
+        self.assertEqual(planned_names.count("divides.v1"), 1)
+        self.assertEqual(
+            adjusted.real_glyphs["divides.v1"].width,
+            baseline.real_glyphs["divides.v1"].width + 20,
+        )
+        self.assertEqual(
+            adjusted.real_glyphs["divides.ex"].width,
+            baseline.real_glyphs["divides.ex"].width + 20,
+        )
+        self.assertEqual(adjusted, reversed_plan)
+
+        with self.assertRaisesRegex(PlanError, "owner construction"):
+            plan_font(
+                self.assembled_math,
+                adjustment_config({"bar@variants": equal}),
+                math_data=self.math_data,
+            )
+        with self.assertRaisesRegex(
+            PlanError,
+            "incompatible spacing adjustments",
+        ):
+            plan_font(
+                self.assembled_math,
+                adjustment_config(
+                    {
+                        "bar@variants": equal,
+                        "divides@variants": adjustment(left=30),
+                    }
+                ),
+                math_data=self.math_data,
+            )
+
+    def test_shared_part_groups_require_complete_equal_adjustments(self) -> None:
+        equal = adjustment(right=20)
+        baseline = plan_font(
+            self.assembled_math,
+            math_data=self.math_data,
+        )
+        adjusted = plan_font(
+            self.assembled_math,
+            adjustment_config(
+                {
+                    "bar@parts": equal,
+                    "divides@parts": adjustment(0, 20),
+                }
+            ),
+            math_data=self.math_data,
+        )
+
+        self.assertEqual(
+            adjusted.real_glyphs["divides.ex"].width,
+            baseline.real_glyphs["divides.ex"].width + 20,
+        )
+        with self.assertRaisesRegex(PlanError, "owner assembly"):
+            plan_font(
+                self.assembled_math,
+                adjustment_config({"bar@parts": equal}),
+                math_data=self.math_data,
+            )
+        with self.assertRaisesRegex(
+            PlanError,
+            "incompatible spacing adjustments",
+        ):
+            plan_font(
+                self.assembled_math,
+                adjustment_config(
+                    {
+                        "bar@parts": equal,
+                        "divides@parts": adjustment(right=30),
+                    }
+                ),
+                math_data=self.math_data,
+            )
+
+    def test_monospace_rejects_only_current_width_adjustment_fields(self) -> None:
+        with self.assertRaisesRegex(PlanError, "Monospace ordinary"):
+            plan_font(
+                assembled_font("mono"),
+                adjustment_config({"A": adjustment(left=10)}),
+            )
+
+        parameters = replace(
+            self.assembled_math.glyph_parameters,
+            monospace_width=900,
+        )
+        plan_font(
+            replace(self.assembled_math, glyph_parameters=parameters),
+            adjustment_config(
+                {"parenleft@variant_glyphs": adjustment(left=10)}
+            ),
+            math_data=self.math_data,
+        )
 
     def test_scaled_edge_thickness_affects_metrics(self) -> None:
         minute = self.math_plan.real_glyphs["minute.st"]
@@ -947,7 +1342,7 @@ class FontPlannerTests(unittest.TestCase):
 
     def test_unused_config_name_is_rejected(self) -> None:
         config = dict(self.math_config)
-        config["does.not.exist"] = GlyphSpacingOverride(1, 0)
+        config[selector("does.not.exist")] = adjustment(left=1)
 
         with self.assertRaisesRegex(PlanError, "does.not.exist"):
             plan_font(
