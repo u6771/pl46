@@ -50,11 +50,11 @@ The load stage produces a small set of immutable objects:
   to resolve glyph geometry. `FontMeta` combines them with the ordered source
   rules and filenames needed only while loading and assembling a build.
 - `MathConfig` contains filenames only. Constants, ssty substitutions, italic
-  corrections, discrete variant glyphs, and assemblies are loaded into
-  immutable `MathData` instead of being carried through as raw dictionaries.
-  Optional `italics_correction_file` and `variants_file` fields select
-  `math_italics_correction/*.json` and `math_variants/*.json` inputs
-  respectively.
+  corrections, top accent attachments, discrete variant glyphs, and assemblies
+  are loaded into immutable `MathData` instead of being carried through as raw
+  dictionaries. Optional `italics_correction_file`, `accent_attachment_file`,
+  and `variants_file` fields select `math_italics_correction/*.json`,
+  `math_accent_attachment/*.json`, and `math_variants/*.json` inputs.
   Omitting `math_config`, setting it to `null`, or using an empty object disables
   MATH. A non-empty object enables it, so there is no separate `enabled` switch.
 
@@ -284,6 +284,42 @@ size variant, is listed explicitly:
 Loading validates names and values, and planning rejects references to glyphs
 that are not present in the build. The mapping is then written directly to
 `MathItalicsCorrectionInfo`.
+
+An optional `math_accent_attachment/*.json` file maps exact glyph names to top
+accent attachment points in the offset-applied grid coordinate system:
+
+```json
+{
+  "u1D453": 1,
+  "j": 1
+}
+```
+
+Only ordinary glyphs and vertical or horizontal discrete variant glyphs may be
+configured. Combining-accent and assembly-part roles are rejected. Planning
+uses the same coordinate transform as its glyph plan. Proportional ordinary and
+discrete variant glyphs convert each authored point with:
+
+```text
+(attachment - monospace_x_offset) * grid
++ resolved_start_scale * radius
++ effective_left_spacing
+```
+
+Monospace ordinary glyphs instead use the same fixed design origin as their
+strokes:
+
+```text
+(attachment + monospace_x_offset) * grid
++ left_spacing
++ monospace_width / 2
+```
+
+The rounded results are written to `MathTopAccentAttachment`.
+Generated glyphs cannot be configured directly. After resolving real glyphs,
+each generated glyph whose real `source_name` has an attachment inherits that
+same final font-unit value. Inheritance is deliberately limited to this direct
+real-source-to-generated-target relationship.
 
 The cubic geometry layer expands each `StrokePlan` independently. Open
 centerlines use cubic round joins and independently selectable round or flat end
