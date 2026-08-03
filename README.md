@@ -50,11 +50,12 @@ The load stage produces a small set of immutable objects:
   to resolve glyph geometry. `FontMeta` combines them with the ordered source
   rules and filenames needed only while loading and assembling a build.
 - `MathConfig` contains filenames only. Constants, ssty substitutions, italic
-  corrections, top accent attachments, discrete variant glyphs, and assemblies
-  are loaded into immutable `MathData` instead of being carried through as raw
-  dictionaries. Optional `italics_correction_file`, `accent_attachment_file`,
-  and `variants_file` fields select `math_italics_correction/*.json`,
-  `math_accent_attachment/*.json`, and `math_variants/*.json` inputs.
+  corrections, top accent attachments, mathematical kerns, discrete variant
+  glyphs, and assemblies are loaded into immutable `MathData` instead of being
+  carried through as raw dictionaries. Optional `italics_correction_file`,
+  `accent_attachment_file`, `kern_file`, and `variants_file` fields select
+  `math_italics_correction/*.json`, `math_accent_attachment/*.json`,
+  `math_kern/*.json`, and `math_variants/*.json` inputs.
   Omitting `math_config`, setting it to `null`, or using an empty object disables
   MATH. A non-empty object enables it, so there is no separate `enabled` switch.
 
@@ -66,9 +67,15 @@ immutable mapping instead of reading those JSON files again.
 
 The assembler processes `source_rules` in order. It selects encoded glyphs by
 `unicode_ranges`, includes unencoded glyphs only when requested, applies an
-optional Unicode mapping, and then checks both glyph-name and Unicode conflicts.
-A later rule may remove conflicting entries only with `replace_existing: true`.
+optional glyph-identity mapping, and then checks both glyph-name and Unicode
+conflicts. A later rule may remove conflicting entries only with
+`replace_existing: true`.
 
+A `GlyphMapping` independently maps the source codepoint and renames the source
+identity. Existing mathematical alphabet mappings retain their compact
+codepoint-range builders while producing semantic names such as `A.italic`,
+`A.script`, and `A.fraktur`. A mapping target codepoint may be absent, allowing
+the same mechanism to produce an unencoded alternate such as `A.st`.
 An optional mapping replaces only a selected `GlyphSource`'s name and Unicode.
 Every selected source, mapped or unchanged, crosses the assembly boundary into
 an immutable `AssembledGlyph` with the same fields and shared design data.
@@ -320,6 +327,30 @@ Generated glyphs cannot be configured directly. After resolving real glyphs,
 each generated glyph whose real `source_name` has an attachment inherits that
 same final font-unit value. Inheritance is deliberately limited to this direct
 real-source-to-generated-target relationship.
+
+Optional per-glyph mathematical kerning is authored in `math_kern/*.json` and
+enabled with `math_config.kern_file`. Keys are exact glyph names; group
+selectors such as `@variant_glyphs`, `@parts`, and `@variants` are not accepted.
+As with top accent attachments, only ordinary and vertical or horizontal
+discrete variant glyphs may be configured. Accent and assembly-part roles are
+rejected. A generated glyph cannot be configured directly, but inherits the
+complete MathKern value of its configured real source.
+
+Each glyph defines one or more of `top_right`, `top_left`, `bottom_right`, and
+`bottom_left`. A corner's `correction_height` values must be strictly increasing,
+and `kern_values` must contain exactly one more integer. Both arrays are already
+in font units. An empty height array defines a constant kern:
+
+```json
+{
+  "A.script": {
+    "bottom_right": {
+      "correction_height": [],
+      "kern_values": [-40]
+    }
+  }
+}
+```
 
 The cubic geometry layer expands each `StrokePlan` independently. Open
 centerlines use cubic round joins and independently selectable round or flat end
