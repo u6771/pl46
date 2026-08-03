@@ -31,6 +31,13 @@
       "replace_existing": true
     },
     {
+      "source_directory": "script",
+      "unicode_ranges": [
+        ["0041", "005A"]
+      ],
+      "mapping_name": "script_latin"
+    },
+    {
       "source_directory": "fraktur",
       "mapping_name": "fraktur_latin"
     },
@@ -57,6 +64,7 @@
     "variants_file": "math.json",
     "ssty_file": "math.json",
     "italics_correction_file": "math.json",
-    "accent_attachment_file": "math.json"
+    "accent_attachment_file": "math.json",
+    "kern_file": "math.json"
   }
 }
