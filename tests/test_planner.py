@@ -24,6 +24,8 @@ from skeletonfont.model import (
     GlyphSpacingAdjustment,
     MathAssemblyPartData,
     MathGlyphAssemblyData,
+    MathGlyphKernData,
+    MathKernTableData,
     StrokeRecord,
 )
 from skeletonfont.planner import (
@@ -65,6 +67,12 @@ def adjustment_config(
     entries: dict[str, GlyphAdjustment],
 ) -> dict[GlyphAdjustmentSelector, GlyphAdjustment]:
     return {selector(name): value for name, value in entries.items()}
+
+
+def glyph_kern(value: int = -40) -> MathGlyphKernData:
+    return MathGlyphKernData(
+        bottom_right=MathKernTableData((), (value,))
+    )
 
 
 class GlyphConfigLoaderTests(unittest.TestCase):
@@ -177,7 +185,7 @@ class FontPlannerTests(unittest.TestCase):
         self.assertEqual(plan.point_radius_scale, 1.6)
         self.assertEqual(
             len(plan.real_glyphs) + len(plan.generated_glyphs),
-            1206,
+            1232,
         )
         self.assertEqual(
             sum(
@@ -185,7 +193,7 @@ class FontPlannerTests(unittest.TestCase):
                 for glyph in plan.real_glyphs.values()
             )
             + len(plan.generated_glyphs),
-            1041,
+            1067,
         )
         self.assertEqual(plan.real_glyphs[".notdef"].width, 600)
         self.assertTrue(plan.real_glyphs[".notdef"].strokes)
@@ -206,9 +214,10 @@ class FontPlannerTests(unittest.TestCase):
         )
         self.assertEqual(math_plan.top_accent_attachments["u1D453"], 400)
         self.assertEqual(math_plan.top_accent_attachments["j"], 400)
-        self.assertEqual(math_plan.top_accent_attachments["u1D457"], 400)
+        self.assertEqual(math_plan.top_accent_attachments["j.italic"], 400)
         self.assertEqual(math_plan.top_accent_attachments["t"], 200)
-        self.assertEqual(math_plan.top_accent_attachments["u1D461"], 200)
+        self.assertEqual(math_plan.top_accent_attachments["t.italic"], 200)
+        self.assertEqual(math_plan.top_accent_attachments["A.script"], 500)
         for generated in self.assembled_math.generated_glyphs:
             source_attachment = math_plan.top_accent_attachments.get(
                 generated.source_name
@@ -244,6 +253,48 @@ class FontPlannerTests(unittest.TestCase):
         with self.assertRaisesRegex(PlanError, "unknown glyphs"):
             plan_font(self.assembled_math, math_data=data)
 
+    def test_math_kerns_allow_supported_real_roles_and_inherit(self) -> None:
+        kern = glyph_kern()
+        data = replace(
+            self.math_data,
+            kerns=MappingProxyType(
+                {
+                    "A.script": kern,
+                    "parenleft.v1": kern,
+                    "uni23B4.h1": kern,
+                    "j": kern,
+                }
+            ),
+        )
+
+        math_plan = plan_font(self.assembled_math, math_data=data).math
+        assert math_plan is not None
+        self.assertEqual(math_plan.kerns["A.script"], kern)
+        self.assertEqual(math_plan.kerns["parenleft.v1"], kern)
+        self.assertEqual(math_plan.kerns["uni23B4.h1"], kern)
+        self.assertEqual(math_plan.kerns["j"], kern)
+        self.assertEqual(math_plan.kerns["j.italic"], kern)
+
+    def test_math_kerns_reject_unsupported_or_nonreal_names(self) -> None:
+        invalid = (
+            ("missing", frozenset(), "not planned as a real glyph"),
+            ("j.italic", frozenset(), "not planned as a real glyph"),
+            ("tildecomb", self.accent_glyphs, "unsupported planning role"),
+            ("uni239C", frozenset(), "unsupported planning role"),
+        )
+        for name, accent_glyphs, message in invalid:
+            with self.subTest(name=name):
+                data = replace(
+                    self.math_data,
+                    kerns=MappingProxyType({name: glyph_kern()}),
+                )
+                with self.assertRaisesRegex(PlanError, message):
+                    plan_font(
+                        self.assembled_math,
+                        math_data=data,
+                        accent_glyphs=accent_glyphs,
+                    )
+
     def test_top_accent_attachment_uses_effective_glyph_metrics(self) -> None:
         data = replace(
             self.math_data,
@@ -263,7 +314,7 @@ class FontPlannerTests(unittest.TestCase):
             ).math
         assert math_plan is not None
         self.assertEqual(math_plan.top_accent_attachments["j"], 420)
-        self.assertEqual(math_plan.top_accent_attachments["u1D457"], 420)
+        self.assertEqual(math_plan.top_accent_attachments["j.italic"], 420)
         self.assertEqual(
             sum(
                 call.args[0].name == "j"
@@ -292,7 +343,7 @@ class FontPlannerTests(unittest.TestCase):
             math_plan = plan_font(assembled, math_data=data).math
         assert math_plan is not None
         self.assertEqual(math_plan.top_accent_attachments["j"], 275)
-        self.assertEqual(math_plan.top_accent_attachments["u1D457"], 275)
+        self.assertEqual(math_plan.top_accent_attachments["j.italic"], 275)
         self.assertFalse(
             any(
                 call.args[0].name == "j"
@@ -336,7 +387,7 @@ class FontPlannerTests(unittest.TestCase):
     def test_top_accent_attachment_rejects_unsupported_roles(self) -> None:
         invalid = (
             ("missing", frozenset(), "not planned as a real glyph"),
-            ("u1D457", frozenset(), "not planned as a real glyph"),
+            ("j.italic", frozenset(), "not planned as a real glyph"),
             ("tildecomb", self.accent_glyphs, "unsupported planning role"),
             ("uni239C", frozenset(), "unsupported planning role"),
         )
@@ -1434,7 +1485,7 @@ class FontPlannerTests(unittest.TestCase):
         generated = next(
             glyph
             for glyph in self.math_plan.generated_glyphs
-            if glyph.target_name == "u1D434"
+            if glyph.target_name == "A.italic"
         )
 
         self.assertEqual(generated.source_name, "A")

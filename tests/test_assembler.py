@@ -3,12 +3,13 @@ from __future__ import annotations
 import unittest
 from dataclasses import replace
 from pathlib import Path
+from types import MappingProxyType
 from unittest.mock import patch
 
 from skeletonfont.assembler import GlyphCatalog, assemble_font
 from skeletonfont.errors import AssemblyError
 from skeletonfont.loader import load_font_meta
-from skeletonfont.mappings import get_mapping
+from skeletonfont.mappings import GlyphIdentity, GlyphMapping, get_mapping
 from skeletonfont.model import AssembledGlyph, GlyphSource
 
 
@@ -53,7 +54,7 @@ class FontAssemblerTests(unittest.TestCase):
             "bold": (97, 96),
             "fraktur": (97, 96),
             "jp": (275, 274),
-            "math": (1206, 1041),
+            "math": (1232, 1067),
             "mono": (578, 577),
             "monobold": (549, 548),
             "script": (97, 96),
@@ -91,7 +92,7 @@ class FontAssemblerTests(unittest.TestCase):
             for glyph in assembled.real_glyphs.values()
             if glyph.codepoint == 0x1D504
         )
-        self.assertEqual(fraktur_a.name, "u1D504")
+        self.assertEqual(fraktur_a.name, "A.fraktur")
         self.assertIsInstance(original_fraktur_a, GlyphSource)
         self.assertIsInstance(fraktur_a, AssembledGlyph)
         self.assertEqual(fraktur_a.codepoint, 0x1D504)
@@ -109,7 +110,7 @@ class FontAssemblerTests(unittest.TestCase):
             if glyph.target_codepoint == 0x1D434
         )
         self.assertEqual(italic_a.source_name, "A")
-        self.assertEqual(italic_a.target_name, "u1D434")
+        self.assertEqual(italic_a.target_name, "A.italic")
 
         equal = next(
             glyph
@@ -263,8 +264,14 @@ class FontAssemblerTests(unittest.TestCase):
             glyph_generators=("first", "second"),
         )
         mappings = {
-            "first": {0x0041: 0xE000},
-            "second": {0xE000: 0xE001},
+            "first": GlyphMapping(
+                MappingProxyType({0x0041: 0xE000}),
+                lambda source: f"{source.name}.first",
+            ),
+            "second": GlyphMapping(
+                MappingProxyType({0xE000: 0xE001}),
+                lambda source: f"{source.name}.second",
+            ),
         }
 
         with patch(
@@ -275,7 +282,27 @@ class FontAssemblerTests(unittest.TestCase):
 
         self.assertEqual(len(assembled.generated_glyphs), 1)
         self.assertEqual(assembled.generated_glyphs[0].source_name, "A")
+        self.assertEqual(assembled.generated_glyphs[0].target_name, "A.first")
         self.assertEqual(assembled.generated_glyphs[0].target_codepoint, 0xE000)
+
+    def test_generator_mapping_can_produce_an_unencoded_glyph(self) -> None:
+        meta = replace(
+            load_font_meta(PROJECT_DIRECTORY, "ascii"),
+            glyph_generators=("st",),
+        )
+        mapping = GlyphMapping(
+            MappingProxyType({0x0041: None}),
+            lambda source: f"{source.name}.st",
+        )
+
+        with patch("skeletonfont.assembler.get_mapping", return_value=mapping):
+            assembled = assemble_font(meta, self.catalog)
+
+        self.assertEqual(len(assembled.generated_glyphs), 1)
+        generated = assembled.generated_glyphs[0]
+        self.assertEqual(generated.source_name, "A")
+        self.assertEqual(generated.target_name, "A.st")
+        self.assertIsNone(generated.target_codepoint)
 
     def test_unicode_mappings_are_shared_and_read_only(self) -> None:
         first = get_mapping("italic_latin")
@@ -283,7 +310,24 @@ class FontAssemblerTests(unittest.TestCase):
 
         self.assertIs(first, second)
         with self.assertRaises(TypeError):
-            first[0x0041] = 0x0041  # type: ignore[index]
+            first.codepoints[0x0041] = 0x0041  # type: ignore[index]
+
+    def test_script_latin_mapping_includes_unicode_exceptions(self) -> None:
+        mapping = get_mapping("script_latin")
+
+        self.assertEqual(len(mapping.codepoints), 52)
+        self.assertEqual(mapping.codepoints[ord("A")], 0x1D49C)
+        self.assertEqual(mapping.codepoints[ord("B")], 0x212C)
+        self.assertEqual(mapping.codepoints[ord("R")], 0x211B)
+        self.assertEqual(mapping.codepoints[ord("a")], 0x1D4B6)
+        self.assertEqual(mapping.codepoints[ord("e")], 0x212F)
+        self.assertEqual(mapping.codepoints[ord("g")], 0x210A)
+        self.assertEqual(mapping.codepoints[ord("o")], 0x2134)
+        self.assertEqual(mapping.codepoints[ord("z")], 0x1D4CF)
+        self.assertEqual(
+            mapping.apply(GlyphIdentity("B", 0x0042)),
+            GlyphIdentity("B.script", 0x212C),
+        )
 
 
 if __name__ == "__main__":

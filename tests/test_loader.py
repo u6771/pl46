@@ -23,6 +23,7 @@ from skeletonfont.loader import (
     parse_math_accent_attachments,
     parse_math_constants,
     parse_math_italics_correction,
+    parse_math_kerns,
     parse_math_ssty,
     parse_stroke_record,
 )
@@ -477,6 +478,18 @@ class KerningLoaderTests(unittest.TestCase):
 
 
 class MathDataLoaderTests(unittest.TestCase):
+    def test_missing_kern_file_produces_empty_data(self) -> None:
+        meta = load_font_meta(PROJECT_DIRECTORY, "math")
+        assert meta.math_config is not None
+
+        data = load_math_data(
+            PROJECT_DIRECTORY,
+            replace(meta.math_config, kern_file=None),
+        )
+
+        self.assertIsNone(data.kern_source_path)
+        self.assertEqual(dict(data.kerns), {})
+
     def test_missing_accent_attachment_file_produces_empty_data(self) -> None:
         meta = load_font_meta(PROJECT_DIRECTORY, "math")
         assert meta.math_config is not None
@@ -532,6 +545,19 @@ class MathDataLoaderTests(unittest.TestCase):
         self.assertEqual(data.accent_attachments["u1D453"], 1.0)
         self.assertEqual(data.accent_attachments["j"], 1.0)
         self.assertEqual(data.accent_attachments["t"], -1.0)
+        assert data.kern_source_path is not None
+        self.assertEqual(data.kern_source_path.name, "math.json")
+        self.assertEqual(set(data.kerns), {"F", "T"})
+        assert data.kerns["F"].bottom_right is not None
+        self.assertEqual(
+            data.kerns["F"].bottom_right.kern_values,
+            (-200,),
+        )
+        assert data.kerns["T"].bottom_right is not None
+        self.assertEqual(
+            data.kerns["T"].bottom_right.kern_values,
+            (-100,),
+        )
         self.assertEqual(
             data.vertical_variant_glyphs["parenleft"][:2],
             ("parenleft.v1", "parenleft.v2"),
@@ -555,6 +581,75 @@ class MathDataLoaderTests(unittest.TestCase):
             data.italic_corrections["contourintegral"] = 0  # type: ignore[index]
         with self.assertRaises(TypeError):
             data.accent_attachments["j"] = 0  # type: ignore[index]
+        with self.assertRaises(TypeError):
+            data.kerns["F"] = data.kerns["F"]  # type: ignore[index]
+
+    def test_math_kerns_are_exact_typed_and_read_only(self) -> None:
+        table = {
+            "correction_height": [-100, 100],
+            "kern_values": [-30, -20, -10],
+        }
+        parsed = parse_math_kerns(
+            {
+                "A.script": {
+                    "top_right": table,
+                    "top_left": table,
+                    "bottom_right": table,
+                    "bottom_left": table,
+                }
+            },
+            source_path=Path("math_kern.json"),
+        )
+
+        glyph_kern = parsed["A.script"]
+        assert glyph_kern.bottom_right is not None
+        self.assertEqual(glyph_kern.bottom_right.correction_height, (-100, 100))
+        self.assertEqual(glyph_kern.bottom_right.kern_values, (-30, -20, -10))
+        with self.assertRaises(TypeError):
+            parsed["A.script"] = glyph_kern  # type: ignore[index]
+
+    def test_math_kerns_reject_selectors_and_invalid_tables(self) -> None:
+        valid_table = {
+            "correction_height": [],
+            "kern_values": [-40],
+        }
+        invalid_inputs = (
+            {},
+            {"A@variant_glyphs": {"bottom_right": valid_table}},
+            {"A": {}},
+            {"A": {"unknown": valid_table}},
+            {
+                "A": {
+                    "bottom_right": {
+                        "correction_height": [0],
+                        "kern_values": [-40],
+                    }
+                }
+            },
+            {
+                "A": {
+                    "bottom_right": {
+                        "correction_height": [0, 0],
+                        "kern_values": [-40, -30, -20],
+                    }
+                }
+            },
+            {
+                "A": {
+                    "bottom_right": {
+                        "correction_height": [0],
+                        "kern_values": [-40, 1.5],
+                    }
+                }
+            },
+        )
+        for value in invalid_inputs:
+            with self.subTest(value=value):
+                with self.assertRaises(ProjectDataError):
+                    parse_math_kerns(
+                        value,
+                        source_path=Path("math_kern.json"),
+                    )
 
     def test_math_accent_attachments_accept_finite_grid_coordinates(self) -> None:
         parsed = parse_math_accent_attachments(
@@ -819,6 +914,15 @@ class MathDataLoaderTests(unittest.TestCase):
                 return dict(data.italic_corrections)
             if path.parent.name == "math_accent_attachment":
                 return dict(data.accent_attachments)
+            if path.parent.name == "math_kern":
+                return {
+                    "F": {
+                        "bottom_right": {
+                            "correction_height": [],
+                            "kern_values": [-200],
+                        }
+                    }
+                }
             return {"vertical": {}, "horizontal": {}}
 
         with patch("skeletonfont.loader.read_json", side_effect=fake_read_json):

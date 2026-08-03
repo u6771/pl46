@@ -113,6 +113,22 @@ def apply_math_table(font: TTFont, plan: MathPlan) -> None:
         )
         for base, assembly in plan.horizontal_assemblies.items()
     }
+    math_kerns = {}
+    for glyph_name, glyph_kern in plan.kerns.items():
+        corners = {}
+        for attribute, table_name in (
+            ("top_right", "TopRight"),
+            ("top_left", "TopLeft"),
+            ("bottom_right", "BottomRight"),
+            ("bottom_left", "BottomLeft"),
+        ):
+            kern_table = getattr(glyph_kern, attribute)
+            if kern_table is not None:
+                corners[table_name] = (
+                    list(kern_table.correction_height),
+                    list(kern_table.kern_values),
+                )
+        math_kerns[glyph_name] = corners
 
     try:
         buildMathTable(
@@ -122,6 +138,7 @@ def apply_math_table(font: TTFont, plan: MathPlan) -> None:
             topAccentAttachments=(
                 dict(plan.top_accent_attachments) or None
             ),
+            mathKerns=math_kerns or None,
             extendedShapes=set(plan.extended_shapes),
             minConnectorOverlap=plan.min_connector_overlap,
             vertGlyphVariants=vertical or None,

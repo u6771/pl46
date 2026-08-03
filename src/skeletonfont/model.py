@@ -69,6 +69,7 @@ class MathConfig:
     ssty_file: str | None
     italics_correction_file: str | None
     accent_attachment_file: str | None
+    kern_file: str | None
 
 
 @dataclass(frozen=True, slots=True)
@@ -92,6 +93,24 @@ class MathGlyphAssemblyData:
 
 
 @dataclass(frozen=True, slots=True)
+class MathKernTableData:
+    """One validated height-dependent mathematical kern table."""
+
+    correction_height: tuple[int, ...]
+    kern_values: tuple[int, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class MathGlyphKernData:
+    """Optional mathematical kern tables for a glyph's four corners."""
+
+    top_right: MathKernTableData | None = None
+    top_left: MathKernTableData | None = None
+    bottom_right: MathKernTableData | None = None
+    bottom_left: MathKernTableData | None = None
+
+
+@dataclass(frozen=True, slots=True)
 class MathData:
     """Validated project inputs used to plan OpenType math data."""
 
@@ -103,6 +122,8 @@ class MathData:
     italic_corrections: Mapping[str, int]
     accent_attachment_source_path: Path | None
     accent_attachments: Mapping[str, float]
+    kern_source_path: Path | None
+    kerns: Mapping[str, MathGlyphKernData]
     min_connector_overlap: int
     vertical_variant_glyphs: Mapping[str, tuple[str, ...]]
     horizontal_variant_glyphs: Mapping[str, tuple[str, ...]]
@@ -160,7 +181,7 @@ class GeneratedGlyph:
 
     source_name: str
     target_name: str
-    target_codepoint: int
+    target_codepoint: int | None
 
 
 @dataclass(frozen=True, slots=True)
@@ -289,6 +310,7 @@ class MathPlan:
     extended_shapes: frozenset[str]
     italic_corrections: Mapping[str, int]
     top_accent_attachments: Mapping[str, int]
+    kerns: Mapping[str, MathGlyphKernData]
 
 
 @dataclass(frozen=True, slots=True)

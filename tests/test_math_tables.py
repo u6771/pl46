@@ -19,6 +19,8 @@ from skeletonfont.math_tables import apply_math_table
 from skeletonfont.model import (
     MathAssemblyPartPlan,
     MathGlyphAssemblyPlan,
+    MathGlyphKernData,
+    MathKernTableData,
     MathPlan,
 )
 from skeletonfont.planner import plan_font
@@ -92,6 +94,13 @@ class MathTableTests(unittest.TestCase):
             extended_shapes=frozenset(),
             italic_corrections=MappingProxyType({}),
             top_accent_attachments=MappingProxyType({}),
+            kerns=MappingProxyType(
+                {
+                    "A": MathGlyphKernData(
+                        bottom_right=MathKernTableData((), (-40,))
+                    )
+                }
+            ),
         )
         apply_math_table(font, plan)
 
@@ -112,6 +121,14 @@ class MathTableTests(unittest.TestCase):
             [],
         )
         self.assertEqual(reopened["GSUB"].table.LookupList.Lookup, [])
+        kern_info = reopened["MATH"].table.MathGlyphInfo.MathKernInfo
+        self.assertEqual(kern_info.MathKernCoverage.glyphs, ["A"])
+        bottom_right = kern_info.MathKernInfoRecords[0].BottomRightMathKern
+        self.assertEqual(bottom_right.HeightCount, 0)
+        self.assertEqual(
+            [value.Value for value in bottom_right.KernValue],
+            [-40],
+        )
 
     def test_vertical_and_horizontal_assemblies_are_serialized(self) -> None:
         base_plan = plan_font(
@@ -171,6 +188,7 @@ class MathTableTests(unittest.TestCase):
             extended_shapes=frozenset({"parenleft"}),
             italic_corrections=MappingProxyType({}),
             top_accent_attachments=MappingProxyType({}),
+            kerns=MappingProxyType({}),
         )
 
         apply_math_table(font, plan)

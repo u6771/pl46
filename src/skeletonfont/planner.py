@@ -21,6 +21,7 @@ from .model import (
     MathData,
     MathGlyphAssemblyData,
     MathGlyphAssemblyPlan,
+    MathGlyphKernData,
     MathPlan,
     MathVariantRecord,
     Point,
@@ -687,6 +688,37 @@ def _group_top_accent_attachments_by_role(
             grouped["horizontal_variant_glyph"]
         ),
     )
+
+
+def _validate_math_kerns_by_role(
+    kerns: Mapping[str, MathGlyphKernData],
+    glyphs_by_role: Mapping[_GlyphRole, Mapping[str, AssembledGlyph]],
+) -> Mapping[str, MathGlyphKernData]:
+    """Validate exact math-kern names against supported real-glyph roles."""
+
+    role_by_name = {
+        name: role
+        for role, glyphs in glyphs_by_role.items()
+        for name in glyphs
+    }
+    supported_roles = {
+        "ordinary",
+        "vertical_variant_glyph",
+        "horizontal_variant_glyph",
+    }
+    for name in kerns:
+        role = role_by_name.get(name)
+        if role is None:
+            raise PlanError(
+                "Math kern references a name not planned as a real glyph: "
+                f"{name!r}."
+            )
+        if role not in supported_roles:
+            raise PlanError(
+                f"Math kern glyph {name!r} has unsupported planning role "
+                f"{role!r}; expected an ordinary or discrete variant glyph."
+            )
+    return kerns
 
 
 def _construction_members(
@@ -1543,6 +1575,10 @@ def plan_font(
         {} if math_data is None else math_data.accent_attachments,
         glyphs_by_role,
     )
+    real_math_kerns = _validate_math_kerns_by_role(
+        {} if math_data is None else math_data.kerns,
+        glyphs_by_role,
+    )
     ordinary_glyph_plans = _plan_ordinary_glyphs(
         glyphs_by_role["ordinary"],
         parameters,
@@ -1633,12 +1669,16 @@ def plan_font(
             **horizontal_variant_glyph_plans.top_accent_attachments,
         }
         top_accent_attachments = dict(real_top_accent_attachments)
+        math_kerns = dict(real_math_kerns)
         for generated in assembled_font.generated_glyphs:
             attachment = real_top_accent_attachments.get(
                 generated.source_name
             )
             if attachment is not None:
                 top_accent_attachments[generated.target_name] = attachment
+            kern = real_math_kerns.get(generated.source_name)
+            if kern is not None:
+                math_kerns[generated.target_name] = kern
         math_plan = MathPlan(
             constants=math_data.constants,
             ssty_feature=_ssty_feature(math_data.ssty, glyph_names),
@@ -1658,6 +1698,7 @@ def plan_font(
             top_accent_attachments=MappingProxyType(
                 top_accent_attachments
             ),
+            kerns=MappingProxyType(math_kerns),
         )
 
     return FontPlan(

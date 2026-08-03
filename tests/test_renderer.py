@@ -13,6 +13,7 @@ from skeletonfont.loader import (
 )
 from skeletonfont.planner import plan_font
 from skeletonfont.renderer import render_font
+from skeletonfont.model import GeneratedGlyph
 
 
 PROJECT_DIRECTORY = Path(__file__).resolve().parents[1]
@@ -39,7 +40,7 @@ class FontRendererTests(unittest.TestCase):
     def test_font_info_and_notdef_are_rendered(self) -> None:
         font = self.font
 
-        self.assertEqual(len(font), 1206)
+        self.assertEqual(len(font), 1232)
         self.assertEqual(font.info.familyName, "PL46")
         self.assertEqual(font.info.styleName, "Math")
         self.assertEqual(font.info.unitsPerEm, 1000)
@@ -58,7 +59,7 @@ class FontRendererTests(unittest.TestCase):
 
     def test_generated_glyph_copies_rendered_source_outline(self) -> None:
         source = self.font["A"]
-        generated = self.font["u1D434"]
+        generated = self.font["A.italic"]
 
         self.assertEqual(generated.width, source.width)
         self.assertEqual(generated.contours, source.contours)
@@ -83,7 +84,22 @@ class FontRendererTests(unittest.TestCase):
             plan_font(assembled, config, math_data=math_data)
         )
 
-        self.assertEqual(font["u1D434"].contours, font["A"].contours)
+        self.assertEqual(font["A.italic"].contours, font["A"].contours)
+
+    def test_unencoded_generated_copy_has_no_unicode(self) -> None:
+        assembled = assemble_font(
+            load_font_meta(PROJECT_DIRECTORY, "ascii"),
+            GlyphCatalog(PROJECT_DIRECTORY),
+        )
+        plan = replace(
+            plan_font(assembled),
+            generated_glyphs=(GeneratedGlyph("A", "A.st", None),),
+        )
+
+        font = render_font(plan)
+
+        self.assertEqual(font["A.st"].contours, font["A"].contours)
+        self.assertEqual(font["A.st"].unicodes, [])
 
     def test_ssty_feature_is_written_before_compilation(self) -> None:
         feature = self.font.features.text

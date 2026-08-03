@@ -86,9 +86,34 @@ class BuildPipelineTests(unittest.TestCase):
                 )
             )
             self.assertEqual(serialized_accent_attachments["j"], 400)
-            self.assertEqual(serialized_accent_attachments["u1D457"], 400)
+            self.assertEqual(serialized_accent_attachments["j.italic"], 400)
             self.assertEqual(serialized_accent_attachments["t"], 200)
-            self.assertEqual(serialized_accent_attachments["u1D461"], 200)
+            self.assertEqual(serialized_accent_attachments["t.italic"], 200)
+
+            kern_info = font["MATH"].table.MathGlyphInfo.MathKernInfo
+            serialized_kerns = dict(
+                zip(
+                    kern_info.MathKernCoverage.glyphs,
+                    kern_info.MathKernInfoRecords,
+                    strict=True,
+                )
+            )
+            self.assertEqual(
+                set(serialized_kerns),
+                {"F", "F.italic", "T", "T.italic"},
+            )
+            for name, expected in (
+                ("F", -200),
+                ("F.italic", -200),
+                ("T", -100),
+                ("T.italic", -100),
+            ):
+                table = serialized_kerns[name].BottomRightMathKern
+                self.assertEqual(table.HeightCount, 0)
+                self.assertEqual(
+                    [value.Value for value in table.KernValue],
+                    [expected],
+                )
 
             scripts = {
                 record.ScriptTag: record.Script

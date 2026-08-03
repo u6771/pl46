@@ -6,7 +6,7 @@ from types import MappingProxyType
 
 from .errors import AssemblyError
 from .loader import load_glyph_source_directory
-from .mappings import get_mapping, glyph_name_for_codepoint
+from .mappings import GlyphIdentity, get_mapping
 from .model import (
     AssembledFont,
     AssembledGlyph,
@@ -104,10 +104,12 @@ def _selected_glyphs(
         else:
             if glyph.codepoint is None:
                 continue
-            target_codepoint = mapping.get(glyph.codepoint)
-            if target_codepoint is None:
+            target = mapping.apply(
+                GlyphIdentity(glyph.name, glyph.codepoint)
+            )
+            if target is None:
                 continue
-            target_name = glyph_name_for_codepoint(target_codepoint)
+            target_name = target.name
             if target_name in produced_names:
                 raise AssemblyError(
                     f"Mapping {rule.mapping_name!r} produced duplicate "
@@ -117,7 +119,7 @@ def _selected_glyphs(
             entry = _assembled_glyph(
                 glyph,
                 name=target_name,
-                codepoint=target_codepoint,
+                codepoint=target.codepoint,
             )
         selected.append(entry)
 
@@ -187,16 +189,22 @@ def _apply_generators(
     occupied_codepoints = set(real_glyphs_by_codepoint)
 
     for generator_name in generator_names:
-        for source_codepoint, target_codepoint in get_mapping(
-            generator_name
-        ).items():
-            if target_codepoint in occupied_codepoints:
-                continue
+        mapping = get_mapping(generator_name)
+        for source_codepoint in mapping.codepoints:
             source = real_glyphs_by_codepoint.get(source_codepoint)
             if source is None:
                 continue
 
-            target_name = glyph_name_for_codepoint(target_codepoint)
+            target = mapping.apply(
+                GlyphIdentity(source.name, source.codepoint)
+            )
+            assert target is not None
+            if (
+                target.codepoint is not None
+                and target.codepoint in occupied_codepoints
+            ):
+                continue
+            target_name = target.name
             if target_name in occupied_names:
                 raise AssemblyError(
                     f"Generator {generator_name!r} cannot create "
@@ -207,11 +215,12 @@ def _apply_generators(
                 GeneratedGlyph(
                     source_name=source.name,
                     target_name=target_name,
-                    target_codepoint=target_codepoint,
+                    target_codepoint=target.codepoint,
                 )
             )
             occupied_names.add(target_name)
-            occupied_codepoints.add(target_codepoint)
+            if target.codepoint is not None:
+                occupied_codepoints.add(target.codepoint)
 
     return tuple(generated)
 

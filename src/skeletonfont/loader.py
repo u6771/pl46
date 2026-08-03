@@ -25,6 +25,8 @@ from .model import (
     MathConfig,
     MathData,
     MathGlyphAssemblyData,
+    MathGlyphKernData,
+    MathKernTableData,
     Point,
     SourceRule,
     StrokeRecord,
@@ -111,6 +113,7 @@ _MATH_FIELDS = {
     "variants_file",
     "italics_correction_file",
     "accent_attachment_file",
+    "kern_file",
 }
 
 _GLYPH_CONFIG_FIELDS = {
@@ -139,6 +142,18 @@ _MATH_CONSTRUCTION_FIELDS = {
     "variant_glyphs",
     "italic_correction",
     "parts",
+}
+
+_MATH_KERN_CORNERS = {
+    "top_right",
+    "top_left",
+    "bottom_right",
+    "bottom_left",
+}
+
+_MATH_KERN_TABLE_FIELDS = {
+    "correction_height",
+    "kern_values",
 }
 
 _VERTICAL_ASSEMBLY_PART_FIELDS = {
@@ -493,6 +508,10 @@ def _parse_math_config(
             data.get("accent_attachment_file"),
             location=f"{location}.accent_attachment_file",
         ),
+        kern_file=_optional_json_filename(
+            data.get("kern_file"),
+            location=f"{location}.kern_file",
+        ),
     )
 
 
@@ -765,6 +784,99 @@ def parse_math_accent_attachments(
     return MappingProxyType(result)
 
 
+def _parse_math_kern_table(
+    value: object,
+    *,
+    location: str,
+) -> MathKernTableData:
+    data = _object(value, location=location)
+    _reject_unknown_fields(
+        data,
+        _MATH_KERN_TABLE_FIELDS,
+        location=location,
+    )
+    missing = _MATH_KERN_TABLE_FIELDS - set(data)
+    if missing:
+        raise ProjectDataError(
+            f"{location} is missing required fields: {sorted(missing)}"
+        )
+    correction_height = tuple(
+        _integer(item, location=f"{location}.correction_height[{index}]")
+        for index, item in enumerate(
+            _array(
+                data["correction_height"],
+                location=f"{location}.correction_height",
+            )
+        )
+    )
+    if any(
+        first >= second
+        for first, second in zip(
+            correction_height,
+            correction_height[1:],
+        )
+    ):
+        raise ProjectDataError(
+            f"{location}.correction_height must be strictly increasing."
+        )
+    kern_values = tuple(
+        _integer(item, location=f"{location}.kern_values[{index}]")
+        for index, item in enumerate(
+            _array(
+                data["kern_values"],
+                location=f"{location}.kern_values",
+            )
+        )
+    )
+    if len(kern_values) != len(correction_height) + 1:
+        raise ProjectDataError(
+            f"{location}.kern_values must contain exactly one more value "
+            "than correction_height."
+        )
+    return MathKernTableData(correction_height, kern_values)
+
+
+def parse_math_kerns(
+    value: object,
+    *,
+    source_path: Path,
+) -> Mapping[str, MathGlyphKernData]:
+    """Parse mathematical kern tables keyed by exact glyph names."""
+
+    data = _object(value, location=str(source_path))
+    if not data:
+        raise ProjectDataError(f"{source_path} cannot be empty.")
+
+    result: dict[str, MathGlyphKernData] = {}
+    for raw_name, raw_glyph_kern in data.items():
+        name = _safe_name(raw_name, location=f"{source_path} glyph name")
+        location = f"{source_path}.{name}"
+        glyph_kern = _object(raw_glyph_kern, location=location)
+        _reject_unknown_fields(
+            glyph_kern,
+            _MATH_KERN_CORNERS,
+            location=location,
+        )
+        if not glyph_kern:
+            raise ProjectDataError(
+                f"{location} must define at least one math-kern corner."
+            )
+        corners = {
+            corner: _parse_math_kern_table(
+                table,
+                location=f"{location}.{corner}",
+            )
+            for corner, table in glyph_kern.items()
+        }
+        result[name] = MathGlyphKernData(
+            top_right=corners.get("top_right"),
+            top_left=corners.get("top_left"),
+            bottom_right=corners.get("bottom_right"),
+            bottom_left=corners.get("bottom_left"),
+        )
+    return MappingProxyType(result)
+
+
 def _parse_math_variant_glyph_names(
     value: object,
     *,
@@ -993,6 +1105,20 @@ def load_math_data(
         )
     )
 
+    kern_path = (
+        None
+        if config.kern_file is None
+        else project_directory / "math_kern" / config.kern_file
+    )
+    kerns = (
+        MappingProxyType({})
+        if kern_path is None
+        else parse_math_kerns(
+            read_json(kern_path),
+            source_path=kern_path,
+        )
+    )
+
     variants_path = (
         None
         if config.variants_file is None
@@ -1055,6 +1181,8 @@ def load_math_data(
         italic_corrections=italic_corrections,
         accent_attachment_source_path=accent_attachment_path,
         accent_attachments=accent_attachments,
+        kern_source_path=kern_path,
+        kerns=kerns,
         min_connector_overlap=min_connector_overlap,
         vertical_variant_glyphs=vertical_variant_glyphs,
         horizontal_variant_glyphs=horizontal_variant_glyphs,
