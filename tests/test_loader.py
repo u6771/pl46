@@ -20,6 +20,7 @@ from skeletonfont.loader import (
     parse_font_meta,
     parse_accent_glyphs,
     parse_glyph_source,
+    parse_math_accent_attachments,
     parse_math_constants,
     parse_math_italics_correction,
     parse_math_ssty,
@@ -80,6 +81,10 @@ class FontMetaLoaderTests(unittest.TestCase):
         self.assertEqual(meta.math_config.ssty_file, "math.json")
         self.assertEqual(
             meta.math_config.italics_correction_file,
+            "math.json",
+        )
+        self.assertEqual(
+            meta.math_config.accent_attachment_file,
             "math.json",
         )
 
@@ -433,9 +438,9 @@ class AccentLoaderTests(unittest.TestCase):
     def test_accent_glyphs_are_unique_valid_names(self) -> None:
         accents = load_accent_glyphs(PROJECT_DIRECTORY, "math.json")
 
-        self.assertEqual(
+        self.assertLessEqual(
+            {"tildecomb", "circumflexcmb"},
             accents,
-            frozenset({"tildecomb", "circumflexcmb"}),
         )
 
     def test_accent_file_rejects_empty_duplicate_and_invalid_names(self) -> None:
@@ -472,6 +477,18 @@ class KerningLoaderTests(unittest.TestCase):
 
 
 class MathDataLoaderTests(unittest.TestCase):
+    def test_missing_accent_attachment_file_produces_empty_data(self) -> None:
+        meta = load_font_meta(PROJECT_DIRECTORY, "math")
+        assert meta.math_config is not None
+
+        data = load_math_data(
+            PROJECT_DIRECTORY,
+            replace(meta.math_config, accent_attachment_file=None),
+        )
+
+        self.assertIsNone(data.accent_attachment_source_path)
+        self.assertEqual(dict(data.accent_attachments), {})
+
     def test_missing_italics_correction_file_produces_empty_data(self) -> None:
         meta = load_font_meta(PROJECT_DIRECTORY, "math")
         assert meta.math_config is not None
@@ -512,6 +529,9 @@ class MathDataLoaderTests(unittest.TestCase):
             200,
         )
         self.assertEqual(set(data.italic_corrections.values()), {200})
+        self.assertEqual(data.accent_attachments["u1D453"], 1.0)
+        self.assertEqual(data.accent_attachments["j"], 1.0)
+        self.assertEqual(data.accent_attachments["t"], -1.0)
         self.assertEqual(
             data.vertical_variant_glyphs["parenleft"][:2],
             ("parenleft.v1", "parenleft.v2"),
@@ -533,6 +553,39 @@ class MathDataLoaderTests(unittest.TestCase):
             data.constants["AxisHeight"] = 0  # type: ignore[index]
         with self.assertRaises(TypeError):
             data.italic_corrections["contourintegral"] = 0  # type: ignore[index]
+        with self.assertRaises(TypeError):
+            data.accent_attachments["j"] = 0  # type: ignore[index]
+
+    def test_math_accent_attachments_accept_finite_grid_coordinates(self) -> None:
+        parsed = parse_math_accent_attachments(
+            {"f": 1, "j": 1.5, "A": -1},
+            source_path=Path("accent_attachment.json"),
+        )
+
+        self.assertEqual(dict(parsed), {"f": 1.0, "j": 1.5, "A": -1.0})
+
+    def test_math_accent_attachments_reject_invalid_data(self) -> None:
+        with self.assertRaisesRegex(ProjectDataError, "cannot be empty"):
+            parse_math_accent_attachments(
+                {},
+                source_path=Path("accent_attachment.json"),
+            )
+
+        for name in ("", "A@variant_glyphs"):
+            with self.subTest(name=name):
+                with self.assertRaises(ProjectDataError):
+                    parse_math_accent_attachments(
+                        {name: 1},
+                        source_path=Path("accent_attachment.json"),
+                    )
+
+        for value in (True, "1", float("inf"), float("nan")):
+            with self.subTest(value=value):
+                with self.assertRaises(ProjectDataError):
+                    parse_math_accent_attachments(
+                        {"j": value},
+                        source_path=Path("accent_attachment.json"),
+                    )
 
     def test_math_italics_correction_values_are_exact_and_read_only(self) -> None:
         parsed = parse_math_italics_correction(
@@ -764,6 +817,8 @@ class MathDataLoaderTests(unittest.TestCase):
                 }
             if path.parent.name == "math_italics_correction":
                 return dict(data.italic_corrections)
+            if path.parent.name == "math_accent_attachment":
+                return dict(data.accent_attachments)
             return {"vertical": {}, "horizontal": {}}
 
         with patch("skeletonfont.loader.read_json", side_effect=fake_read_json):

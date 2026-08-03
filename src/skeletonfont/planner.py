@@ -61,9 +61,23 @@ class _VerticalLayout:
 
 
 @dataclass(frozen=True, slots=True)
+class _OrdinaryGlyphPlans:
+    glyph_plans: Mapping[str, RealGlyphPlan]
+    top_accent_attachments: Mapping[str, int]
+
+
+@dataclass(frozen=True, slots=True)
 class _VariantGlyphPlans:
     glyph_plans: Mapping[str, RealGlyphPlan]
     full_advances: Mapping[str, int]
+    top_accent_attachments: Mapping[str, int]
+
+
+@dataclass(frozen=True, slots=True)
+class _TopAccentAttachmentInputs:
+    ordinary: Mapping[str, float]
+    vertical_variant_glyph: Mapping[str, float]
+    horizontal_variant_glyph: Mapping[str, float]
 
 
 @dataclass(frozen=True, slots=True)
@@ -106,6 +120,23 @@ def _adjusted_spacing(
     return (
         parameters.left_spacing + left_adjustment,
         parameters.right_spacing + right_adjustment,
+    )
+
+
+def _top_accent_attachment(
+    attachment: float | None,
+    glyph: AssembledGlyph,
+    parameters: GlyphParameters,
+    *,
+    start_scale: float,
+    left_spacing: float,
+) -> int | None:
+    if attachment is None:
+        return None
+    return round(
+        (attachment - glyph.monospace_x_offset) * parameters.grid
+        + start_scale * parameters.radius
+        + left_spacing
     )
 
 
@@ -262,20 +293,29 @@ def _plan_proportional_real_glyph(
     glyph: AssembledGlyph,
     parameters: GlyphParameters,
     adjustment: GlyphSpacingAdjustment,
-) -> RealGlyphPlan:
+    top_accent_attachment: float | None,
+) -> tuple[RealGlyphPlan, int | None]:
     left_spacing, right_spacing = _adjusted_spacing(parameters, adjustment)
     if not glyph.skeleton:
-        return RealGlyphPlan(
-            name=glyph.name,
-            codepoint=glyph.codepoint,
-            source_path=glyph.source_path,
-            width=_rounded_width(
-                glyph.x_extent * parameters.grid
-                + left_spacing
-                + right_spacing,
-                glyph_name=glyph.name,
+        if top_accent_attachment is not None:
+            raise PlanError(
+                f"Math top accent attachment glyph {glyph.name!r} has no "
+                "non-empty skeleton."
+            )
+        return (
+            RealGlyphPlan(
+                name=glyph.name,
+                codepoint=glyph.codepoint,
+                source_path=glyph.source_path,
+                width=_rounded_width(
+                    glyph.x_extent * parameters.grid
+                    + left_spacing
+                    + right_spacing,
+                    glyph_name=glyph.name,
+                ),
+                strokes=(),
             ),
-            strokes=(),
+            None,
         )
 
     authored_scale = None if parameters.use_scaled_edge_thickness else 1.0
@@ -295,7 +335,7 @@ def _plan_proportional_real_glyph(
         + right_spacing,
         glyph_name=glyph.name,
     )
-    return RealGlyphPlan(
+    glyph_plan = RealGlyphPlan(
         name=glyph.name,
         codepoint=glyph.codepoint,
         source_path=glyph.source_path,
@@ -312,16 +352,27 @@ def _plan_proportional_real_glyph(
             font_y_shift=parameters.y_shift + parameters.radius,
         ),
     )
+    return (
+        glyph_plan,
+        _top_accent_attachment(
+            top_accent_attachment,
+            glyph,
+            parameters,
+            start_scale=x_measurement.start_scale,
+            left_spacing=left_spacing,
+        ),
+    )
 
 
 def _plan_monospace_real_glyph(
     glyph: AssembledGlyph,
     parameters: GlyphParameters,
-) -> RealGlyphPlan:
+    top_accent_attachment: float | None,
+) -> tuple[RealGlyphPlan, int | None]:
     assert parameters.monospace_width is not None
     left_spacing = parameters.left_spacing
     right_spacing = parameters.right_spacing
-    return RealGlyphPlan(
+    glyph_plan = RealGlyphPlan(
         name=glyph.name,
         codepoint=glyph.codepoint,
         source_path=glyph.source_path,
@@ -339,15 +390,27 @@ def _plan_monospace_real_glyph(
             font_y_shift=parameters.y_shift + parameters.radius,
         ),
     )
+    if top_accent_attachment is None:
+        return glyph_plan, None
+    return (
+        glyph_plan,
+        round(
+            (top_accent_attachment + glyph.monospace_x_offset)
+            * parameters.grid
+            + left_spacing
+            + parameters.monospace_width / 2
+        ),
+    )
 
 
 def _plan_variant_glyph(
     glyph: AssembledGlyph,
     parameters: GlyphParameters,
     adjustment: GlyphSpacingAdjustment,
+    top_accent_attachment: float | None = None,
     *,
     axis: _Axis,
-) -> tuple[RealGlyphPlan, int]:
+) -> tuple[RealGlyphPlan, int, int | None]:
     if not glyph.skeleton:
         raise PlanError(f"Math variant glyph {glyph.name!r} has no skeleton.")
 
@@ -410,30 +473,48 @@ def _plan_variant_glyph(
         ),
         glyph_name=glyph.name,
     )
-    return glyph_plan, full_advance
+    return (
+        glyph_plan,
+        full_advance,
+        _top_accent_attachment(
+            top_accent_attachment,
+            glyph,
+            parameters,
+            start_scale=x_measurement.start_scale,
+            left_spacing=left_spacing,
+        ),
+    )
 
 
 def _plan_ordinary_glyphs(
     glyphs: Mapping[str, AssembledGlyph],
     parameters: GlyphParameters,
     adjustment_by_name: Mapping[str, GlyphSpacingAdjustment],
-) -> Mapping[str, RealGlyphPlan]:
-    if parameters.monospace_width is not None:
-        return MappingProxyType(
-            {
-                name: _plan_monospace_real_glyph(glyph, parameters)
-                for name, glyph in glyphs.items()
-            }
-        )
-    return MappingProxyType(
-        {
-            name: _plan_proportional_real_glyph(
+    top_accent_attachments: Mapping[str, float],
+) -> _OrdinaryGlyphPlans:
+    glyph_plans: dict[str, RealGlyphPlan] = {}
+    planned_attachments: dict[str, int] = {}
+    for name, glyph in glyphs.items():
+        attachment = top_accent_attachments.get(name)
+        if parameters.monospace_width is None:
+            glyph_plan, planned_attachment = _plan_proportional_real_glyph(
                 glyph,
                 parameters,
                 adjustment_by_name.get(name, _EMPTY_SPACING_ADJUSTMENT),
+                attachment,
             )
-            for name, glyph in glyphs.items()
-        }
+        else:
+            glyph_plan, planned_attachment = _plan_monospace_real_glyph(
+                glyph,
+                parameters,
+                attachment,
+            )
+        glyph_plans[name] = glyph_plan
+        if planned_attachment is not None:
+            planned_attachments[name] = planned_attachment
+    return _OrdinaryGlyphPlans(
+        glyph_plans=MappingProxyType(glyph_plans),
+        top_accent_attachments=MappingProxyType(planned_attachments),
     )
 
 
@@ -441,23 +522,29 @@ def _plan_variant_glyphs(
     glyphs: Mapping[str, AssembledGlyph],
     parameters: GlyphParameters,
     adjustment_by_name: Mapping[str, GlyphSpacingAdjustment],
+    top_accent_attachments: Mapping[str, float],
     *,
     axis: _Axis,
 ) -> _VariantGlyphPlans:
     planned_glyphs: dict[str, RealGlyphPlan] = {}
     full_advances: dict[str, int] = {}
+    planned_attachments: dict[str, int] = {}
     for name, glyph in glyphs.items():
-        plan, full_advance = _plan_variant_glyph(
+        plan, full_advance, planned_attachment = _plan_variant_glyph(
             glyph,
             parameters,
             adjustment_by_name.get(name, _EMPTY_SPACING_ADJUSTMENT),
+            top_accent_attachments.get(name),
             axis=axis,
         )
         planned_glyphs[name] = plan
         full_advances[name] = full_advance
+        if planned_attachment is not None:
+            planned_attachments[name] = planned_attachment
     return _VariantGlyphPlans(
         glyph_plans=MappingProxyType(planned_glyphs),
         full_advances=MappingProxyType(full_advances),
+        top_accent_attachments=MappingProxyType(planned_attachments),
     )
 
 
@@ -465,11 +552,13 @@ def _plan_vertical_variant_glyphs(
     glyphs: Mapping[str, AssembledGlyph],
     parameters: GlyphParameters,
     adjustment_by_name: Mapping[str, GlyphSpacingAdjustment],
+    top_accent_attachments: Mapping[str, float],
 ) -> _VariantGlyphPlans:
     return _plan_variant_glyphs(
         glyphs,
         parameters,
         adjustment_by_name,
+        top_accent_attachments,
         axis=1,
     )
 
@@ -478,11 +567,13 @@ def _plan_horizontal_variant_glyphs(
     glyphs: Mapping[str, AssembledGlyph],
     parameters: GlyphParameters,
     adjustment_by_name: Mapping[str, GlyphSpacingAdjustment],
+    top_accent_attachments: Mapping[str, float],
 ) -> _VariantGlyphPlans:
     return _plan_variant_glyphs(
         glyphs,
         parameters,
         adjustment_by_name,
+        top_accent_attachments,
         axis=0,
     )
 
@@ -555,6 +646,47 @@ def _validate_italic_corrections(
             f"{sorted(missing)}"
         )
     return italic_corrections
+
+
+def _group_top_accent_attachments_by_role(
+    accent_attachments: Mapping[str, float],
+    glyphs_by_role: Mapping[_GlyphRole, Mapping[str, AssembledGlyph]],
+) -> _TopAccentAttachmentInputs:
+    """Validate exact glyph names and divide authored points by role."""
+
+    role_by_name = {
+        name: role
+        for role, glyphs in glyphs_by_role.items()
+        for name in glyphs
+    }
+    grouped: dict[str, dict[str, float]] = {
+        "ordinary": {},
+        "vertical_variant_glyph": {},
+        "horizontal_variant_glyph": {},
+    }
+    for name, attachment in accent_attachments.items():
+        role = role_by_name.get(name)
+        if role is None:
+            raise PlanError(
+                "Math top accent attachment references a name not planned "
+                f"as a real glyph: {name!r}."
+            )
+        if role not in grouped:
+            raise PlanError(
+                f"Math top accent attachment glyph {name!r} has unsupported "
+                f"planning role {role!r}; expected an ordinary or discrete "
+                "variant glyph."
+            )
+        grouped[role][name] = attachment
+    return _TopAccentAttachmentInputs(
+        ordinary=MappingProxyType(grouped["ordinary"]),
+        vertical_variant_glyph=MappingProxyType(
+            grouped["vertical_variant_glyph"]
+        ),
+        horizontal_variant_glyph=MappingProxyType(
+            grouped["horizontal_variant_glyph"]
+        ),
+    )
 
 
 def _construction_members(
@@ -1407,10 +1539,15 @@ def plan_font(
         vertical_assemblies,
         horizontal_assemblies,
     )
+    top_accent_attachment_inputs = _group_top_accent_attachments_by_role(
+        {} if math_data is None else math_data.accent_attachments,
+        glyphs_by_role,
+    )
     ordinary_glyph_plans = _plan_ordinary_glyphs(
         glyphs_by_role["ordinary"],
         parameters,
         resolved_spacing_adjustments.real_glyph_spacing_by_name,
+        top_accent_attachment_inputs.ordinary,
     )
     accent_glyph_plans = _plan_accent_glyphs(
         glyphs_by_role["accent"],
@@ -1420,11 +1557,13 @@ def plan_font(
         glyphs_by_role["vertical_variant_glyph"],
         parameters,
         resolved_spacing_adjustments.real_glyph_spacing_by_name,
+        top_accent_attachment_inputs.vertical_variant_glyph,
     )
     horizontal_variant_glyph_plans = _plan_horizontal_variant_glyphs(
         glyphs_by_role["horizontal_variant_glyph"],
         parameters,
         resolved_spacing_adjustments.real_glyph_spacing_by_name,
+        top_accent_attachment_inputs.horizontal_variant_glyph,
     )
     minimum_overlap = (
         0 if math_data is None else math_data.min_connector_overlap
@@ -1447,7 +1586,7 @@ def plan_font(
     for role, plans in (
         (
             "ordinary",
-            ordinary_glyph_plans,
+            ordinary_glyph_plans.glyph_plans,
         ),
         (
             "accent",
@@ -1488,6 +1627,18 @@ def plan_font(
     )
     math_plan: MathPlan | None = None
     if math_data is not None:
+        real_top_accent_attachments = {
+            **ordinary_glyph_plans.top_accent_attachments,
+            **vertical_variant_glyph_plans.top_accent_attachments,
+            **horizontal_variant_glyph_plans.top_accent_attachments,
+        }
+        top_accent_attachments = dict(real_top_accent_attachments)
+        for generated in assembled_font.generated_glyphs:
+            attachment = real_top_accent_attachments.get(
+                generated.source_name
+            )
+            if attachment is not None:
+                top_accent_attachments[generated.target_name] = attachment
         math_plan = MathPlan(
             constants=math_data.constants,
             ssty_feature=_ssty_feature(math_data.ssty, glyph_names),
@@ -1503,6 +1654,9 @@ def plan_font(
             italic_corrections=_validate_italic_corrections(
                 math_data.italic_corrections,
                 glyph_names,
+            ),
+            top_accent_attachments=MappingProxyType(
+                top_accent_attachments
             ),
         )
 

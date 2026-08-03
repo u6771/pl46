@@ -53,7 +53,7 @@ class FontAssemblerTests(unittest.TestCase):
             "bold": (97, 96),
             "fraktur": (97, 96),
             "jp": (275, 274),
-            "math": (1204, 1039),
+            "math": (1206, 1041),
             "mono": (578, 577),
             "monobold": (549, 548),
             "script": (97, 96),
@@ -193,14 +193,14 @@ class FontAssemblerTests(unittest.TestCase):
         encoded_only = assemble_font(without_unencoded, self.catalog)
         all_math = assemble_font(with_unencoded, self.catalog)
 
-        self.assertEqual(len(encoded_only.real_glyphs), 428)
-        self.assertEqual(len(all_math.real_glyphs), 592)
+        self.assertEqual(len(encoded_only.real_glyphs), 430)
+        self.assertEqual(len(all_math.real_glyphs), 594)
         self.assertEqual(
             sum(
                 glyph.codepoint is not None
                 for glyph in all_math.real_glyphs.values()
             ),
-            427,
+            429,
         )
 
     def test_conflict_requires_replace_existing(self) -> None:

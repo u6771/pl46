@@ -71,6 +71,24 @@ class BuildPipelineTests(unittest.TestCase):
                 set(serialized_italic_corrections.values()),
                 {200},
             )
+            accent_attachment = (
+                font["MATH"]
+                .table.MathGlyphInfo.MathTopAccentAttachment
+            )
+            serialized_accent_attachments = dict(
+                zip(
+                    accent_attachment.TopAccentCoverage.glyphs,
+                    (
+                        value.Value
+                        for value in accent_attachment.TopAccentAttachment
+                    ),
+                    strict=True,
+                )
+            )
+            self.assertEqual(serialized_accent_attachments["j"], 400)
+            self.assertEqual(serialized_accent_attachments["u1D457"], 400)
+            self.assertEqual(serialized_accent_attachments["t"], 200)
+            self.assertEqual(serialized_accent_attachments["u1D461"], 200)
 
             scripts = {
                 record.ScriptTag: record.Script

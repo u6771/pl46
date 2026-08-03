@@ -110,6 +110,7 @@ _MATH_FIELDS = {
     "ssty_file",
     "variants_file",
     "italics_correction_file",
+    "accent_attachment_file",
 }
 
 _GLYPH_CONFIG_FIELDS = {
@@ -488,6 +489,10 @@ def _parse_math_config(
             data.get("italics_correction_file"),
             location=f"{location}.italics_correction_file",
         ),
+        accent_attachment_file=_optional_json_filename(
+            data.get("accent_attachment_file"),
+            location=f"{location}.accent_attachment_file",
+        ),
     )
 
 
@@ -739,6 +744,27 @@ def parse_math_italics_correction(
     return MappingProxyType(result)
 
 
+def parse_math_accent_attachments(
+    value: object,
+    *,
+    source_path: Path,
+) -> Mapping[str, float]:
+    """Parse exact-glyph top accent points in authored grid coordinates."""
+
+    data = _object(value, location=str(source_path))
+    if not data:
+        raise ProjectDataError(f"{source_path} cannot be empty.")
+
+    result: dict[str, float] = {}
+    for raw_name, raw_attachment in data.items():
+        name = _safe_name(raw_name, location=f"{source_path} glyph name")
+        result[name] = _number(
+            raw_attachment,
+            location=f"{source_path}.{name}",
+        )
+    return MappingProxyType(result)
+
+
 def _parse_math_variant_glyph_names(
     value: object,
     *,
@@ -951,6 +977,22 @@ def load_math_data(
         )
     )
 
+    accent_attachment_path = (
+        None
+        if config.accent_attachment_file is None
+        else project_directory
+        / "math_accent_attachment"
+        / config.accent_attachment_file
+    )
+    accent_attachments = (
+        MappingProxyType({})
+        if accent_attachment_path is None
+        else parse_math_accent_attachments(
+            read_json(accent_attachment_path),
+            source_path=accent_attachment_path,
+        )
+    )
+
     variants_path = (
         None
         if config.variants_file is None
@@ -1011,6 +1053,8 @@ def load_math_data(
         ssty=ssty,
         italics_correction_source_path=italics_correction_path,
         italic_corrections=italic_corrections,
+        accent_attachment_source_path=accent_attachment_path,
+        accent_attachments=accent_attachments,
         min_connector_overlap=min_connector_overlap,
         vertical_variant_glyphs=vertical_variant_glyphs,
         horizontal_variant_glyphs=horizontal_variant_glyphs,

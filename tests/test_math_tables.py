@@ -91,6 +91,7 @@ class MathTableTests(unittest.TestCase):
             horizontal_assemblies=MappingProxyType({}),
             extended_shapes=frozenset(),
             italic_corrections=MappingProxyType({}),
+            top_accent_attachments=MappingProxyType({}),
         )
         apply_math_table(font, plan)
 
@@ -169,6 +170,7 @@ class MathTableTests(unittest.TestCase):
             horizontal_assemblies=MappingProxyType({"arrowright": horizontal}),
             extended_shapes=frozenset({"parenleft"}),
             italic_corrections=MappingProxyType({}),
+            top_accent_attachments=MappingProxyType({}),
         )
 
         apply_math_table(font, plan)

@@ -71,7 +71,7 @@ class GlyphConfigLoaderTests(unittest.TestCase):
     def test_math_adjustments_are_typed_and_read_only(self) -> None:
         config = load_glyph_config(PROJECT_DIRECTORY, "math.json")
 
-        self.assertEqual(len(config), 33)
+        self.assertEqual(len(config), 30)
         self.assertEqual(
             config[selector("parenleft@variants")],
             adjustment(left=50.0),
@@ -177,7 +177,7 @@ class FontPlannerTests(unittest.TestCase):
         self.assertEqual(plan.point_radius_scale, 1.6)
         self.assertEqual(
             len(plan.real_glyphs) + len(plan.generated_glyphs),
-            1204,
+            1206,
         )
         self.assertEqual(
             sum(
@@ -185,7 +185,7 @@ class FontPlannerTests(unittest.TestCase):
                 for glyph in plan.real_glyphs.values()
             )
             + len(plan.generated_glyphs),
-            1039,
+            1041,
         )
         self.assertEqual(plan.real_glyphs[".notdef"].width, 600)
         self.assertTrue(plan.real_glyphs[".notdef"].strokes)
@@ -204,6 +204,20 @@ class FontPlannerTests(unittest.TestCase):
             dict(math_plan.italic_corrections),
             dict(self.math_data.italic_corrections),
         )
+        self.assertEqual(math_plan.top_accent_attachments["u1D453"], 400)
+        self.assertEqual(math_plan.top_accent_attachments["j"], 400)
+        self.assertEqual(math_plan.top_accent_attachments["u1D457"], 400)
+        self.assertEqual(math_plan.top_accent_attachments["t"], 200)
+        self.assertEqual(math_plan.top_accent_attachments["u1D461"], 200)
+        for generated in self.assembled_math.generated_glyphs:
+            source_attachment = math_plan.top_accent_attachments.get(
+                generated.source_name
+            )
+            if source_attachment is not None:
+                self.assertEqual(
+                    math_plan.top_accent_attachments[generated.target_name],
+                    source_attachment,
+                )
         self.assertEqual(
             [
                 (record.glyph_name, record.full_advance)
@@ -229,6 +243,115 @@ class FontPlannerTests(unittest.TestCase):
 
         with self.assertRaisesRegex(PlanError, "unknown glyphs"):
             plan_font(self.assembled_math, math_data=data)
+
+    def test_top_accent_attachment_uses_effective_glyph_metrics(self) -> None:
+        data = replace(
+            self.math_data,
+            accent_attachments=MappingProxyType({"j": 1.0}),
+        )
+        config = dict(self.math_config)
+        config[selector("j")] = adjustment(left=20)
+
+        with patch(
+            "skeletonfont.planner._measure_glyph_axis",
+            wraps=_measure_glyph_axis,
+        ) as measure_axis:
+            math_plan = plan_font(
+                self.assembled_math,
+                config,
+                math_data=data,
+            ).math
+        assert math_plan is not None
+        self.assertEqual(math_plan.top_accent_attachments["j"], 420)
+        self.assertEqual(math_plan.top_accent_attachments["u1D457"], 420)
+        self.assertEqual(
+            sum(
+                call.args[0].name == "j"
+                for call in measure_axis.call_args_list
+            ),
+            1,
+        )
+
+    def test_monospace_top_accent_attachment_uses_design_origin(self) -> None:
+        assembled = replace(
+            self.assembled_math,
+            glyph_parameters=replace(
+                self.assembled_math.glyph_parameters,
+                monospace_width=600,
+            ),
+        )
+        data = replace(
+            self.math_data,
+            accent_attachments=MappingProxyType({"j": 1.0}),
+        )
+
+        with patch(
+            "skeletonfont.planner._measure_glyph_axis",
+            wraps=_measure_glyph_axis,
+        ) as measure_axis:
+            math_plan = plan_font(assembled, math_data=data).math
+        assert math_plan is not None
+        self.assertEqual(math_plan.top_accent_attachments["j"], 275)
+        self.assertEqual(math_plan.top_accent_attachments["u1D457"], 275)
+        self.assertFalse(
+            any(
+                call.args[0].name == "j"
+                for call in measure_axis.call_args_list
+            )
+        )
+
+    def test_top_accent_attachment_allows_both_variant_roles(self) -> None:
+        data = replace(
+            self.math_data,
+            accent_attachments=MappingProxyType(
+                {"parenleft.v1": 1.0, "uni23B4.h1": 1.0}
+            ),
+        )
+
+        with patch(
+            "skeletonfont.planner._measure_glyph_axis",
+            wraps=_measure_glyph_axis,
+        ) as measure_axis:
+            math_plan = plan_font(self.assembled_math, math_data=data).math
+        assert math_plan is not None
+        self.assertEqual(
+            set(math_plan.top_accent_attachments),
+            {"parenleft.v1", "uni23B4.h1"},
+        )
+        self.assertEqual(
+            sum(
+                call.args[0].name == "parenleft.v1"
+                for call in measure_axis.call_args_list
+            ),
+            2,
+        )
+        self.assertEqual(
+            sum(
+                call.args[0].name == "uni23B4.h1"
+                for call in measure_axis.call_args_list
+            ),
+            1,
+        )
+
+    def test_top_accent_attachment_rejects_unsupported_roles(self) -> None:
+        invalid = (
+            ("missing", frozenset(), "not planned as a real glyph"),
+            ("u1D457", frozenset(), "not planned as a real glyph"),
+            ("tildecomb", self.accent_glyphs, "unsupported planning role"),
+            ("uni239C", frozenset(), "unsupported planning role"),
+        )
+        for name, accent_glyphs, message in invalid:
+            with self.subTest(name=name):
+                data = replace(
+                    self.math_data,
+                    accent_attachments=MappingProxyType({name: 1.0}),
+                )
+                with self.assertRaisesRegex(PlanError, message):
+                    plan_font(
+                        self.assembled_math,
+                        math_data=data,
+                        accent_glyphs=accent_glyphs,
+                    )
 
     def test_accent_glyphs_have_zero_advance_and_authored_origin(self) -> None:
         tilde = self.math_plan.real_glyphs["tildecomb"]
