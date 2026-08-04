@@ -28,14 +28,14 @@
     },
     {
       "source_directory": "math",
-      "unicode_ranges": [
+      "unicode_domain": [
         ["2010", "20C0"]
       ]
     },
     {
       "source_directory": "uni6771",
-      "unicode_ranges": [
-        ["6771", "6771"]
+      "unicode_domain": [
+        ["6771"]
       ]
     }
   ],

@@ -32,30 +32,30 @@
     },
     {
       "source_directory": "script",
-      "unicode_ranges": [
+      "unicode_domain": [
         ["0041", "005A"]
       ],
-      "mapping_name": "script_latin"
+      "mapping_name": "upright_latin_to_script_latin"
     },
     {
       "source_directory": "fraktur",
-      "mapping_name": "fraktur_latin"
+      "mapping_name": "upright_latin_to_fraktur_latin"
     },
     {
       "source_directory": "blackboard",
-      "mapping_name": "blackboard_latin"
+      "mapping_name": "upright_latin_to_blackboard_latin"
     },
     {
       "source_directory": "ascii_bold",
-      "mapping_name": "bold_latin"
+      "mapping_name": "upright_latin_to_bold_latin"
     },
     {
       "source_directory": "uni6771"
     }
   ],
   "glyph_generators": [
-    "italic_latin",
-    "italic_greek"
+    "upright_latin_to_italic_latin",
+    "upright_greek_to_italic_greek"
   ],
   "glyph_config_file": "math.json",
   "accent_file": "math.json",

@@ -15,46 +15,21 @@
       "include_unencoded": true
     },
     {
-      "source_directory": "ascii",
-      "unicode_ranges": [
-        [
-          "0000",
-          "10FFFF"
-        ]
-      ]
+      "source_directory": "ascii"
     },
     {
-      "source_directory": "latin",
-      "unicode_ranges": [
-        [
-          "0000",
-          "10FFFF"
-        ]
-      ]
+      "source_directory": "latin"
     },
     {
-      "source_directory": "greek",
-      "unicode_ranges": [
-        [
-          "0000",
-          "10FFFF"
-        ]
-      ]
+      "source_directory": "greek"
     },
     {
-      "source_directory": "cyrillic",
-      "unicode_ranges": [
-        [
-          "0000",
-          "10FFFF"
-        ]
-      ]
+      "source_directory": "cyrillic"
     },
     {
       "source_directory": "uni6771",
-      "unicode_ranges": [
+      "unicode_domain": [
         [
-          "6771",
           "6771"
         ]
       ]

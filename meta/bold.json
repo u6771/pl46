@@ -19,9 +19,8 @@
     },
     {
       "source_directory": "uni6771",
-      "unicode_ranges": [
+      "unicode_domain": [
         [
-          "6771",
           "6771"
         ]
       ]
