@@ -56,9 +56,9 @@ class GlyphCatalog:
 def _matches_rule(glyph: GlyphSource, rule: SourceRule) -> bool:
     if glyph.codepoint is None:
         return rule.include_unencoded
-    return any(
-        start <= glyph.codepoint <= end
-        for start, end in rule.unicode_ranges
+    return (
+        rule.unicode_domain is None
+        or glyph.codepoint in rule.unicode_domain
     )
 
 

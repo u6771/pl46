@@ -31,13 +31,13 @@ from .model import (
     SourceRule,
     SstyData,
     StrokeRecord,
+    UnicodeDomain,
     UnicodeRange,
 )
+from .unicode_domains import UNICODE_DOMAINS, normalize_unicode_ranges
 
 
 _SAFE_NAME_RE = re.compile(r"[A-Za-z0-9_.-]+")
-_FULL_UNICODE_RANGE: tuple[UnicodeRange, ...] = ((0, 0x10FFFF),)
-
 META_FIELD_ORDER = (
     "family",
     "style",
@@ -79,7 +79,7 @@ _REQUIRED_META_FIELDS = {
 
 _SOURCE_RULE_FIELDS = {
     "source_directory",
-    "unicode_ranges",
+    "unicode_domain",
     "include_unencoded",
     "replace_existing",
     "mapping_name",
@@ -376,50 +376,77 @@ def parse_codepoint(value: object, *, location: str) -> int | None:
     return codepoint
 
 
-def _parse_unicode_ranges(
+def _named_unicode_domain(
+    value: object,
+    *,
+    location: str,
+) -> UnicodeDomain:
+    name = _safe_name(value, location=location)
+    domain = UNICODE_DOMAINS.get(name)
+    if domain is None:
+        raise ProjectDataError(
+            f"{location} references unknown Unicode domain {name!r}. "
+            f"Known domains: {sorted(UNICODE_DOMAINS)}"
+        )
+    return domain
+
+
+def _parse_unicode_domain(
     raw: object | None,
     *,
     location: str,
-) -> tuple[UnicodeRange, ...]:
+) -> UnicodeDomain | None:
     if raw is None:
-        return _FULL_UNICODE_RANGE
+        return None
+
+    if isinstance(raw, str):
+        return _named_unicode_domain(raw, location=location)
 
     ranges: list[UnicodeRange] = []
-    for index, item in enumerate(
-        _array(raw, location=location)
-    ):
-        pair = _array(
+    for index, item in enumerate(_array(raw, location=location)):
+        item_location = f"{location}[{index}]"
+        if isinstance(item, str):
+            ranges.extend(
+                _named_unicode_domain(
+                    item,
+                    location=item_location,
+                ).ranges
+            )
+            continue
+
+        endpoints = _array(
             item,
-            location=f"{location}[{index}]",
+            location=item_location,
         )
-        if len(pair) != 2:
+        if len(endpoints) not in (1, 2):
             raise ProjectDataError(
-                f"{location}[{index}] must contain [start, end]."
+                f"{item_location} must contain [codepoint] or "
+                "[start, end]."
             )
         start = parse_codepoint(
-            pair[0],
-            location=f"{location}[{index}][0]",
+            endpoints[0],
+            location=f"{item_location}[0]",
         )
-        end = parse_codepoint(
-            pair[1],
-            location=f"{location}[{index}][1]",
+        end = (
+            start
+            if len(endpoints) == 1
+            else parse_codepoint(
+                endpoints[1],
+                location=f"{item_location}[1]",
+            )
         )
         if start is None or end is None:
             raise ProjectDataError(
-                f"{location}[{index}] endpoints cannot be null."
+                f"{item_location} endpoints cannot be null."
             )
         if start > end:
             raise ProjectDataError(
-                f"{location}[{index}] descends from "
+                f"{item_location} descends from "
                 f"U+{start:04X} to U+{end:04X}."
             )
         ranges.append((start, end))
 
-    if not ranges:
-        raise ProjectDataError(
-            f"{location} cannot be empty."
-        )
-    return tuple(ranges)
+    return normalize_unicode_ranges(ranges)
 
 
 def _parse_source_rule(
@@ -448,9 +475,9 @@ def _parse_source_rule(
             data.get("source_directory"),
             location=f"{location}.source_directory",
         ),
-        unicode_ranges=_parse_unicode_ranges(
-            data.get("unicode_ranges"),
-            location=f"{location}.unicode_ranges",
+        unicode_domain=_parse_unicode_domain(
+            data.get("unicode_domain"),
+            location=f"{location}.unicode_domain",
         ),
         include_unencoded=_boolean(
             data.get("include_unencoded", False),

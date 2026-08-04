@@ -6,6 +6,8 @@ from types import MappingProxyType
 from typing import Callable, Mapping
 
 from .errors import AssemblyError
+from .model import UnicodeDomain
+from .unicode_domains import UNICODE_DOMAINS
 
 
 UnicodePair = tuple[int, int | None]
@@ -26,6 +28,8 @@ class GlyphMapping:
 
     codepoints: Mapping[int, int | None]
     rename: NameMapper
+    source_domain: str | None = None
+    target_domain: str | None = None
 
     def apply(self, source: GlyphIdentity) -> GlyphIdentity | None:
         codepoint = source.codepoint
@@ -48,14 +52,14 @@ def _paired_ranges(
     )
 
 
-def _italic_latin() -> Iterable[UnicodePair]:
+def _upright_latin_to_italic_latin() -> Iterable[UnicodePair]:
     yield from _paired_ranges(0x0041, 0x005B, 0x1D434)
     yield from _paired_ranges(0x0061, 0x0068, 0x1D44E)
     yield 0x0068, 0x210E
     yield from _paired_ranges(0x0069, 0x007B, 0x1D456)
 
 
-def _italic_greek() -> Iterable[UnicodePair]:
+def _upright_greek_to_italic_greek() -> Iterable[UnicodePair]:
     yield from _paired_ranges(0x0391, 0x03A2, 0x1D6E2)
     yield 0x03F4, 0x1D6F3
     yield from _paired_ranges(0x03A3, 0x03AA, 0x1D6F4)
@@ -70,7 +74,7 @@ def _italic_greek() -> Iterable[UnicodePair]:
     yield 0x03D6, 0x1D71B
 
 
-def _script_latin() -> Iterable[UnicodePair]:
+def _upright_latin_to_script_latin() -> Iterable[UnicodePair]:
     yield 0x0041, 0x1D49C
     yield 0x0042, 0x212C
     yield from _paired_ranges(0x0043, 0x0045, 0x1D49E)
@@ -95,7 +99,7 @@ def _script_latin() -> Iterable[UnicodePair]:
     yield from _paired_ranges(0x0070, 0x007B, 0x1D4C5)
 
 
-def _fraktur_latin() -> Iterable[UnicodePair]:
+def _upright_latin_to_fraktur_latin() -> Iterable[UnicodePair]:
     yield from _paired_ranges(0x0041, 0x0043, 0x1D504)
     yield 0x0043, 0x212D
     yield from _paired_ranges(0x0044, 0x0048, 0x1D507)
@@ -108,7 +112,7 @@ def _fraktur_latin() -> Iterable[UnicodePair]:
     yield from _paired_ranges(0x0061, 0x007B, 0x1D51E)
 
 
-def _blackboard_latin() -> Iterable[UnicodePair]:
+def _upright_latin_to_blackboard_latin() -> Iterable[UnicodePair]:
     yield from _paired_ranges(0x0041, 0x0043, 0x1D538)
     yield 0x0043, 0x2102
     yield from _paired_ranges(0x0044, 0x0048, 0x1D53B)
@@ -124,12 +128,12 @@ def _blackboard_latin() -> Iterable[UnicodePair]:
     yield from _paired_ranges(0x0061, 0x007B, 0x1D552)
 
 
-def _bold_latin() -> Iterable[UnicodePair]:
+def _upright_latin_to_bold_latin() -> Iterable[UnicodePair]:
     yield from _paired_ranges(0x0041, 0x005B, 0x1D400)
     yield from _paired_ranges(0x0061, 0x007B, 0x1D41A)
 
 
-def _bold_greek() -> Iterable[UnicodePair]:
+def _upright_greek_to_bold_greek() -> Iterable[UnicodePair]:
     yield from _paired_ranges(0x0391, 0x03A2, 0x1D6A8)
     yield 0x03F4, 0x1D6B9
     yield from _paired_ranges(0x03A3, 0x03AA, 0x1D6BA)
@@ -154,23 +158,127 @@ def _styled_name(style: str) -> NameMapper:
 
 
 _MAPPING_DEFINITIONS = {
-    "italic_latin": (_italic_latin, _styled_name("italic")),
-    "italic_greek": (_italic_greek, _styled_name("italic")),
-    "script_latin": (_script_latin, _styled_name("script")),
-    "fraktur_latin": (_fraktur_latin, _styled_name("fraktur")),
-    "blackboard_latin": (_blackboard_latin, _styled_name("blackboard")),
-    "bold_latin": (_bold_latin, _styled_name("bold")),
-    "bold_greek": (_bold_greek, _styled_name("bold")),
+    "upright_latin_to_italic_latin": (
+        _upright_latin_to_italic_latin,
+        _styled_name("italic"),
+        "upright_latin",
+        "italic_latin",
+    ),
+    "upright_greek_to_italic_greek": (
+        _upright_greek_to_italic_greek,
+        _styled_name("italic"),
+        "upright_greek",
+        "italic_greek",
+    ),
+    "upright_latin_to_script_latin": (
+        _upright_latin_to_script_latin,
+        _styled_name("script"),
+        "upright_latin",
+        "script_latin",
+    ),
+    "upright_latin_to_fraktur_latin": (
+        _upright_latin_to_fraktur_latin,
+        _styled_name("fraktur"),
+        "upright_latin",
+        "fraktur_latin",
+    ),
+    "upright_latin_to_blackboard_latin": (
+        _upright_latin_to_blackboard_latin,
+        _styled_name("blackboard"),
+        "upright_latin",
+        "blackboard_latin",
+    ),
+    "upright_latin_to_bold_latin": (
+        _upright_latin_to_bold_latin,
+        _styled_name("bold"),
+        "upright_latin",
+        "bold_latin",
+    ),
+    "upright_greek_to_bold_greek": (
+        _upright_greek_to_bold_greek,
+        _styled_name("bold"),
+        "upright_greek",
+        "bold_greek",
+    ),
 }
+
+
+def _domain_for_mapping(
+    mapping_name: str,
+    domain_name: str,
+    *,
+    side: str,
+) -> UnicodeDomain:
+    domain = UNICODE_DOMAINS.get(domain_name)
+    if domain is None:
+        raise ValueError(
+            f"Mapping {mapping_name!r} references unknown {side} "
+            f"domain {domain_name!r}."
+        )
+    return domain
+
+
+def _format_codepoints(codepoints: Iterable[int]) -> list[str]:
+    return [f"U+{value:04X}" for value in sorted(codepoints)]
+
+
+def _validate_mapping_domains(
+    name: str,
+    mapping: GlyphMapping,
+) -> None:
+    if mapping.source_domain is not None:
+        source_domain = _domain_for_mapping(
+            name,
+            mapping.source_domain,
+            side="source",
+        )
+        invalid_sources = [
+            codepoint
+            for codepoint in mapping.codepoints
+            if codepoint not in source_domain
+        ]
+        if invalid_sources:
+            raise ValueError(
+                f"Mapping {name!r} has source codepoints outside domain "
+                f"{mapping.source_domain!r}: "
+                f"{_format_codepoints(invalid_sources)}"
+            )
+
+    if mapping.target_domain is not None:
+        target_domain = _domain_for_mapping(
+            name,
+            mapping.target_domain,
+            side="target",
+        )
+        invalid_targets = [
+            codepoint
+            for codepoint in mapping.codepoints.values()
+            if codepoint is not None and codepoint not in target_domain
+        ]
+        if invalid_targets:
+            raise ValueError(
+                f"Mapping {name!r} has target codepoints outside domain "
+                f"{mapping.target_domain!r}: "
+                f"{_format_codepoints(invalid_targets)}"
+            )
 
 
 def _build_mappings() -> Mapping[str, GlyphMapping]:
     mappings: dict[str, GlyphMapping] = {}
-    for name, (builder, rename) in _MAPPING_DEFINITIONS.items():
-        mappings[name] = GlyphMapping(
+    for name, (
+        builder,
+        rename,
+        source_domain,
+        target_domain,
+    ) in _MAPPING_DEFINITIONS.items():
+        mapping = GlyphMapping(
             codepoints=MappingProxyType(dict(builder())),
             rename=rename,
+            source_domain=source_domain,
+            target_domain=target_domain,
         )
+        _validate_mapping_domains(name, mapping)
+        mappings[name] = mapping
     return MappingProxyType(mappings)
 
 

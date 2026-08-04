@@ -9,8 +9,13 @@ from unittest.mock import patch
 from skeletonfont.assembler import GlyphCatalog, assemble_font
 from skeletonfont.errors import AssemblyError
 from skeletonfont.loader import load_font_meta
-from skeletonfont.mappings import GlyphIdentity, GlyphMapping, get_mapping
-from skeletonfont.model import AssembledGlyph, GlyphSource
+from skeletonfont.mappings import (
+    GlyphIdentity,
+    GlyphMapping,
+    _validate_mapping_domains,
+    get_mapping,
+)
+from skeletonfont.model import AssembledGlyph, GlyphSource, UnicodeDomain
 
 
 PROJECT_DIRECTORY = Path(__file__).resolve().parents[1]
@@ -176,11 +181,11 @@ class FontAssemblerTests(unittest.TestCase):
             )
         )
 
-    def test_unicode_range_is_applied_before_merge(self) -> None:
+    def test_unicode_domain_is_applied_before_merge(self) -> None:
         meta = load_font_meta(PROJECT_DIRECTORY, "ascii")
         uppercase_rule = replace(
             meta.source_rules[1],
-            unicode_ranges=((0x0041, 0x005A),),
+            unicode_domain=UnicodeDomain(((0x0041, 0x005A),)),
         )
         uppercase_meta = replace(
             meta,
@@ -348,15 +353,15 @@ class FontAssemblerTests(unittest.TestCase):
         self.assertIsNone(generated.target_codepoint)
 
     def test_unicode_mappings_are_shared_and_read_only(self) -> None:
-        first = get_mapping("italic_latin")
-        second = get_mapping("italic_latin")
+        first = get_mapping("upright_latin_to_italic_latin")
+        second = get_mapping("upright_latin_to_italic_latin")
 
         self.assertIs(first, second)
         with self.assertRaises(TypeError):
             first.codepoints[0x0041] = 0x0041  # type: ignore[index]
 
     def test_script_latin_mapping_includes_unicode_exceptions(self) -> None:
-        mapping = get_mapping("script_latin")
+        mapping = get_mapping("upright_latin_to_script_latin")
 
         self.assertEqual(len(mapping.codepoints), 52)
         self.assertEqual(mapping.codepoints[ord("A")], 0x1D49C)
@@ -371,6 +376,35 @@ class FontAssemblerTests(unittest.TestCase):
             mapping.apply(GlyphIdentity("B", 0x0042)),
             GlyphIdentity("B.script", 0x212C),
         )
+        self.assertEqual(mapping.source_domain, "upright_latin")
+        self.assertEqual(mapping.target_domain, "script_latin")
+
+    def test_mapping_domain_validation_allows_unrestricted_sides(self) -> None:
+        mapping = GlyphMapping(
+            MappingProxyType({0xE000: 0xE001}),
+            lambda source: f"{source.name}.alternate",
+        )
+
+        _validate_mapping_domains("unrestricted", mapping)
+
+    def test_mapping_domain_validation_rejects_outliers(self) -> None:
+        invalid_source = GlyphMapping(
+            MappingProxyType({0x0030: 0x1D434}),
+            lambda source: f"{source.name}.italic",
+            source_domain="upright_latin",
+            target_domain="italic_latin",
+        )
+        invalid_target = GlyphMapping(
+            MappingProxyType({0x0041: 0x0030}),
+            lambda source: f"{source.name}.italic",
+            source_domain="upright_latin",
+            target_domain="italic_latin",
+        )
+
+        with self.assertRaisesRegex(ValueError, "source codepoints outside"):
+            _validate_mapping_domains("invalid-source", invalid_source)
+        with self.assertRaisesRegex(ValueError, "target codepoints outside"):
+            _validate_mapping_domains("invalid-target", invalid_target)
 
 
 if __name__ == "__main__":

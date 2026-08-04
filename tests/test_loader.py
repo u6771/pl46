@@ -62,13 +62,82 @@ class FontMetaLoaderTests(unittest.TestCase):
                 msg=str(path),
             )
 
-    def test_unicode_ranges_are_normalized(self) -> None:
+    def test_omitted_unicode_domain_is_unrestricted(self) -> None:
         meta = load_font_meta(PROJECT_DIRECTORY, "mono")
 
-        self.assertEqual(
-            meta.source_rules[1].unicode_ranges,
-            ((0, 0x10FFFF),),
+        self.assertIsNone(meta.source_rules[1].unicode_domain)
+
+    def test_unicode_domain_unions_names_ranges_and_singletons(self) -> None:
+        path = PROJECT_DIRECTORY / "meta" / "ascii.json"
+        data = json.loads(path.read_text(encoding="utf-8"))
+        data["source_rules"][1]["unicode_domain"] = [
+            "upright_latin",
+            ["0050", "0065"],
+            ["2202"],
+        ]
+
+        meta = parse_font_meta(
+            data,
+            build_name="domain-union",
+            meta_path=path,
         )
+
+        domain = meta.source_rules[1].unicode_domain
+        self.assertIsNotNone(domain)
+        assert domain is not None
+        self.assertEqual(
+            domain.ranges,
+            ((0x0041, 0x007A), (0x2202, 0x2202)),
+        )
+
+    def test_unicode_domain_keeps_full_range_compact(self) -> None:
+        path = PROJECT_DIRECTORY / "meta" / "ascii.json"
+        data = json.loads(path.read_text(encoding="utf-8"))
+        data["source_rules"][1]["unicode_domain"] = [
+            ["0000", "10FFFF"]
+        ]
+
+        meta = parse_font_meta(
+            data,
+            build_name="full-domain",
+            meta_path=path,
+        )
+
+        domain = meta.source_rules[1].unicode_domain
+        self.assertIsNotNone(domain)
+        assert domain is not None
+        self.assertEqual(domain.ranges, ((0, 0x10FFFF),))
+
+    def test_unicode_domain_string_items_are_names(self) -> None:
+        path = PROJECT_DIRECTORY / "meta" / "ascii.json"
+        data = json.loads(path.read_text(encoding="utf-8"))
+        data["source_rules"][1]["unicode_domain"] = ["0041"]
+
+        with self.assertRaisesRegex(
+            ProjectDataError,
+            "unknown Unicode domain '0041'",
+        ):
+            parse_font_meta(
+                data,
+                build_name="unknown-domain",
+                meta_path=path,
+            )
+
+    def test_empty_unicode_domain_selects_no_encoded_glyphs(self) -> None:
+        path = PROJECT_DIRECTORY / "meta" / "ascii.json"
+        data = json.loads(path.read_text(encoding="utf-8"))
+        data["source_rules"][1]["unicode_domain"] = []
+
+        meta = parse_font_meta(
+            data,
+            build_name="empty-domain",
+            meta_path=path,
+        )
+
+        domain = meta.source_rules[1].unicode_domain
+        self.assertIsNotNone(domain)
+        assert domain is not None
+        self.assertEqual(domain.ranges, ())
 
     def test_math_table_config_uses_normalized_json_names(self) -> None:
         meta = load_font_meta(PROJECT_DIRECTORY, "math")
@@ -100,7 +169,10 @@ class FontMetaLoaderTests(unittest.TestCase):
         self.assertEqual(meta.glyph_parameters.radius, 25)
         self.assertEqual(
             meta.glyph_generators,
-            ("italic_latin", "italic_greek"),
+            (
+                "upright_latin_to_italic_latin",
+                "upright_greek_to_italic_greek",
+            ),
         )
         self.assertEqual(meta.glyph_config_file, "math.json")
         self.assertEqual(meta.accent_file, "math.json")

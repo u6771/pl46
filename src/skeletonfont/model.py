@@ -11,6 +11,19 @@ CapStyle = Literal["round", "flat"]
 
 
 @dataclass(frozen=True, slots=True)
+class UnicodeDomain:
+    """A canonical union of disjoint, non-adjacent Unicode ranges."""
+
+    ranges: tuple[UnicodeRange, ...]
+
+    def __contains__(self, codepoint: int) -> bool:
+        return any(
+            start <= codepoint <= end
+            for start, end in self.ranges
+        )
+
+
+@dataclass(frozen=True, slots=True)
 class StrokeRecord:
     """One normalized centerline and its outline-expansion settings."""
 
@@ -54,7 +67,7 @@ class SourceRule:
     """Select and optionally remap glyphs from one source directory."""
 
     source_directory: str
-    unicode_ranges: tuple[UnicodeRange, ...]
+    unicode_domain: UnicodeDomain | None
     include_unencoded: bool
     replace_existing: bool
     mapping_name: str | None
