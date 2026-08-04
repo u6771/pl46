@@ -68,10 +68,31 @@ that refers to a directory loads and validates it; later builds receive the same
 immutable mapping instead of reading those JSON files again.
 
 The assembler processes `source_rules` in order. It selects encoded glyphs by
-`unicode_ranges`, includes unencoded glyphs only when requested, applies an
-optional glyph-identity mapping, and then checks both glyph-name and Unicode
-conflicts. A later rule may remove conflicting entries only with
+the optional `unicode_domain`, includes unencoded glyphs only when requested,
+applies an optional glyph-identity mapping, and then checks both glyph-name and
+Unicode conflicts. A later rule may remove conflicting entries only with
 `replace_existing: true`.
+
+`unicode_domain` accepts a registered domain name or an array whose items are
+registered names, one-codepoint arrays, or inclusive two-codepoint ranges. The
+loader unions and normalizes them into the smallest sorted collection of
+disjoint ranges, without expanding the codepoints. Omitting the field leaves
+encoded glyphs unrestricted. For example:
+
+```json
+"unicode_domain": [
+  "upright_latin",
+  ["2202"],
+  ["0030", "0039"]
+]
+```
+
+Registered domains currently include `upright_latin`, `upright_greek`,
+`italic_latin`, `italic_greek`, `script_latin`, `fraktur_latin`,
+`blackboard_latin`, `bold_latin`, and `bold_greek`. A string is always a
+registered name, so a literal singleton must use the nested `["2202"]` form.
+Their explicit range definitions are authoritative and independent of the
+registered glyph mappings.
 
 A source rule's optional `thickness_scale` defaults to `1`. The identity case
 reuses the source skeleton directly. Any other positive scale is multiplied into
@@ -80,10 +101,14 @@ each stroke's authored `thickness_scale` while producing the immutable
 effective stroke scale.
 
 A `GlyphMapping` independently maps the source codepoint and renames the source
-identity. Existing mathematical alphabet mappings retain their compact
-codepoint-range builders while producing semantic names such as `A.italic`,
-`A.script`, and `A.fraktur`. An optional mapping replaces only a selected
-`GlyphSource`'s name and Unicode.
+identity. Mathematical alphabet mapping names state both sides, for example
+`upright_latin_to_italic_latin` and `upright_latin_to_fraktur_latin`, while
+retaining compact codepoint-range builders and producing semantic names such as
+`A.italic`, `A.script`, and `A.fraktur`. An optional mapping replaces only a
+selected `GlyphSource`'s name and Unicode. Built-in mappings declare optional
+source and target domain names and are checked against those explicit domains
+once when the immutable mapping registry is created. A `None` side is
+unrestricted and skips that check.
 
 Every selected source, mapped or unchanged, crosses the assembly boundary into
 an immutable `AssembledGlyph` with the same fields and shared design data.
