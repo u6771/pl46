@@ -43,20 +43,22 @@ The load stage produces a small set of immutable objects:
   normalized (`x_min = y_min = 0`), and stores its derived `x_extent` and
   `y_extent`. An empty source writes `x_extent` instead. `skeleton` and
   `x_extent` are mutually exclusive and exactly one must be present.
-- `SourceRule` says which `source_directory` participates in a build and whether
-  mapped glyphs may `replace_existing` glyphs.
+- `SourceRule` says which `source_directory` participates in a build, whether
+  mapped glyphs may `replace_existing` glyphs, and may apply `mapping_name` and
+  a font-specific `thickness_scale` while assembling them.
 - `FontInfo` contains immutable font identity and vertical metrics, while
   `GlyphParameters` contains the grid, radius, spacing, and other values used
   to resolve glyph geometry. `FontMeta` combines them with the ordered source
   rules and filenames needed only while loading and assembling a build.
-- `MathConfig` contains filenames only. Constants, ssty substitutions, italic
-  corrections, top accent attachments, mathematical kerns, discrete variant
-  glyphs, and assemblies are loaded into immutable `MathData` instead of being
-  carried through as raw dictionaries. Optional `italics_correction_file`,
-  `accent_attachment_file`, `kern_file`, and `variants_file` fields select
-  `math_italics_correction/*.json`, `math_accent_attachment/*.json`,
-  `math_kern/*.json`, and `math_variants/*.json` inputs.
-  Omitting `math_config`, setting it to `null`, or using an empty object disables
+- `SstyData` contains optional explicitly authored `ssty` substitutions selected
+  by the top-level `ssty_file`; it is independent of MATH.
+- `MathTableConfig` contains filenames only. Constants, italic corrections, top
+  accent attachments, mathematical kerns, discrete variant glyphs, and
+  assemblies are loaded into immutable `MathTableData` instead of being carried
+  through as raw dictionaries. Its files live under `math_table/`: respectively
+  `constants/`, `italics_correction/`, `accent_attachment/`, `kern/`, and
+  `variants/`.
+  Omitting `math_table`, setting it to `null`, or using an empty object disables
   MATH. A non-empty object enables it, so there is no separate `enabled` switch.
 
 ## Assemble stage
@@ -71,12 +73,18 @@ optional glyph-identity mapping, and then checks both glyph-name and Unicode
 conflicts. A later rule may remove conflicting entries only with
 `replace_existing: true`.
 
+A source rule's optional `thickness_scale` defaults to `1`. The identity case
+reuses the source skeleton directly. Any other positive scale is multiplied into
+each stroke's authored `thickness_scale` while producing the immutable
+`AssembledGlyph`, so all later outline and edge measurements consume one
+effective stroke scale.
+
 A `GlyphMapping` independently maps the source codepoint and renames the source
 identity. Existing mathematical alphabet mappings retain their compact
 codepoint-range builders while producing semantic names such as `A.italic`,
-`A.script`, and `A.fraktur`. A mapping target codepoint may be absent, allowing
-the same mechanism to produce an unencoded alternate such as `A.st`.
-An optional mapping replaces only a selected `GlyphSource`'s name and Unicode.
+`A.script`, and `A.fraktur`. An optional mapping replaces only a selected
+`GlyphSource`'s name and Unicode.
+
 Every selected source, mapped or unchanged, crosses the assembly boundary into
 an immutable `AssembledGlyph` with the same fields and shared design data.
 `AssembledFont` contains those selected real glyphs, simple generated-glyph copy
@@ -164,7 +172,7 @@ Each `RealGlyphPlan` stores only the glyph identity, source path for diagnostics
 final integer width, and planned strokes. Spacing, source offsets, and skeleton
 measurements have already been consumed. A `FontPlan` adds the unchanged
 `FontInfo`, resolved output stem, point radius scale, kerning, generated copy
-records, and an optional `MathPlan`.
+records, an optional `ssty_feature`, and an optional `MathTablePlan`.
 
 For proportional glyphs with a skeleton, width is resolved as:
 
@@ -183,15 +191,15 @@ monospace glyph, so their advances remain equal. The current left and right
 glyph-adjustment fields are not allowed for ordinary glyphs in monospace builds;
 non-ordinary MATH roles continue to use proportional metrics and may use them.
 
-Planning first groups every real glyph into exactly one role: ordinary, vertical
-variant glyph, horizontal variant glyph, vertical assembly part, or horizontal
-assembly part, then passes each group to its own role planner. Variant-glyph
-planners return both real glyph plans and FullAdvances; each axis-specific planner
-returns its real glyph plans and construction records. `plan_font()` merges the
-five disjoint glyph-plan mappings only after those planners finish. A glyph may
-be reused by several constructions of the same role but cannot cross roles.
-Ordinary glyphs
-follow the font's normal metric mode; every math
+Planning first groups every real glyph into exactly one role: ordinary, accent,
+vertical variant glyph, horizontal variant glyph, vertical assembly part, or
+horizontal assembly part, then passes each group to its own role planner.
+Variant-glyph planners return both real glyph plans and FullAdvances; each
+axis-specific planner returns its real glyph plans and construction records.
+`plan_font()` merges the six disjoint glyph-plan mappings only after those
+planners finish. A glyph may be reused by several constructions of the same role
+but cannot cross roles. Ordinary glyphs follow the font's normal metric mode;
+every math
 construction role uses proportional planning even in a monospace font. Variant
 roles include both dictionary keys and alternates, so an empty variant array is
 legal and still produces a one-record construction containing its proportional
@@ -211,8 +219,8 @@ multiplication. Generated glyphs are copied from the rendered source glyph rathe
 than being planned or expanded again.
 
 Discrete variants and MATH assemblies are authored together in an optional
-`math_variants/*.json` file. Its required `min_connector_overlap` is followed by
-`vertical` and `horizontal` construction mappings. Every construction key is a
+`math_table/variants/*.json` file. Its required `min_connector_overlap` is
+followed by `vertical` and `horizontal` construction mappings. Every construction key is a
 variant base. `variant_glyphs` may be omitted or empty, in which case planning
 still produces a base-only variant record and assigns that base to the
 proportional variant-glyph role. `parts` may be omitted; when present it must be
@@ -271,12 +279,13 @@ resolved plan.
 planning, and rendering path as every other real glyph. Assembly fails when it
 is missing. Compilation explicitly places it at glyph ID 0.
 
-When a math plan contains ssty substitutions, render writes one `ssty` feature
+When a font plan contains ssty substitutions, render writes one `ssty` feature
 for the `math` script. One alternate uses a single substitution; two alternates
-use an alternate substitution. ufo2ft therefore compiles GSUB together with the
-font rather than requiring a later GSUB rewrite.
+use an alternate substitution. This works independently of whether the build
+also emits a MATH table. ufo2ft therefore compiles GSUB together with the font
+rather than requiring a later GSUB rewrite.
 
-An optional `math_italics_correction/*.json` file maps exact glyph names to
+An optional `math_table/italics_correction/*.json` file maps exact glyph names to
 non-negative italic-correction values in font units. It deliberately has no
 group-selector syntax; every glyph that needs a value, including a discrete
 size variant, is listed explicitly:
@@ -292,7 +301,7 @@ Loading validates names and values, and planning rejects references to glyphs
 that are not present in the build. The mapping is then written directly to
 `MathItalicsCorrectionInfo`.
 
-An optional `math_accent_attachment/*.json` file maps exact glyph names to top
+An optional `math_table/accent_attachment/*.json` file maps exact glyph names to top
 accent attachment points in the offset-applied grid coordinate system:
 
 ```json
@@ -328,8 +337,9 @@ each generated glyph whose real `source_name` has an attachment inherits that
 same final font-unit value. Inheritance is deliberately limited to this direct
 real-source-to-generated-target relationship.
 
-Optional per-glyph mathematical kerning is authored in `math_kern/*.json` and
-enabled with `math_config.kern_file`. Keys are exact glyph names; group
+Optional per-glyph mathematical kerning is authored in
+`math_table/kern/*.json` and enabled with `math_table.kern_file`. Keys are exact
+glyph names; group
 selectors such as `@variant_glyphs`, `@parts`, and `@variants` are not accepted.
 As with top accent attachments, only ordinary and vertical or horizontal
 discrete variant glyphs may be configured. Accent and assembly-part roles are
@@ -423,9 +433,10 @@ skeletonfont-build --project-directory D:\workspace\pl46 ascii
 
 With no names, the command reads `build_list.json`. Output defaults to
 `build/otf/<output_stem>.otf`; `--output-directory` can override the output
-location. A build declaring `math_config` loads and validates its mathematical
-inputs and emits MATH plus the associated math GSUB data. It fails before saving
-if those inputs refer to missing glyphs or invalid constructions.
+location. A build declaring `math_table` loads and validates its mathematical
+inputs and emits MATH. A build with explicit `ssty` substitutions emits the
+corresponding GSUB feature independently. It fails
+before saving if those inputs refer to missing glyphs or invalid constructions.
 
 Run the committed test suite with:
 
@@ -445,7 +456,7 @@ keep their relative position; they are not written merely to show a default.
 | Geometry | `grid`, `thickness`, `point_radius_scale`, `y_shift`, `use_scaled_edge_thickness` |
 | Horizontal metrics | `monospace_width`, `left_spacing`, `right_spacing` |
 | Glyph set | `source_rules`, `glyph_generators` |
-| Additional data | `glyph_config_file`, `accent_file`, `kerning_file`, `math_config` |
+| Additional data | `glyph_config_file`, `accent_file`, `kerning_file`, `ssty_file`, `math_table` |
 
 The following fields are required and must always be written:
 
@@ -463,10 +474,10 @@ All other meta fields are optional:
 | `monospace_width` | absent; the font uses proportional metrics |
 | `left_spacing`, `right_spacing` | `0` |
 | `glyph_generators` | no generators |
-| `glyph_config_file`, `accent_file`, `kerning_file` | no file |
-| `math_config` | MATH disabled |
+| `glyph_config_file`, `accent_file`, `kerning_file`, `ssty_file` | no file |
+| `math_table` | MATH disabled |
 
 The nullable fields `output_stem`, `glyph_generators`, `glyph_config_file`,
-`accent_file`, `kerning_file`, and `math_config` may also be written explicitly
-as `null`, though
+`accent_file`, `kerning_file`, `ssty_file`, and `math_table` may also be written
+explicitly as `null`, though
 omitting them is preferred when the default is intended.
