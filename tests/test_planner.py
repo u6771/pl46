@@ -14,7 +14,8 @@ from skeletonfont.loader import (
     load_font_meta,
     load_glyph_config,
     load_kerning_data,
-    load_math_data,
+    load_math_table_data,
+    load_ssty_data,
     parse_glyph_config,
 )
 from skeletonfont.model import (
@@ -26,6 +27,7 @@ from skeletonfont.model import (
     MathGlyphAssemblyData,
     MathGlyphKernData,
     MathKernTableData,
+    SstyData,
     StrokeRecord,
 )
 from skeletonfont.planner import (
@@ -158,13 +160,17 @@ class FontPlannerTests(unittest.TestCase):
             cls.meta,
             GlyphCatalog(PROJECT_DIRECTORY),
         )
-        cls.math_config = load_glyph_config(
+        cls.math_table = load_glyph_config(
             PROJECT_DIRECTORY,
             "math.json",
         )
-        assert cls.meta.math_config is not None
-        cls.math_data = load_math_data(
-            PROJECT_DIRECTORY, cls.meta.math_config
+        assert cls.meta.math_table is not None
+        cls.math_data = load_math_table_data(
+            PROJECT_DIRECTORY, cls.meta.math_table
+        )
+        assert cls.meta.ssty_file is not None
+        cls.ssty_data = load_ssty_data(
+            PROJECT_DIRECTORY, cls.meta.ssty_file
         )
         assert cls.meta.accent_file is not None
         cls.accent_glyphs = load_accent_glyphs(
@@ -173,8 +179,9 @@ class FontPlannerTests(unittest.TestCase):
         )
         cls.math_plan = plan_font(
             cls.assembled_math,
-            cls.math_config,
-            math_data=cls.math_data,
+            cls.math_table,
+            math_table_data=cls.math_data,
+            ssty_data=cls.ssty_data,
             accent_glyphs=cls.accent_glyphs,
         )
 
@@ -184,16 +191,12 @@ class FontPlannerTests(unittest.TestCase):
         self.assertEqual(plan.output_stem, "PL46-Math")
         self.assertEqual(plan.point_radius_scale, 1.6)
         self.assertEqual(
-            len(plan.real_glyphs) + len(plan.generated_glyphs),
-            1232,
+            set(plan.real_glyphs),
+            set(self.assembled_math.real_glyphs),
         )
         self.assertEqual(
-            sum(
-                glyph.codepoint is not None
-                for glyph in plan.real_glyphs.values()
-            )
-            + len(plan.generated_glyphs),
-            1067,
+            plan.generated_glyphs,
+            self.assembled_math.generated_glyphs,
         )
         self.assertEqual(plan.real_glyphs[".notdef"].width, 600)
         self.assertTrue(plan.real_glyphs[".notdef"].strokes)
@@ -201,10 +204,14 @@ class FontPlannerTests(unittest.TestCase):
             plan.real_glyphs["new"] = plan.real_glyphs["A"]  # type: ignore[index]
 
     def test_math_plan_resolves_ssty_and_variant_advances(self) -> None:
-        math_plan = self.math_plan.math
+        math_plan = self.math_plan.math_table
         assert math_plan is not None
 
-        self.assertIn("sub minute by minute.st;", math_plan.ssty_feature)
+        assert self.math_plan.ssty_feature is not None
+        self.assertIn(
+            "sub minute by minute.st;",
+            self.math_plan.ssty_feature,
+        )
         self.assertEqual(len(math_plan.vertical_variant_records), 36)
         self.assertEqual(len(math_plan.horizontal_variant_records), 6)
         self.assertIn("parenleft", math_plan.extended_shapes)
@@ -244,6 +251,16 @@ class FontPlannerTests(unittest.TestCase):
             ],
         )
 
+    def test_explicit_ssty_does_not_require_a_math_table(self) -> None:
+        plan = plan_font(
+            self.assembled_math,
+            ssty_data=self.ssty_data,
+        )
+
+        self.assertIsNone(plan.math_table)
+        assert plan.ssty_feature is not None
+        self.assertIn("sub minute by minute.st;", plan.ssty_feature)
+
     def test_math_italics_correction_rejects_unknown_glyphs(self) -> None:
         data = replace(
             self.math_data,
@@ -251,7 +268,7 @@ class FontPlannerTests(unittest.TestCase):
         )
 
         with self.assertRaisesRegex(PlanError, "unknown glyphs"):
-            plan_font(self.assembled_math, math_data=data)
+            plan_font(self.assembled_math, math_table_data=data)
 
     def test_math_kerns_allow_supported_real_roles_and_inherit(self) -> None:
         kern = glyph_kern()
@@ -267,7 +284,7 @@ class FontPlannerTests(unittest.TestCase):
             ),
         )
 
-        math_plan = plan_font(self.assembled_math, math_data=data).math
+        math_plan = plan_font(self.assembled_math, math_table_data=data).math_table
         assert math_plan is not None
         self.assertEqual(math_plan.kerns["A.script"], kern)
         self.assertEqual(math_plan.kerns["parenleft.v1"], kern)
@@ -291,7 +308,7 @@ class FontPlannerTests(unittest.TestCase):
                 with self.assertRaisesRegex(PlanError, message):
                     plan_font(
                         self.assembled_math,
-                        math_data=data,
+                        math_table_data=data,
                         accent_glyphs=accent_glyphs,
                     )
 
@@ -300,7 +317,7 @@ class FontPlannerTests(unittest.TestCase):
             self.math_data,
             accent_attachments=MappingProxyType({"j": 1.0}),
         )
-        config = dict(self.math_config)
+        config = dict(self.math_table)
         config[selector("j")] = adjustment(left=20)
 
         with patch(
@@ -310,8 +327,8 @@ class FontPlannerTests(unittest.TestCase):
             math_plan = plan_font(
                 self.assembled_math,
                 config,
-                math_data=data,
-            ).math
+                math_table_data=data,
+            ).math_table
         assert math_plan is not None
         self.assertEqual(math_plan.top_accent_attachments["j"], 420)
         self.assertEqual(math_plan.top_accent_attachments["j.italic"], 420)
@@ -340,7 +357,7 @@ class FontPlannerTests(unittest.TestCase):
             "skeletonfont.planner._measure_glyph_axis",
             wraps=_measure_glyph_axis,
         ) as measure_axis:
-            math_plan = plan_font(assembled, math_data=data).math
+            math_plan = plan_font(assembled, math_table_data=data).math_table
         assert math_plan is not None
         self.assertEqual(math_plan.top_accent_attachments["j"], 275)
         self.assertEqual(math_plan.top_accent_attachments["j.italic"], 275)
@@ -363,7 +380,7 @@ class FontPlannerTests(unittest.TestCase):
             "skeletonfont.planner._measure_glyph_axis",
             wraps=_measure_glyph_axis,
         ) as measure_axis:
-            math_plan = plan_font(self.assembled_math, math_data=data).math
+            math_plan = plan_font(self.assembled_math, math_table_data=data).math_table
         assert math_plan is not None
         self.assertEqual(
             set(math_plan.top_accent_attachments),
@@ -400,7 +417,7 @@ class FontPlannerTests(unittest.TestCase):
                 with self.assertRaisesRegex(PlanError, message):
                     plan_font(
                         self.assembled_math,
-                        math_data=data,
+                        math_table_data=data,
                         accent_glyphs=accent_glyphs,
                     )
 
@@ -423,7 +440,7 @@ class FontPlannerTests(unittest.TestCase):
             plan_font(
                 self.assembled_math,
                 adjustment_config({"tildecomb": adjustment(left=10)}),
-                math_data=self.math_data,
+                math_table_data=self.math_data,
                 accent_glyphs=self.accent_glyphs,
             )
 
@@ -431,7 +448,7 @@ class FontPlannerTests(unittest.TestCase):
         with self.assertRaisesRegex(PlanError, "unknown real glyphs"):
             plan_font(
                 self.assembled_math,
-                math_data=self.math_data,
+                math_table_data=self.math_data,
                 accent_glyphs=frozenset({"missing"}),
             )
 
@@ -447,7 +464,7 @@ class FontPlannerTests(unittest.TestCase):
         with self.assertRaisesRegex(PlanError, "multiple planning roles"):
             plan_font(
                 self.assembled_math,
-                math_data=overlapping,
+                math_table_data=overlapping,
                 accent_glyphs=self.accent_glyphs,
             )
 
@@ -461,7 +478,7 @@ class FontPlannerTests(unittest.TestCase):
             glyph_parameters=parameters,
         )
 
-        plan = plan_font(assembled, math_data=self.math_data)
+        plan = plan_font(assembled, math_table_data=self.math_data)
 
         self.assertEqual(plan.real_glyphs["parenleft"].width, 400)
         self.assertEqual(plan.real_glyphs["parenleft.v4"].width, 620)
@@ -488,18 +505,18 @@ class FontPlannerTests(unittest.TestCase):
 
         plan = plan_font(
             self.assembled_math,
-            math_data=math_data,
+            math_table_data=math_data,
         )
-        assert plan.math is not None
+        assert plan.math_table is not None
 
         self.assertEqual(
             [
                 (record.glyph_name, record.full_advance)
-                for record in plan.math.horizontal_variant_records["equal"]
+                for record in plan.math_table.horizontal_variant_records["equal"]
             ],
             [("equal", 650), ("arrowleft", 850)],
         )
-        self.assertEqual(plan.math.extended_shapes, set())
+        self.assertEqual(plan.math_table.extended_shapes, set())
 
     def test_assemblies_resolve_part_roles_and_common_vertical_metrics(self) -> None:
         vertical = MathGlyphAssemblyData(
@@ -557,9 +574,9 @@ class FontPlannerTests(unittest.TestCase):
 
         plan = plan_font(
             self.assembled_math,
-            math_data=math_data,
+            math_table_data=math_data,
         )
-        math_plan = plan.math
+        math_plan = plan.math_table
         assert math_plan is not None
 
         paren_part = plan.real_glyphs["parenleft.v1"]
@@ -629,7 +646,7 @@ class FontPlannerTests(unittest.TestCase):
         with self.assertRaisesRegex(PlanError, "missing.part"):
             plan_font(
                 self.assembled_math,
-                math_data=missing_data,
+                math_table_data=missing_data,
             )
 
         no_overlap = replace(
@@ -654,19 +671,22 @@ class FontPlannerTests(unittest.TestCase):
         with self.assertRaisesRegex(PlanError, "overlap itself"):
             plan_font(
                 self.assembled_math,
-                math_data=no_overlap_data,
+                math_table_data=no_overlap_data,
             )
 
     def test_math_references_must_exist_in_real_glyphs(self) -> None:
-        missing_ssty = replace(
-            self.math_data,
-            ssty=MappingProxyType({"minute": ("missing.st",)}),
+        missing_ssty = SstyData(
+            source_path=Path("ssty.json"),
+            substitutions=MappingProxyType(
+                {"minute": ("missing.st",)}
+            ),
         )
         with self.assertRaisesRegex(PlanError, "missing.st"):
             plan_font(
                 self.assembled_math,
-                self.math_config,
-                math_data=missing_ssty,
+                self.math_table,
+                math_table_data=self.math_data,
+                ssty_data=missing_ssty,
             )
 
         missing_variant = replace(
@@ -681,7 +701,7 @@ class FontPlannerTests(unittest.TestCase):
         with self.assertRaisesRegex(PlanError, "missing.v1"):
             plan_font(
                 self.assembled_math,
-                math_data=missing_variant,
+                math_table_data=missing_variant,
             )
 
     def test_empty_variant_glyph_sequence_still_plans_its_base(self) -> None:
@@ -695,7 +715,6 @@ class FontPlannerTests(unittest.TestCase):
         )
         data = replace(
             self.math_data,
-            ssty=MappingProxyType({}),
             min_connector_overlap=0,
             vertical_variant_glyphs=MappingProxyType({"A": ()}),
             horizontal_variant_glyphs=MappingProxyType({}),
@@ -703,19 +722,19 @@ class FontPlannerTests(unittest.TestCase):
             horizontal_assemblies=MappingProxyType({}),
         )
 
-        plan = plan_font(assembled, math_data=data)
-        assert plan.math is not None
+        plan = plan_font(assembled, math_table_data=data)
+        assert plan.math_table is not None
 
         self.assertEqual(plan.real_glyphs["A"].width, 600)
         self.assertEqual(plan.real_glyphs[".notdef"].width, 1050)
         self.assertEqual(
             [
                 record.glyph_name
-                for record in plan.math.vertical_variant_records["A"]
+                for record in plan.math_table.vertical_variant_records["A"]
             ],
             ["A"],
         )
-        self.assertIn("A", plan.math.extended_shapes)
+        self.assertIn("A", plan.math_table.extended_shapes)
 
     def test_cross_role_math_glyph_is_rejected_before_branch_planning(self) -> None:
         part = MathAssemblyPartData(
@@ -728,7 +747,6 @@ class FontPlannerTests(unittest.TestCase):
         )
         data = replace(
             self.math_data,
-            ssty=MappingProxyType({}),
             min_connector_overlap=0,
             vertical_variant_glyphs=MappingProxyType(
                 {"A": (), "parenleft": ()}
@@ -746,7 +764,7 @@ class FontPlannerTests(unittest.TestCase):
         )
 
         with self.assertRaisesRegex(PlanError, "multiple planning roles"):
-            plan_font(self.assembled_math, math_data=data)
+            plan_font(self.assembled_math, math_table_data=data)
 
     def test_shared_vertical_parts_are_transformed_once_per_glyph(self) -> None:
         first_parts = (
@@ -771,7 +789,6 @@ class FontPlannerTests(unittest.TestCase):
         )
         data = replace(
             self.math_data,
-            ssty=MappingProxyType({}),
             min_connector_overlap=0,
             vertical_variant_glyphs=MappingProxyType(
                 {"parenleft": (), "parenright": ()}
@@ -796,7 +813,7 @@ class FontPlannerTests(unittest.TestCase):
                 wraps=_measure_glyph_axis,
             ) as measure_axis,
         ):
-            plan = plan_font(self.assembled_math, math_data=data)
+            plan = plan_font(self.assembled_math, math_table_data=data)
 
         transformed_skeletons = [
             call.args[0] for call in transform.call_args_list
@@ -820,9 +837,9 @@ class FontPlannerTests(unittest.TestCase):
             vertically_measured_names.count("radical.v1"),
             1,
         )
-        assert plan.math is not None
-        first = plan.math.vertical_assemblies["parenleft"].parts[0]
-        second = plan.math.vertical_assemblies["parenright"].parts[0]
+        assert plan.math_table is not None
+        first = plan.math_table.vertical_assemblies["parenleft"].parts[0]
+        second = plan.math_table.vertical_assemblies["parenright"].parts[0]
         self.assertNotEqual(
             first.start_connector_length,
             second.start_connector_length,
@@ -848,7 +865,6 @@ class FontPlannerTests(unittest.TestCase):
             construction_items = tuple(items)
             data = replace(
                 self.math_data,
-                ssty=MappingProxyType({}),
                 min_connector_overlap=0,
                 vertical_variant_glyphs=MappingProxyType(
                     {base: () for base, _construction in construction_items}
@@ -857,7 +873,7 @@ class FontPlannerTests(unittest.TestCase):
                 vertical_assemblies=MappingProxyType(dict(construction_items)),
                 horizontal_assemblies=MappingProxyType({}),
             )
-            return plan_font(self.assembled_math, math_data=data)
+            return plan_font(self.assembled_math, math_table_data=data)
 
         forward = planned_with(constructions.items())
         backward = planned_with(reversed(tuple(constructions.items())))
@@ -888,7 +904,6 @@ class FontPlannerTests(unittest.TestCase):
         )
         data = replace(
             self.math_data,
-            ssty=MappingProxyType({}),
             min_connector_overlap=0,
             vertical_variant_glyphs=MappingProxyType(
                 {"parenleft": (), "parenright": ()}
@@ -901,7 +916,7 @@ class FontPlannerTests(unittest.TestCase):
             PlanError,
             "incompatible construction layouts",
         ) as context:
-            plan_font(self.assembled_math, math_data=data)
+            plan_font(self.assembled_math, math_table_data=data)
         self.assertIn("'parenleft':", str(context.exception))
         self.assertIn("'parenright':", str(context.exception))
 
@@ -919,7 +934,7 @@ class FontPlannerTests(unittest.TestCase):
             PlanError,
             "inconsistent authored",
         ) as context:
-            plan_font(self.assembled_math, math_data=scale_data)
+            plan_font(self.assembled_math, math_table_data=scale_data)
         self.assertIn("'parenleft':", str(context.exception))
         self.assertIn("'parenright':", str(context.exception))
 
@@ -932,7 +947,6 @@ class FontPlannerTests(unittest.TestCase):
         )
         data = replace(
             self.math_data,
-            ssty=MappingProxyType({}),
             min_connector_overlap=0,
             vertical_variant_glyphs=MappingProxyType({}),
             horizontal_variant_glyphs=MappingProxyType(
@@ -947,10 +961,10 @@ class FontPlannerTests(unittest.TestCase):
             ),
         )
 
-        plan = plan_font(self.assembled_math, math_data=data)
-        assert plan.math is not None
-        left = plan.math.horizontal_assemblies["arrowleft"].parts[0]
-        right = plan.math.horizontal_assemblies["arrowright"].parts[0]
+        plan = plan_font(self.assembled_math, math_table_data=data)
+        assert plan.math_table is not None
+        left = plan.math_table.horizontal_assemblies["arrowleft"].parts[0]
+        right = plan.math_table.horizontal_assemblies["arrowright"].parts[0]
 
         self.assertNotEqual(
             left.start_connector_length,
@@ -1131,14 +1145,14 @@ class FontPlannerTests(unittest.TestCase):
     def test_variant_glyph_group_adjusts_base_and_discrete_variants(self) -> None:
         baseline = plan_font(
             self.assembled_math,
-            math_data=self.math_data,
+            math_table_data=self.math_data,
         )
         adjusted = plan_font(
             self.assembled_math,
             adjustment_config(
                 {"parenleft@variant_glyphs": adjustment(40, 30)}
             ),
-            math_data=self.math_data,
+            math_table_data=self.math_data,
         )
         names = (
             "parenleft",
@@ -1150,22 +1164,22 @@ class FontPlannerTests(unittest.TestCase):
                 adjusted.real_glyphs[name].width,
                 baseline.real_glyphs[name].width + 70,
             )
-        assert baseline.math is not None
-        assert adjusted.math is not None
+        assert baseline.math_table is not None
+        assert adjusted.math_table is not None
         self.assertEqual(
-            adjusted.math.vertical_variant_records["parenleft"],
-            baseline.math.vertical_variant_records["parenleft"],
+            adjusted.math_table.vertical_variant_records["parenleft"],
+            baseline.math_table.vertical_variant_records["parenleft"],
         )
 
     def test_vertical_part_group_adjusts_layout_but_not_base(self) -> None:
         baseline = plan_font(
             self.assembled_math,
-            math_data=self.math_data,
+            math_table_data=self.math_data,
         )
         adjusted = plan_font(
             self.assembled_math,
             adjustment_config({"parenleft@parts": adjustment(40, 30)}),
-            math_data=self.math_data,
+            math_table_data=self.math_data,
         )
         part_names = {
             part.glyph_name
@@ -1181,22 +1195,22 @@ class FontPlannerTests(unittest.TestCase):
                 adjusted.real_glyphs[name].width,
                 baseline.real_glyphs[name].width + 70,
             )
-        assert baseline.math is not None
-        assert adjusted.math is not None
+        assert baseline.math_table is not None
+        assert adjusted.math_table is not None
         self.assertEqual(
-            adjusted.math.vertical_assemblies["parenleft"],
-            baseline.math.vertical_assemblies["parenleft"],
+            adjusted.math_table.vertical_assemblies["parenleft"],
+            baseline.math_table.vertical_assemblies["parenleft"],
         )
 
     def test_variants_group_combines_discrete_and_part_adjustments(self) -> None:
         baseline = plan_font(
             self.assembled_math,
-            math_data=self.math_data,
+            math_table_data=self.math_data,
         )
         adjusted = plan_font(
             self.assembled_math,
             adjustment_config({"parenleft@variants": adjustment(25, 15)}),
-            math_data=self.math_data,
+            math_table_data=self.math_data,
         )
         names = {
             "parenleft",
@@ -1218,14 +1232,14 @@ class FontPlannerTests(unittest.TestCase):
     def test_horizontal_groups_allow_only_discrete_variants(self) -> None:
         baseline = plan_font(
             self.assembled_math,
-            math_data=self.math_data,
+            math_table_data=self.math_data,
         )
         adjusted = plan_font(
             self.assembled_math,
             adjustment_config(
                 {"uni23B4@variant_glyphs": adjustment(left=20)}
             ),
-            math_data=self.math_data,
+            math_table_data=self.math_data,
         )
         names = (
             "uni23B4",
@@ -1236,11 +1250,11 @@ class FontPlannerTests(unittest.TestCase):
                 adjusted.real_glyphs[name].width,
                 baseline.real_glyphs[name].width + 20,
             )
-        assert baseline.math is not None
-        assert adjusted.math is not None
+        assert baseline.math_table is not None
+        assert adjusted.math_table is not None
         self.assertEqual(
-            adjusted.math.horizontal_variant_records["uni23B4"],
-            baseline.math.horizontal_variant_records["uni23B4"],
+            adjusted.math_table.horizontal_variant_records["uni23B4"],
+            baseline.math_table.horizontal_variant_records["uni23B4"],
         )
 
         for group_kind in ("parts", "variants"):
@@ -1255,7 +1269,7 @@ class FontPlannerTests(unittest.TestCase):
                                 )
                             }
                         ),
-                        math_data=self.math_data,
+                        math_table_data=self.math_data,
                     )
 
     def test_part_groups_require_an_existing_vertical_assembly(self) -> None:
@@ -1282,7 +1296,7 @@ class FontPlannerTests(unittest.TestCase):
                                 )
                             }
                         ),
-                        math_data=data,
+                        math_table_data=data,
                     )
 
         plan_font(
@@ -1290,7 +1304,7 @@ class FontPlannerTests(unittest.TestCase):
             adjustment_config(
                 {"parenleft@variant_glyphs": adjustment(left=10)}
             ),
-            math_data=data,
+            math_table_data=data,
         )
 
     def test_group_adjustments_require_math_data_and_known_bases(self) -> None:
@@ -1304,7 +1318,7 @@ class FontPlannerTests(unittest.TestCase):
                     plan_font(
                         self.assembled_math,
                         adjustment_config({selector_name: value}),
-                        math_data=math_data,
+                        math_table_data=math_data,
                     )
 
     def test_direct_part_and_group_overlap_adjustments_are_rejected(self) -> None:
@@ -1328,7 +1342,7 @@ class FontPlannerTests(unittest.TestCase):
                     plan_font(
                         self.assembled_math,
                         adjustment_config(config),
-                        math_data=self.math_data,
+                        math_table_data=self.math_data,
                     )
 
     def test_shared_owner_groups_require_complete_equal_adjustments(self) -> None:
@@ -1341,7 +1355,7 @@ class FontPlannerTests(unittest.TestCase):
         )
         baseline = plan_font(
             self.assembled_math,
-            math_data=self.math_data,
+            math_table_data=self.math_data,
         )
 
         with patch(
@@ -1351,12 +1365,12 @@ class FontPlannerTests(unittest.TestCase):
             adjusted = plan_font(
                 self.assembled_math,
                 config,
-                math_data=self.math_data,
+                math_table_data=self.math_data,
             )
         reversed_plan = plan_font(
             self.assembled_math,
             dict(reversed(tuple(config.items()))),
-            math_data=self.math_data,
+            math_table_data=self.math_data,
         )
 
         planned_names = [
@@ -1377,7 +1391,7 @@ class FontPlannerTests(unittest.TestCase):
             plan_font(
                 self.assembled_math,
                 adjustment_config({"bar@variants": equal}),
-                math_data=self.math_data,
+                math_table_data=self.math_data,
             )
         with self.assertRaisesRegex(
             PlanError,
@@ -1391,14 +1405,14 @@ class FontPlannerTests(unittest.TestCase):
                         "divides@variants": adjustment(left=30),
                     }
                 ),
-                math_data=self.math_data,
+                math_table_data=self.math_data,
             )
 
     def test_shared_part_groups_require_complete_equal_adjustments(self) -> None:
         equal = adjustment(right=20)
         baseline = plan_font(
             self.assembled_math,
-            math_data=self.math_data,
+            math_table_data=self.math_data,
         )
         adjusted = plan_font(
             self.assembled_math,
@@ -1408,7 +1422,7 @@ class FontPlannerTests(unittest.TestCase):
                     "divides@parts": adjustment(0, 20),
                 }
             ),
-            math_data=self.math_data,
+            math_table_data=self.math_data,
         )
 
         self.assertEqual(
@@ -1419,7 +1433,7 @@ class FontPlannerTests(unittest.TestCase):
             plan_font(
                 self.assembled_math,
                 adjustment_config({"bar@parts": equal}),
-                math_data=self.math_data,
+                math_table_data=self.math_data,
             )
         with self.assertRaisesRegex(
             PlanError,
@@ -1433,7 +1447,7 @@ class FontPlannerTests(unittest.TestCase):
                         "divides@parts": adjustment(right=30),
                     }
                 ),
-                math_data=self.math_data,
+                math_table_data=self.math_data,
             )
 
     def test_monospace_rejects_only_current_width_adjustment_fields(self) -> None:
@@ -1452,7 +1466,7 @@ class FontPlannerTests(unittest.TestCase):
             adjustment_config(
                 {"parenleft@variant_glyphs": adjustment(left=10)}
             ),
-            math_data=self.math_data,
+            math_table_data=self.math_data,
         )
 
     def test_scaled_edge_thickness_affects_metrics(self) -> None:
@@ -1475,8 +1489,8 @@ class FontPlannerTests(unittest.TestCase):
         )
         unscaled = plan_font(
             unscaled_assembled,
-            self.math_config,
-            math_data=self.math_data,
+            self.math_table,
+            math_table_data=self.math_data,
         ).real_glyphs["minute.st"]
         self.assertEqual(unscaled.width, 400)
         self.assertEqual(unscaled.strokes[0].radius, 35)
@@ -1545,8 +1559,8 @@ class FontPlannerTests(unittest.TestCase):
 
         shifted = plan_font(
             shifted_assembled,
-            self.math_config,
-            math_data=self.math_data,
+            self.math_table,
+            math_table_data=self.math_data,
         ).real_glyphs["A"]
 
         self.assertEqual(
@@ -1582,14 +1596,14 @@ class FontPlannerTests(unittest.TestCase):
         self.assertIs(plan.kerning, kerning)
 
     def test_unused_config_name_is_rejected(self) -> None:
-        config = dict(self.math_config)
+        config = dict(self.math_table)
         config[selector("does.not.exist")] = adjustment(left=1)
 
         with self.assertRaisesRegex(PlanError, "does.not.exist"):
             plan_font(
                 self.assembled_math,
                 config,
-                math_data=self.math_data,
+                math_table_data=self.math_data,
             )
 
 

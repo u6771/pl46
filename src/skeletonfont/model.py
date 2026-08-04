@@ -58,15 +58,15 @@ class SourceRule:
     include_unencoded: bool
     replace_existing: bool
     mapping_name: str | None
+    thickness_scale: float
 
 
 @dataclass(frozen=True, slots=True)
-class MathConfig:
-    """Names of the optional inputs used to construct OpenType math data."""
+class MathTableConfig:
+    """Names of the optional inputs used to construct the OpenType MATH table."""
 
     constants_file: str
     variants_file: str | None
-    ssty_file: str | None
     italics_correction_file: str | None
     accent_attachment_file: str | None
     kern_file: str | None
@@ -111,13 +111,11 @@ class MathGlyphKernData:
 
 
 @dataclass(frozen=True, slots=True)
-class MathData:
-    """Validated project inputs used to plan OpenType math data."""
+class MathTableData:
+    """Validated project inputs used to plan the OpenType MATH table."""
 
     constants_source_path: Path
     constants: Mapping[str, int]
-    ssty_source_path: Path | None
-    ssty: Mapping[str, tuple[str, ...]]
     italics_correction_source_path: Path | None
     italic_corrections: Mapping[str, int]
     accent_attachment_source_path: Path | None
@@ -129,6 +127,14 @@ class MathData:
     horizontal_variant_glyphs: Mapping[str, tuple[str, ...]]
     vertical_assemblies: Mapping[str, MathGlyphAssemblyData]
     horizontal_assemblies: Mapping[str, MathGlyphAssemblyData]
+
+
+@dataclass(frozen=True, slots=True)
+class SstyData:
+    """Explicit GSUB ssty substitutions loaded from one project file."""
+
+    source_path: Path
+    substitutions: Mapping[str, tuple[str, ...]]
 
 
 @dataclass(frozen=True, slots=True)
@@ -171,8 +177,9 @@ class FontMeta:
     glyph_config_file: str | None
     accent_file: str | None
     kerning_file: str | None
+    ssty_file: str | None
     output_stem: str
-    math_config: MathConfig | None
+    math_table: MathTableConfig | None
 
 
 @dataclass(frozen=True, slots=True)
@@ -297,11 +304,10 @@ class MathGlyphAssemblyPlan:
 
 
 @dataclass(frozen=True, slots=True)
-class MathPlan:
-    """All resolved inputs needed to compile GSUB and MATH data."""
+class MathTablePlan:
+    """All resolved inputs needed to compile the OpenType MATH table."""
 
     constants: Mapping[str, int]
-    ssty_feature: str | None
     vertical_variant_records: Mapping[str, tuple[MathVariantRecord, ...]]
     horizontal_variant_records: Mapping[str, tuple[MathVariantRecord, ...]]
     min_connector_overlap: int
@@ -321,6 +327,7 @@ class FontPlan:
     output_stem: str
     point_radius_scale: float
     kerning: KerningData | None
-    math: MathPlan | None
+    ssty_feature: str | None
+    math_table: MathTablePlan | None
     real_glyphs: Mapping[str, RealGlyphPlan]
     generated_glyphs: tuple[GeneratedGlyph, ...]

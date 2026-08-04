@@ -5,7 +5,7 @@ from fontTools.ttLib import TTFont, newTable
 from fontTools.ttLib.tables import otTables
 
 from .errors import CompileError
-from .model import MathPlan
+from .model import MathTablePlan
 
 
 def _empty_langsys() -> otTables.LangSys:
@@ -64,7 +64,7 @@ def ensure_math_script(font: TTFont) -> None:
     records.sort(key=lambda item: item.ScriptTag)
 
 
-def apply_math_table(font: TTFont, plan: MathPlan) -> None:
+def apply_math_table(font: TTFont, plan: MathTablePlan) -> None:
     """Add resolved MATH data and the required GSUB math script in memory."""
 
     vertical = {

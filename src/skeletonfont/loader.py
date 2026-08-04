@@ -22,13 +22,14 @@ from .model import (
     KerningData,
     KerningPair,
     MathAssemblyPartData,
-    MathConfig,
-    MathData,
+    MathTableConfig,
+    MathTableData,
     MathGlyphAssemblyData,
     MathGlyphKernData,
     MathKernTableData,
     Point,
     SourceRule,
+    SstyData,
     StrokeRecord,
     UnicodeRange,
 )
@@ -59,7 +60,8 @@ META_FIELD_ORDER = (
     "glyph_config_file",
     "accent_file",
     "kerning_file",
-    "math_config",
+    "ssty_file",
+    "math_table",
 )
 _META_FIELDS = set(META_FIELD_ORDER)
 _REQUIRED_META_FIELDS = {
@@ -81,6 +83,7 @@ _SOURCE_RULE_FIELDS = {
     "include_unencoded",
     "replace_existing",
     "mapping_name",
+    "thickness_scale",
 }
 
 _GLYPH_FIELDS = {
@@ -107,9 +110,8 @@ _STROKE_FIELDS = {
     "filled",
 }
 
-_MATH_FIELDS = {
+_MATH_TABLE_FIELDS = {
     "constants_file",
-    "ssty_file",
     "variants_file",
     "italics_correction_file",
     "accent_attachment_file",
@@ -441,7 +443,6 @@ def _parse_source_rule(
             location=f"{location}.mapping_name",
         )
     )
-
     return SourceRule(
         source_directory=_relative_directory(
             data.get("source_directory"),
@@ -460,6 +461,11 @@ def _parse_source_rule(
             location=f"{location}.replace_existing",
         ),
         mapping_name=mapping_name,
+        thickness_scale=_number(
+            data.get("thickness_scale", 1),
+            location=f"{location}.thickness_scale",
+            positive=True,
+        ),
     )
 
 
@@ -473,21 +479,21 @@ def _optional_json_filename(
     return normalize_json_filename(value, location=location)
 
 
-def _parse_math_config(
+def _parse_math_table_config(
     value: object | None,
     *,
     build_name: str,
     location: str,
-) -> MathConfig | None:
+) -> MathTableConfig | None:
     if value is None:
         return None
 
     data = _object(value, location=location)
-    _reject_unknown_fields(data, _MATH_FIELDS, location=location)
+    _reject_unknown_fields(data, _MATH_TABLE_FIELDS, location=location)
     if not data:
         return None
 
-    return MathConfig(
+    return MathTableConfig(
         constants_file=normalize_json_filename(
             data.get("constants_file", build_name),
             location=f"{location}.constants_file",
@@ -495,10 +501,6 @@ def _parse_math_config(
         variants_file=_optional_json_filename(
             data.get("variants_file"),
             location=f"{location}.variants_file",
-        ),
-        ssty_file=_optional_json_filename(
-            data.get("ssty_file"),
-            location=f"{location}.ssty_file",
         ),
         italics_correction_file=_optional_json_filename(
             data.get("italics_correction_file"),
@@ -660,11 +662,15 @@ def parse_font_meta(
             data.get("kerning_file"),
             location=f"{location}.kerning_file",
         ),
+        ssty_file=_optional_json_filename(
+            data.get("ssty_file"),
+            location=f"{location}.ssty_file",
+        ),
         output_stem=output_stem,
-        math_config=_parse_math_config(
-            data.get("math_config"),
+        math_table=_parse_math_table_config(
+            data.get("math_table"),
             build_name=build_name,
-            location=f"{location}.math_config",
+            location=f"{location}.math_table",
         ),
     )
 
@@ -706,7 +712,7 @@ def parse_math_constants(
     return MappingProxyType(constants)
 
 
-def parse_math_ssty(
+def parse_ssty(
     value: object,
     *,
     source_path: Path,
@@ -1048,36 +1054,42 @@ def _parse_math_variants_axis(
     return MappingProxyType(variant_glyphs), MappingProxyType(assemblies)
 
 
-def load_math_data(
+def load_ssty_data(
     project_directory: Path,
-    config: MathConfig,
-) -> MathData:
-    """Load all mathematical build inputs declared by one meta file."""
+    filename: str,
+) -> SstyData:
+    """Load explicit GSUB ssty substitutions."""
+
+    source_path = project_directory / "ssty" / filename
+    return SstyData(
+        source_path=source_path,
+        substitutions=parse_ssty(
+            read_json(source_path),
+            source_path=source_path,
+        ),
+    )
+
+
+def load_math_table_data(
+    project_directory: Path,
+    config: MathTableConfig,
+) -> MathTableData:
+    """Load all OpenType MATH-table inputs declared by one meta file."""
 
     constants_path = (
-        project_directory / "math_constants" / config.constants_file
+        project_directory / "math_table" / "constants" / config.constants_file
     )
     constants = parse_math_constants(
         read_json(constants_path),
         source_path=constants_path,
     )
 
-    ssty_path = (
-        None
-        if config.ssty_file is None
-        else project_directory / "math_ssty" / config.ssty_file
-    )
-    ssty = (
-        MappingProxyType({})
-        if ssty_path is None
-        else parse_math_ssty(read_json(ssty_path), source_path=ssty_path)
-    )
-
     italics_correction_path = (
         None
         if config.italics_correction_file is None
         else project_directory
-        / "math_italics_correction"
+        / "math_table"
+        / "italics_correction"
         / config.italics_correction_file
     )
     italic_corrections = (
@@ -1093,7 +1105,8 @@ def load_math_data(
         None
         if config.accent_attachment_file is None
         else project_directory
-        / "math_accent_attachment"
+        / "math_table"
+        / "accent_attachment"
         / config.accent_attachment_file
     )
     accent_attachments = (
@@ -1108,7 +1121,7 @@ def load_math_data(
     kern_path = (
         None
         if config.kern_file is None
-        else project_directory / "math_kern" / config.kern_file
+        else project_directory / "math_table" / "kern" / config.kern_file
     )
     kerns = (
         MappingProxyType({})
@@ -1122,7 +1135,10 @@ def load_math_data(
     variants_path = (
         None
         if config.variants_file is None
-        else project_directory / "math_variants" / config.variants_file
+        else project_directory
+        / "math_table"
+        / "variants"
+        / config.variants_file
     )
     min_connector_overlap = 0
     vertical_variant_glyphs: Mapping[str, tuple[str, ...]] = (
@@ -1172,11 +1188,9 @@ def load_math_data(
             source_path=variants_path,
         )
 
-    return MathData(
+    return MathTableData(
         constants_source_path=constants_path,
         constants=constants,
-        ssty_source_path=ssty_path,
-        ssty=ssty,
         italics_correction_source_path=italics_correction_path,
         italic_corrections=italic_corrections,
         accent_attachment_source_path=accent_attachment_path,

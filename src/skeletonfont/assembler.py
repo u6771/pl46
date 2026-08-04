@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
+from dataclasses import replace
 from pathlib import Path
 from types import MappingProxyType
 
@@ -66,7 +67,19 @@ def _assembled_glyph(
     *,
     name: str,
     codepoint: int | None,
+    thickness_scale: float,
 ) -> AssembledGlyph:
+    skeleton = source.skeleton
+    if thickness_scale != 1:
+        skeleton = tuple(
+            replace(
+                stroke,
+                thickness_scale=(
+                    stroke.thickness_scale * thickness_scale
+                ),
+            )
+            for stroke in skeleton
+        )
     return AssembledGlyph(
         name=name,
         codepoint=codepoint,
@@ -74,7 +87,7 @@ def _assembled_glyph(
         y_offset=source.y_offset,
         x_extent=source.x_extent,
         y_extent=source.y_extent,
-        skeleton=source.skeleton,
+        skeleton=skeleton,
         source_path=source.source_path,
     )
 
@@ -100,6 +113,7 @@ def _selected_glyphs(
                 glyph,
                 name=glyph.name,
                 codepoint=glyph.codepoint,
+                thickness_scale=rule.thickness_scale,
             )
         else:
             if glyph.codepoint is None:
@@ -120,6 +134,7 @@ def _selected_glyphs(
                 glyph,
                 name=target_name,
                 codepoint=target.codepoint,
+                thickness_scale=rule.thickness_scale,
             )
         selected.append(entry)
 

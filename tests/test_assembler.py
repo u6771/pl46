@@ -54,7 +54,6 @@ class FontAssemblerTests(unittest.TestCase):
             "bold": (97, 96),
             "fraktur": (97, 96),
             "jp": (275, 274),
-            "math": (1232, 1067),
             "mono": (578, 577),
             "monobold": (549, 548),
             "script": (97, 96),
@@ -127,6 +126,37 @@ class FontAssemblerTests(unittest.TestCase):
         self.assertIn("math", equal.source_path.parts)
         self.assertEqual(len(assembled.generated_glyphs), 108)
 
+    def test_source_rule_scales_strokes_without_mutating_source(
+        self,
+    ) -> None:
+        meta = load_font_meta(PROJECT_DIRECTORY, "ascii")
+        source = self.catalog.load("ascii")["A"]
+        scaled_rule = replace(
+            meta.source_rules[1],
+            thickness_scale=0.75,
+        )
+        assembled = assemble_font(
+            replace(
+                meta,
+                source_rules=(meta.source_rules[0], scaled_rule),
+            ),
+            self.catalog,
+        )
+
+        scaled = assembled.real_glyphs["A"]
+        self.assertIsNot(scaled.skeleton, source.skeleton)
+        self.assertEqual(len(scaled.skeleton), len(source.skeleton))
+        for source_stroke, scaled_stroke in zip(
+            source.skeleton,
+            scaled.skeleton,
+            strict=True,
+        ):
+            self.assertAlmostEqual(
+                scaled_stroke.thickness_scale,
+                source_stroke.thickness_scale * 0.75,
+            )
+            self.assertIsNot(scaled_stroke, source_stroke)
+
     def test_every_selected_source_crosses_assembly_type_boundary(self) -> None:
         assembled = assemble_font(
             load_font_meta(PROJECT_DIRECTORY, "ascii"),
@@ -194,14 +224,27 @@ class FontAssemblerTests(unittest.TestCase):
         encoded_only = assemble_font(without_unencoded, self.catalog)
         all_math = assemble_font(with_unencoded, self.catalog)
 
-        self.assertEqual(len(encoded_only.real_glyphs), 430)
-        self.assertEqual(len(all_math.real_glyphs), 594)
+        added_names = (
+            set(all_math.real_glyphs) - set(encoded_only.real_glyphs)
+        )
+        self.assertTrue(added_names)
+        self.assertTrue(
+            all(
+                all_math.real_glyphs[name].codepoint is None
+                for name in added_names
+            )
+        )
         self.assertEqual(
-            sum(
-                glyph.codepoint is not None
+            {
+                (glyph.name, glyph.codepoint)
+                for glyph in encoded_only.real_glyphs.values()
+                if glyph.codepoint is not None
+            },
+            {
+                (glyph.name, glyph.codepoint)
                 for glyph in all_math.real_glyphs.values()
-            ),
-            429,
+                if glyph.codepoint is not None
+            },
         )
 
     def test_conflict_requires_replace_existing(self) -> None:

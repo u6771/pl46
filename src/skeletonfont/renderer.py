@@ -79,7 +79,7 @@ def render_font(plan: FontPlan) -> Font:
         for pair in plan.kerning.pairs:
             font.kerning[(pair.left, pair.right)] = pair.value
 
-    if plan.math is not None and plan.math.ssty_feature is not None:
-        font.features.text = plan.math.ssty_feature
+    if plan.ssty_feature is not None:
+        font.features.text = plan.ssty_feature
 
     return font

@@ -18,16 +18,17 @@ from .model import (
     KerningData,
     MathAssemblyPartData,
     MathAssemblyPartPlan,
-    MathData,
+    MathTableData,
     MathGlyphAssemblyData,
     MathGlyphAssemblyPlan,
     MathGlyphKernData,
-    MathPlan,
+    MathTablePlan,
     MathVariantRecord,
     Point,
     RealGlyphPlan,
     StrokePlan,
     StrokeRecord,
+    SstyData,
 )
 
 
@@ -590,7 +591,7 @@ def _ssty_feature(
         missing = {base, *alternates} - glyph_names
         if missing:
             raise PlanError(
-                f"Math ssty rule for {base!r} references unknown glyphs: "
+                f"Ssty rule for {base!r} references unknown glyphs: "
                 f"{sorted(missing)}"
             )
         if len(alternates) == 1:
@@ -1524,7 +1525,8 @@ def plan_font(
     glyph_config: Mapping[GlyphAdjustmentSelector, GlyphAdjustment]
     | None = None,
     kerning: KerningData | None = None,
-    math_data: MathData | None = None,
+    ssty_data: SstyData | None = None,
+    math_table_data: MathTableData | None = None,
     accent_glyphs: frozenset[str] | None = None,
 ) -> FontPlan:
     """Resolve all glyph metrics and centerline transforms without file I/O."""
@@ -1538,16 +1540,22 @@ def plan_font(
     _validate_kerning(glyph_names, kerning)
 
     vertical_variant_glyphs = (
-        {} if math_data is None else math_data.vertical_variant_glyphs
+        {}
+        if math_table_data is None
+        else math_table_data.vertical_variant_glyphs
     )
     horizontal_variant_glyphs = (
-        {} if math_data is None else math_data.horizontal_variant_glyphs
+        {}
+        if math_table_data is None
+        else math_table_data.horizontal_variant_glyphs
     )
     vertical_assemblies = (
-        {} if math_data is None else math_data.vertical_assemblies
+        {} if math_table_data is None else math_table_data.vertical_assemblies
     )
     horizontal_assemblies = (
-        {} if math_data is None else math_data.horizontal_assemblies
+        {}
+        if math_table_data is None
+        else math_table_data.horizontal_assemblies
     )
     glyphs_by_role = _group_glyphs_by_role(
         assembled_font.real_glyphs,
@@ -1572,11 +1580,13 @@ def plan_font(
         horizontal_assemblies,
     )
     top_accent_attachment_inputs = _group_top_accent_attachments_by_role(
-        {} if math_data is None else math_data.accent_attachments,
+        {}
+        if math_table_data is None
+        else math_table_data.accent_attachments,
         glyphs_by_role,
     )
     real_math_kerns = _validate_math_kerns_by_role(
-        {} if math_data is None else math_data.kerns,
+        {} if math_table_data is None else math_table_data.kerns,
         glyphs_by_role,
     )
     ordinary_glyph_plans = _plan_ordinary_glyphs(
@@ -1602,7 +1612,9 @@ def plan_font(
         top_accent_attachment_inputs.horizontal_variant_glyph,
     )
     minimum_overlap = (
-        0 if math_data is None else math_data.min_connector_overlap
+        0
+        if math_table_data is None
+        else math_table_data.min_connector_overlap
     )
     vertical_assembly_plans = _plan_vertical_assemblies(
         vertical_assemblies,
@@ -1661,8 +1673,8 @@ def plan_font(
         horizontal_variant_glyphs,
         horizontal_variant_glyph_plans.full_advances,
     )
-    math_plan: MathPlan | None = None
-    if math_data is not None:
+    math_table_plan: MathTablePlan | None = None
+    if math_table_data is not None:
         real_top_accent_attachments = {
             **ordinary_glyph_plans.top_accent_attachments,
             **vertical_variant_glyph_plans.top_accent_attachments,
@@ -1679,9 +1691,8 @@ def plan_font(
             kern = real_math_kerns.get(generated.source_name)
             if kern is not None:
                 math_kerns[generated.target_name] = kern
-        math_plan = MathPlan(
-            constants=math_data.constants,
-            ssty_feature=_ssty_feature(math_data.ssty, glyph_names),
+        math_table_plan = MathTablePlan(
+            constants=math_table_data.constants,
             vertical_variant_records=vertical_variant_records,
             horizontal_variant_records=horizontal_variant_records,
             min_connector_overlap=minimum_overlap,
@@ -1692,7 +1703,7 @@ def plan_font(
                 | frozenset(vertical_assembly_plans.assembly_plans)
             ),
             italic_corrections=_validate_italic_corrections(
-                math_data.italic_corrections,
+                math_table_data.italic_corrections,
                 glyph_names,
             ),
             top_accent_attachments=MappingProxyType(
@@ -1706,7 +1717,11 @@ def plan_font(
         output_stem=assembled_font.output_stem,
         point_radius_scale=assembled_font.point_radius_scale,
         kerning=kerning,
-        math=math_plan,
+        ssty_feature=_ssty_feature(
+            {} if ssty_data is None else ssty_data.substitutions,
+            glyph_names,
+        ),
+        math_table=math_table_plan,
         real_glyphs=MappingProxyType(real_glyph_plans),
         generated_glyphs=assembled_font.generated_glyphs,
     )

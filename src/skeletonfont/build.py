@@ -10,7 +10,8 @@ from .loader import (
     load_font_meta,
     load_glyph_config,
     load_kerning_data,
-    load_math_data,
+    load_math_table_data,
+    load_ssty_data,
 )
 from .math_tables import apply_math_table
 from .planner import plan_font
@@ -44,22 +45,28 @@ def build_font(
         if meta.kerning_file is None
         else load_kerning_data(project_directory, meta.kerning_file)
     )
-    math_data = (
+    ssty_data = (
         None
-        if meta.math_config is None
-        else load_math_data(project_directory, meta.math_config)
+        if meta.ssty_file is None
+        else load_ssty_data(project_directory, meta.ssty_file)
+    )
+    math_table_data = (
+        None
+        if meta.math_table is None
+        else load_math_table_data(project_directory, meta.math_table)
     )
     plan = plan_font(
         assembled,
         glyph_config=glyph_config,
         accent_glyphs=accent_glyphs,
         kerning=kerning,
-        math_data=math_data,
+        ssty_data=ssty_data,
+        math_table_data=math_table_data,
     )
     ufo = render_font(plan)
     otf = compile_font(ufo)
-    if plan.math is not None:
-        apply_math_table(otf, plan.math)
+    if plan.math_table is not None:
+        apply_math_table(otf, plan.math_table)
 
     destination = (
         project_directory / "build" / "otf"

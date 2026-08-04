@@ -16,7 +16,8 @@ from skeletonfont.loader import (
     load_font_meta,
     load_glyph_source,
     load_kerning_data,
-    load_math_data,
+    load_math_table_data,
+    load_ssty_data,
     parse_font_meta,
     parse_accent_glyphs,
     parse_glyph_source,
@@ -24,7 +25,7 @@ from skeletonfont.loader import (
     parse_math_constants,
     parse_math_italics_correction,
     parse_math_kerns,
-    parse_math_ssty,
+    parse_ssty,
     parse_stroke_record,
 )
 
@@ -69,23 +70,23 @@ class FontMetaLoaderTests(unittest.TestCase):
             ((0, 0x10FFFF),),
         )
 
-    def test_math_config_uses_normalized_json_names(self) -> None:
+    def test_math_table_config_uses_normalized_json_names(self) -> None:
         meta = load_font_meta(PROJECT_DIRECTORY, "math")
 
-        self.assertIsNotNone(meta.math_config)
-        assert meta.math_config is not None
-        self.assertEqual(meta.math_config.constants_file, "math.json")
+        self.assertIsNotNone(meta.math_table)
+        assert meta.math_table is not None
+        self.assertEqual(meta.math_table.constants_file, "math.json")
         self.assertEqual(
-            meta.math_config.variants_file,
+            meta.math_table.variants_file,
             "math.json",
         )
-        self.assertEqual(meta.math_config.ssty_file, "math.json")
+        self.assertEqual(meta.ssty_file, "math.json")
         self.assertEqual(
-            meta.math_config.italics_correction_file,
+            meta.math_table.italics_correction_file,
             "math.json",
         )
         self.assertEqual(
-            meta.math_config.accent_attachment_file,
+            meta.math_table.accent_attachment_file,
             "math.json",
         )
 
@@ -108,16 +109,47 @@ class FontMetaLoaderTests(unittest.TestCase):
         self.assertEqual(math_rule.source_directory, "math")
         self.assertTrue(math_rule.replace_existing)
         self.assertIsNone(math_rule.mapping_name)
+        self.assertEqual(math_rule.thickness_scale, 1)
+
+    def test_source_rule_thickness_scale_is_positive(self) -> None:
+        path = PROJECT_DIRECTORY / "meta" / "ascii.json"
+        original = json.loads(path.read_text(encoding="utf-8"))
+
+        scaled = json.loads(path.read_text(encoding="utf-8"))
+        scaled["source_rules"][1]["thickness_scale"] = 0.75
+        meta = parse_font_meta(
+            scaled,
+            build_name="scaled",
+            meta_path=path,
+        )
+        self.assertEqual(meta.source_rules[1].thickness_scale, 0.75)
+
+        for value in (None, True, "0.75", 0, -1, float("inf")):
+            with self.subTest(value=value):
+                invalid = dict(original)
+                invalid["source_rules"] = [
+                    dict(rule) for rule in original["source_rules"]
+                ]
+                invalid["source_rules"][1]["thickness_scale"] = value
+                with self.assertRaisesRegex(
+                    ProjectDataError,
+                    "thickness_scale",
+                ):
+                    parse_font_meta(
+                        invalid,
+                        build_name="invalid-scale",
+                        meta_path=path,
+                    )
 
     def test_disabled_math_is_none(self) -> None:
         meta = load_font_meta(PROJECT_DIRECTORY, "ascii")
 
-        self.assertIsNone(meta.math_config)
+        self.assertIsNone(meta.math_table)
 
-    def test_empty_math_config_is_none(self) -> None:
+    def test_empty_math_table_is_none(self) -> None:
         path = PROJECT_DIRECTORY / "meta" / "ascii.json"
         data = json.loads(path.read_text(encoding="utf-8"))
-        data["math_config"] = {}
+        data["math_table"] = {}
 
         meta = parse_font_meta(
             data,
@@ -125,12 +157,12 @@ class FontMetaLoaderTests(unittest.TestCase):
             meta_path=path,
         )
 
-        self.assertIsNone(meta.math_config)
+        self.assertIsNone(meta.math_table)
 
-    def test_math_config_does_not_accept_enabled_switch(self) -> None:
+    def test_math_table_does_not_accept_enabled_switch(self) -> None:
         path = PROJECT_DIRECTORY / "meta" / "ascii.json"
         data = json.loads(path.read_text(encoding="utf-8"))
-        data["math_config"] = {"enabled": False}
+        data["math_table"] = {"enabled": False}
 
         with self.assertRaisesRegex(ProjectDataError, "enabled"):
             parse_font_meta(
@@ -154,11 +186,11 @@ class FontMetaLoaderTests(unittest.TestCase):
             "accent_file",
             "kerning_file",
             "output_stem",
-            "math_config",
+            "math_table",
         ):
             data.pop(key, None)
         data["glyph_generators"] = None
-        data["math_config"] = None
+        data["math_table"] = None
 
         meta = parse_font_meta(
             data,
@@ -179,7 +211,7 @@ class FontMetaLoaderTests(unittest.TestCase):
         self.assertIsNone(meta.accent_file)
         self.assertIsNone(meta.kerning_file)
         self.assertEqual(meta.output_stem, "PL46-Ascii")
-        self.assertIsNone(meta.math_config)
+        self.assertIsNone(meta.math_table)
 
     def test_required_meta_field_cannot_be_omitted(self) -> None:
         path = PROJECT_DIRECTORY / "meta" / "ascii.json"
@@ -193,10 +225,10 @@ class FontMetaLoaderTests(unittest.TestCase):
                 meta_path=path,
             )
 
-    def test_math_config_rejects_legacy_variant_fields(self) -> None:
+    def test_math_table_rejects_legacy_variant_fields(self) -> None:
         path = PROJECT_DIRECTORY / "meta" / "ascii.json"
         data = json.loads(path.read_text(encoding="utf-8"))
-        data["math_config"] = {"variant_glyphs_file": "math.json"}
+        data["math_table"] = {"variant_glyphs_file": "math.json"}
 
         with self.assertRaisesRegex(ProjectDataError, "variant_glyphs_file"):
             parse_font_meta(data, build_name="ascii", meta_path=path)
@@ -477,14 +509,14 @@ class KerningLoaderTests(unittest.TestCase):
             kerning.groups["new"] = ("A",)  # type: ignore[index]
 
 
-class MathDataLoaderTests(unittest.TestCase):
+class MathTableDataLoaderTests(unittest.TestCase):
     def test_missing_kern_file_produces_empty_data(self) -> None:
         meta = load_font_meta(PROJECT_DIRECTORY, "math")
-        assert meta.math_config is not None
+        assert meta.math_table is not None
 
-        data = load_math_data(
+        data = load_math_table_data(
             PROJECT_DIRECTORY,
-            replace(meta.math_config, kern_file=None),
+            replace(meta.math_table, kern_file=None),
         )
 
         self.assertIsNone(data.kern_source_path)
@@ -492,11 +524,11 @@ class MathDataLoaderTests(unittest.TestCase):
 
     def test_missing_accent_attachment_file_produces_empty_data(self) -> None:
         meta = load_font_meta(PROJECT_DIRECTORY, "math")
-        assert meta.math_config is not None
+        assert meta.math_table is not None
 
-        data = load_math_data(
+        data = load_math_table_data(
             PROJECT_DIRECTORY,
-            replace(meta.math_config, accent_attachment_file=None),
+            replace(meta.math_table, accent_attachment_file=None),
         )
 
         self.assertIsNone(data.accent_attachment_source_path)
@@ -504,11 +536,11 @@ class MathDataLoaderTests(unittest.TestCase):
 
     def test_missing_italics_correction_file_produces_empty_data(self) -> None:
         meta = load_font_meta(PROJECT_DIRECTORY, "math")
-        assert meta.math_config is not None
+        assert meta.math_table is not None
 
-        data = load_math_data(
+        data = load_math_table_data(
             PROJECT_DIRECTORY,
-            replace(meta.math_config, italics_correction_file=None),
+            replace(meta.math_table, italics_correction_file=None),
         )
 
         self.assertIsNone(data.italics_correction_source_path)
@@ -516,11 +548,11 @@ class MathDataLoaderTests(unittest.TestCase):
 
     def test_missing_variants_file_produces_empty_flattened_data(self) -> None:
         meta = load_font_meta(PROJECT_DIRECTORY, "math")
-        assert meta.math_config is not None
+        assert meta.math_table is not None
 
-        data = load_math_data(
+        data = load_math_table_data(
             PROJECT_DIRECTORY,
-            replace(meta.math_config, variants_file=None),
+            replace(meta.math_table, variants_file=None),
         )
 
         self.assertEqual(data.min_connector_overlap, 0)
@@ -531,33 +563,28 @@ class MathDataLoaderTests(unittest.TestCase):
 
     def test_real_math_inputs_are_typed_and_read_only(self) -> None:
         meta = load_font_meta(PROJECT_DIRECTORY, "math")
-        assert meta.math_config is not None
+        assert meta.math_table is not None
 
-        data = load_math_data(PROJECT_DIRECTORY, meta.math_config)
+        data = load_math_table_data(PROJECT_DIRECTORY, meta.math_table)
+        assert meta.ssty_file is not None
+        ssty = load_ssty_data(PROJECT_DIRECTORY, meta.ssty_file)
 
         self.assertEqual(data.constants["AxisHeight"], 225)
-        self.assertEqual(data.ssty["minute"], ("minute.st",))
+        self.assertEqual(ssty.substitutions["minute"], ("minute.st",))
         self.assertEqual(
             data.italic_corrections["contourintegral.v1"],
             200,
         )
         self.assertEqual(set(data.italic_corrections.values()), {200})
         self.assertEqual(data.accent_attachments["u1D453"], 1.0)
+        self.assertEqual(data.accent_attachments["uni210F"], -2.0)
+        self.assertEqual(data.accent_attachments["dotlessj"], 1.0)
+        self.assertEqual(data.accent_attachments["uni2113"], 0.0)
+        self.assertNotIn("theta", data.accent_attachments)
         self.assertEqual(data.accent_attachments["j"], 1.0)
         self.assertEqual(data.accent_attachments["t"], -1.0)
-        assert data.kern_source_path is not None
-        self.assertEqual(data.kern_source_path.name, "math.json")
-        self.assertEqual(set(data.kerns), {"F", "T"})
-        assert data.kerns["F"].bottom_right is not None
-        self.assertEqual(
-            data.kerns["F"].bottom_right.kern_values,
-            (-200,),
-        )
-        assert data.kerns["T"].bottom_right is not None
-        self.assertEqual(
-            data.kerns["T"].bottom_right.kern_values,
-            (-100,),
-        )
+        self.assertIsNone(data.kern_source_path)
+        self.assertEqual(dict(data.kerns), {})
         self.assertEqual(
             data.vertical_variant_glyphs["parenleft"][:2],
             ("parenleft.v1", "parenleft.v2"),
@@ -582,7 +609,7 @@ class MathDataLoaderTests(unittest.TestCase):
         with self.assertRaises(TypeError):
             data.accent_attachments["j"] = 0  # type: ignore[index]
         with self.assertRaises(TypeError):
-            data.kerns["F"] = data.kerns["F"]  # type: ignore[index]
+            data.kerns["F"] = None  # type: ignore[index, assignment]
 
     def test_math_kerns_are_exact_typed_and_read_only(self) -> None:
         table = {
@@ -723,8 +750,8 @@ class MathDataLoaderTests(unittest.TestCase):
             parse_math_constants({}, source_path=Path("constants.json"))
 
         meta = load_font_meta(PROJECT_DIRECTORY, "math")
-        assert meta.math_config is not None
-        data = load_math_data(PROJECT_DIRECTORY, meta.math_config)
+        assert meta.math_table is not None
+        data = load_math_table_data(PROJECT_DIRECTORY, meta.math_table)
         constants = dict(data.constants)
         constants["AxisHeight"] = True
         with self.assertRaisesRegex(ProjectDataError, "AxisHeight"):
@@ -735,12 +762,12 @@ class MathDataLoaderTests(unittest.TestCase):
 
     def test_ssty_rejects_duplicate_and_base_alternates(self) -> None:
         with self.assertRaisesRegex(ProjectDataError, "duplicate"):
-            parse_math_ssty(
+            parse_ssty(
                 {"minute": ["minute.st", "minute.st"]},
                 source_path=Path("ssty.json"),
             )
         with self.assertRaisesRegex(ProjectDataError, "base glyph"):
-            parse_math_ssty(
+            parse_ssty(
                 {"minute": ["minute"]},
                 source_path=Path("ssty.json"),
             )
@@ -899,22 +926,17 @@ class MathDataLoaderTests(unittest.TestCase):
 
     def test_variants_file_requires_min_connector_overlap(self) -> None:
         meta = load_font_meta(PROJECT_DIRECTORY, "math")
-        assert meta.math_config is not None
-        data = load_math_data(PROJECT_DIRECTORY, meta.math_config)
+        assert meta.math_table is not None
+        data = load_math_table_data(PROJECT_DIRECTORY, meta.math_table)
 
         def fake_read_json(path: Path) -> object:
-            if path.parent.name == "math_constants":
+            if path.parent.name == "constants":
                 return dict(data.constants)
-            if path.parent.name == "math_ssty":
-                return {
-                    base: list(alternates)
-                    for base, alternates in data.ssty.items()
-                }
-            if path.parent.name == "math_italics_correction":
+            if path.parent.name == "italics_correction":
                 return dict(data.italic_corrections)
-            if path.parent.name == "math_accent_attachment":
+            if path.parent.name == "accent_attachment":
                 return dict(data.accent_attachments)
-            if path.parent.name == "math_kern":
+            if path.parent.name == "kern":
                 return {
                     "F": {
                         "bottom_right": {
@@ -923,14 +945,16 @@ class MathDataLoaderTests(unittest.TestCase):
                         }
                     }
                 }
-            return {"vertical": {}, "horizontal": {}}
+            if path.parent.name == "variants":
+                return {"vertical": {}, "horizontal": {}}
+            raise AssertionError(path)
 
         with patch("skeletonfont.loader.read_json", side_effect=fake_read_json):
             with self.assertRaisesRegex(
                 ProjectDataError,
                 "min_connector_overlap",
             ):
-                load_math_data(PROJECT_DIRECTORY, meta.math_config)
+                load_math_table_data(PROJECT_DIRECTORY, meta.math_table)
 
 
 if __name__ == "__main__":

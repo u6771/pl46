@@ -9,7 +9,8 @@ from skeletonfont.loader import (
     load_font_meta,
     load_glyph_config,
     load_kerning_data,
-    load_math_data,
+    load_math_table_data,
+    load_ssty_data,
 )
 from skeletonfont.planner import plan_font
 from skeletonfont.renderer import render_font
@@ -31,16 +32,26 @@ class FontRendererTests(unittest.TestCase):
             PROJECT_DIRECTORY,
             meta.glyph_config_file,
         )
-        assert meta.math_config is not None
-        math_data = load_math_data(PROJECT_DIRECTORY, meta.math_config)
+        assert meta.math_table is not None
+        math_data = load_math_table_data(PROJECT_DIRECTORY, meta.math_table)
+        assert meta.ssty_file is not None
+        ssty_data = load_ssty_data(PROJECT_DIRECTORY, meta.ssty_file)
+        cls.glyph_count = (
+            len(assembled.real_glyphs) + len(assembled.generated_glyphs)
+        )
         cls.font = render_font(
-            plan_font(assembled, config, math_data=math_data)
+            plan_font(
+                assembled,
+                config,
+                math_table_data=math_data,
+                ssty_data=ssty_data,
+            )
         )
 
     def test_font_info_and_notdef_are_rendered(self) -> None:
         font = self.font
 
-        self.assertEqual(len(font), 1232)
+        self.assertEqual(len(font), self.glyph_count)
         self.assertEqual(font.info.familyName, "PL46")
         self.assertEqual(font.info.styleName, "Math")
         self.assertEqual(font.info.unitsPerEm, 1000)
@@ -77,11 +88,11 @@ class FontRendererTests(unittest.TestCase):
             PROJECT_DIRECTORY,
             meta.glyph_config_file,
         )
-        assert meta.math_config is not None
-        math_data = load_math_data(PROJECT_DIRECTORY, meta.math_config)
+        assert meta.math_table is not None
+        math_data = load_math_table_data(PROJECT_DIRECTORY, meta.math_table)
 
         font = render_font(
-            plan_font(assembled, config, math_data=math_data)
+            plan_font(assembled, config, math_table_data=math_data)
         )
 
         self.assertEqual(font["A.italic"].contours, font["A"].contours)

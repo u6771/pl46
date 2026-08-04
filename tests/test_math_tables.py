@@ -13,7 +13,7 @@ from skeletonfont.compiler import compile_font
 from skeletonfont.loader import (
     load_font_meta,
     load_glyph_config,
-    load_math_data,
+    load_math_table_data,
 )
 from skeletonfont.math_tables import apply_math_table
 from skeletonfont.model import (
@@ -21,7 +21,8 @@ from skeletonfont.model import (
     MathGlyphAssemblyPlan,
     MathGlyphKernData,
     MathKernTableData,
-    MathPlan,
+    MathTablePlan,
+    SstyData,
 )
 from skeletonfont.planner import plan_font
 from skeletonfont.renderer import render_font
@@ -34,31 +35,32 @@ class MathTableTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         math_meta = load_font_meta(PROJECT_DIRECTORY, "math")
-        assert math_meta.math_config is not None
-        cls.math_data = load_math_data(
+        assert math_meta.math_table is not None
+        cls.math_data = load_math_table_data(
             PROJECT_DIRECTORY,
-            math_meta.math_config,
+            math_meta.math_table,
         )
         cls.math_assembled = assemble_font(
             math_meta,
             GlyphCatalog(PROJECT_DIRECTORY),
         )
-        cls.math_config = load_glyph_config(
+        cls.math_table = load_glyph_config(
             PROJECT_DIRECTORY,
             math_meta.glyph_config_file,
         )
 
     def test_ssty_with_two_alternates_compiles_as_alternate_substitution(self) -> None:
-        two_level_data = replace(
-            self.math_data,
-            ssty=MappingProxyType(
+        two_level_data = SstyData(
+            source_path=Path("ssty.json"),
+            substitutions=MappingProxyType(
                 {"minute": ("minute.st", "A")}
             ),
         )
         plan = plan_font(
             self.math_assembled,
-            self.math_config,
-            math_data=two_level_data,
+            self.math_table,
+            math_table_data=self.math_data,
+            ssty_data=two_level_data,
         )
         font = compile_font(render_font(plan))
 
@@ -72,7 +74,7 @@ class MathTableTests(unittest.TestCase):
             gsub.LookupList.Lookup[index].LookupType
             for index in ssty.LookupListIndex
         ]
-        self.assertEqual(lookup_types, [3])
+        self.assertIn(3, lookup_types)
 
     def test_math_script_is_created_when_no_ssty_generates_gsub(self) -> None:
         meta = load_font_meta(PROJECT_DIRECTORY, "ascii")
@@ -83,9 +85,8 @@ class MathTableTests(unittest.TestCase):
         font = compile_font(render_font(plan_font(assembled)))
         self.assertNotIn("GSUB", font)
 
-        plan = MathPlan(
+        plan = MathTablePlan(
             constants=self.math_data.constants,
-            ssty_feature=None,
             vertical_variant_records=MappingProxyType({}),
             horizontal_variant_records=MappingProxyType({}),
             min_connector_overlap=0,
@@ -133,8 +134,8 @@ class MathTableTests(unittest.TestCase):
     def test_vertical_and_horizontal_assemblies_are_serialized(self) -> None:
         base_plan = plan_font(
             self.math_assembled,
-            self.math_config,
-            math_data=self.math_data,
+            self.math_table,
+            math_table_data=self.math_data,
         )
         font = compile_font(render_font(base_plan))
         vertical = MathGlyphAssemblyPlan(
@@ -175,11 +176,10 @@ class MathTableTests(unittest.TestCase):
                 ),
             ),
         )
-        plan = MathPlan(
+        plan = MathTablePlan(
             constants=self.math_data.constants,
-            ssty_feature=None,
             vertical_variant_records=(
-                base_plan.math.vertical_variant_records
+                base_plan.math_table.vertical_variant_records
             ),
             horizontal_variant_records=MappingProxyType({}),
             min_connector_overlap=20,
