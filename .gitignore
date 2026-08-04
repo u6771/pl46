@@ -23,7 +23,7 @@ __pycache__/
 /__pdf2png.py
 
 # Reference data not used by the build
-/math_constants/latin_modern_math.json
+/math_table/constants/latin_modern_math.json
 /latinmodern_math_variants.json
 
 # Windows source-tree shortcut
