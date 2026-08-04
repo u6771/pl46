@@ -11,10 +11,10 @@
       "centerline": [[0, 3], [4, 3]]
     },
     {
-      "centerline": [[2, 8], [0, 0]]
+      "centerline": [[1, 8], [1, 0]]
     },
     {
-      "centerline": [[4, 8], [2, 0]]
+      "centerline": [[3, 8], [3, 0]]
     }
   ]
 }

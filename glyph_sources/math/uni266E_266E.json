@@ -1,0 +1,16 @@
+{
+  "name": "uni266E",
+  "unicode": "266E",
+  "monospace_x_offset": -1,
+  "y_offset": -2,
+  "skeleton": [
+    {
+      "centerline": [[0, 8], [0, 2], [2, 3]],
+      "end_cap": "flat"
+    },
+    {
+      "centerline": [[0, 5], [2, 6], [2, 0]],
+      "start_cap": "flat"
+    }
+  ]
+}

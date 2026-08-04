@@ -1,0 +1,12 @@
+{
+  "name": "uni25B6",
+  "unicode": "25B6",
+  "monospace_x_offset": -3,
+  "y_offset": -1,
+  "skeleton": [
+    {
+      "centerline": [[0, 0], [0, 6], [6, 3], [0, 0]],
+      "filled": true
+    }
+  ]
+}

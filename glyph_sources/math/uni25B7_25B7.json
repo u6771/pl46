@@ -1,0 +1,11 @@
+{
+  "name": "uni25B7",
+  "unicode": "25B7",
+  "monospace_x_offset": -3,
+  "y_offset": -1,
+  "skeleton": [
+    {
+      "centerline": [[0, 0], [0, 6], [6, 3], [0, 0]]
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "name": "filledrect",
+  "unicode": "25AC",
+  "monospace_x_offset": -3,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[0, 0], [0, 4], [6, 4], [6, 0], [0, 0]],
+      "filled": true
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "name": "lozenge",
+  "unicode": "25CA",
+  "monospace_x_offset": -2,
+  "y_offset": -1,
+  "skeleton": [
+    {
+      "centerline": [[2, 0], [0, 3], [2, 6], [4, 3], [2, 0]]
+    }
+  ]
+}

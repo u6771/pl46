@@ -1,0 +1,12 @@
+{
+  "name": "musicflatsign",
+  "unicode": "266D",
+  "monospace_x_offset": -1,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[0, 6], [0, 0], [2, 2], [2, 3], [1, 4], [0, 3]],
+      "end_cap": "flat"
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "name": "centigrade",
+  "unicode": "2103",
+  "monospace_x_offset": -3,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[1, 4], [0, 5], [1, 6], [2, 5], [1, 4]]
+    },
+    {
+      "centerline": [[7, 5], [6, 6], [4, 6], [3, 5], [3, 1], [4, 0], [6, 0], [7, 1]]
+    }
+  ]
+}

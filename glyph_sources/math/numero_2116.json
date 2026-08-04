@@ -1,0 +1,17 @@
+{
+  "name": "numero",
+  "unicode": "2116",
+  "monospace_x_offset": -4,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[6, 2], [5, 3], [5, 4], [6, 5], [7, 4], [7, 3], [6, 2]]
+    },
+    {
+      "centerline": [[5, 1], [7, 1]]
+    },
+    {
+      "centerline": [[0, 0], [0, 6], [4, 0], [4, 6]]
+    }
+  ]
+}

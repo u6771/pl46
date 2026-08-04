@@ -1,0 +1,19 @@
+{
+  "name": "aleph",
+  "unicode": "2135",
+  "monospace_x_offset": -2,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[0, 6], [0, 5], [4, 1], [4, 0]]
+    },
+    {
+      "centerline": [[1, 4], [1, 0], [0, 1]],
+      "start_cap": "flat"
+    },
+    {
+      "centerline": [[3, 2], [3, 6], [4, 5]],
+      "start_cap": "flat"
+    }
+  ]
+}

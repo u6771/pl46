@@ -1,0 +1,12 @@
+{
+  "name": "triagup",
+  "unicode": "25B2",
+  "monospace_x_offset": -3,
+  "y_offset": -1,
+  "skeleton": [
+    {
+      "centerline": [[0, 0], [3, 6], [6, 0], [0, 0]],
+      "filled": true
+    }
+  ]
+}

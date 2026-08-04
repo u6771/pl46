@@ -1,0 +1,12 @@
+{
+  "name": "H18533",
+  "unicode": "25CF",
+  "monospace_x_offset": -3,
+  "y_offset": -1,
+  "skeleton": [
+    {
+      "centerline": [[2, 0], [0, 2], [0, 4], [2, 6], [4, 6], [6, 4], [6, 2], [4, 0], [2, 0]],
+      "filled": true
+    }
+  ]
+}

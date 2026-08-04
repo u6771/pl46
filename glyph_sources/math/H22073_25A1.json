@@ -1,0 +1,11 @@
+{
+  "name": "H22073",
+  "unicode": "25A1",
+  "monospace_x_offset": -3,
+  "y_offset": -1,
+  "skeleton": [
+    {
+      "centerline": [[0, 0], [0, 6], [6, 6], [6, 0], [0, 0]]
+    }
+  ]
+}
