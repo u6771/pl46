@@ -5,16 +5,7 @@
   "y_offset": 0,
   "skeleton": [
     {
-      "centerline": [[0, 0], [0, 6], [1, 4.5], [1, 0], [0, 0]],
-      "filled": true
-    },
-    {
-      "centerline": [[1, 4.5], [3, 1.5]],
-      "start_cap": "flat",
-      "end_cap": "flat"
-    },
-    {
-      "centerline": [[3, 1.5], [3, 6], [4, 6], [4, 0], [3, 1.5]],
+      "centerline": [[0, 0], [0, 6], [3, 1.5], [3, 6], [4, 6], [4, 0], [1, 4.5], [1, 0], [0, 0]],
       "filled": true
     }
   ]

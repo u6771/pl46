@@ -1,0 +1,34 @@
+{
+  "name": "uni2720",
+  "unicode": "2720",
+  "monospace_x_offset": -3,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[2, 3], [4, 3]],
+      "start_cap": "flat",
+      "end_cap": "flat"
+    },
+    {
+      "centerline": [[3, 4], [3, 2]],
+      "start_cap": "flat",
+      "end_cap": "flat"
+    },
+    {
+      "centerline": [[2, 3], [0, 1], [0, 5], [2, 3]],
+      "filled": true
+    },
+    {
+      "centerline": [[3, 4], [1, 6], [5, 6], [3, 4]],
+      "filled": true
+    },
+    {
+      "centerline": [[6, 1], [4, 3], [6, 5], [6, 1]],
+      "filled": true
+    },
+    {
+      "centerline": [[3, 2], [5, 0], [1, 0], [3, 2]],
+      "filled": true
+    }
+  ]
+}
