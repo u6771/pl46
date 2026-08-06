@@ -31,6 +31,10 @@
       "replace_existing": true
     },
     {
+      "source_directory": "italic",
+      "mapping_name": "upright_latin_to_italic_latin"
+    },
+    {
       "source_directory": "script",
       "unicode_domain": [
         ["0041", "005A"]
@@ -53,9 +57,24 @@
       "source_directory": "uni6771"
     }
   ],
-  "glyph_generators": [
+  "glyph_alias_generators": [
     "upright_latin_to_italic_latin",
     "upright_greek_to_italic_greek"
+  ],
+  "ssty_generators": [
+    {
+      "unicode_domain": [
+        "ascii_digits",
+        "upright_latin",
+        "upright_greek",
+        "italic_latin",
+        "italic_greek",
+        "script_latin",
+        "fraktur_latin"
+      ],
+      "ssty_alternate_name": "st",
+      "thickness_scale": 1.2
+    }
   ],
   "glyph_config_file": "math.json",
   "accent_file": "math.json",

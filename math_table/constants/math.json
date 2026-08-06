@@ -10,7 +10,7 @@
   "SubscriptShiftDown": 200,
   "SubscriptTopMax": 360,
   "SubscriptBaselineDropMin": 200,
-  "SuperscriptShiftUp": 250,
+  "SuperscriptShiftUp": 300,
   "SuperscriptShiftUpCramped": 250,
   "SuperscriptBottomMin": 112,
   "SuperscriptBaselineDropMax": 250,
