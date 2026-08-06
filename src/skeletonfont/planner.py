@@ -25,7 +25,7 @@ from .model import (
     MathTablePlan,
     MathVariantRecord,
     Point,
-    RealGlyphPlan,
+    GlyphPlan,
     StrokePlan,
     StrokeRecord,
     SstyData,
@@ -64,13 +64,13 @@ class _VerticalLayout:
 
 @dataclass(frozen=True, slots=True)
 class _OrdinaryGlyphPlans:
-    glyph_plans: Mapping[str, RealGlyphPlan]
+    glyph_plans: Mapping[str, GlyphPlan]
     top_accent_attachments: Mapping[str, int]
 
 
 @dataclass(frozen=True, slots=True)
 class _VariantGlyphPlans:
-    glyph_plans: Mapping[str, RealGlyphPlan]
+    glyph_plans: Mapping[str, GlyphPlan]
     full_advances: Mapping[str, int]
     top_accent_attachments: Mapping[str, int]
 
@@ -84,7 +84,7 @@ class _TopAccentAttachmentInputs:
 
 @dataclass(frozen=True, slots=True)
 class _AssemblyPlans:
-    glyph_plans: Mapping[str, RealGlyphPlan]
+    glyph_plans: Mapping[str, GlyphPlan]
     assembly_plans: Mapping[str, MathGlyphAssemblyPlan]
 
 
@@ -96,7 +96,7 @@ class _SpacingAdjustmentSource:
 
 @dataclass(frozen=True, slots=True)
 class _ResolvedGlyphSpacingAdjustments:
-    real_glyph_spacing_by_name: Mapping[str, GlyphSpacingAdjustment]
+    glyph_spacing_by_name: Mapping[str, GlyphSpacingAdjustment]
     vertical_part_spacing_by_base: Mapping[str, GlyphSpacingAdjustment]
 
 
@@ -291,12 +291,12 @@ def _transformed_strokes(
     )
 
 
-def _plan_proportional_real_glyph(
+def _plan_proportional_glyph(
     glyph: AssembledGlyph,
     parameters: GlyphParameters,
     adjustment: GlyphSpacingAdjustment,
     top_accent_attachment: float | None,
-) -> tuple[RealGlyphPlan, int | None]:
+) -> tuple[GlyphPlan, int | None]:
     left_spacing, right_spacing = _adjusted_spacing(parameters, adjustment)
     if not glyph.skeleton:
         if top_accent_attachment is not None:
@@ -305,7 +305,7 @@ def _plan_proportional_real_glyph(
                 "non-empty skeleton."
             )
         return (
-            RealGlyphPlan(
+            GlyphPlan(
                 name=glyph.name,
                 codepoint=glyph.codepoint,
                 source_path=glyph.source_path,
@@ -337,7 +337,7 @@ def _plan_proportional_real_glyph(
         + right_spacing,
         glyph_name=glyph.name,
     )
-    glyph_plan = RealGlyphPlan(
+    glyph_plan = GlyphPlan(
         name=glyph.name,
         codepoint=glyph.codepoint,
         source_path=glyph.source_path,
@@ -366,15 +366,15 @@ def _plan_proportional_real_glyph(
     )
 
 
-def _plan_monospace_real_glyph(
+def _plan_monospace_glyph(
     glyph: AssembledGlyph,
     parameters: GlyphParameters,
     top_accent_attachment: float | None,
-) -> tuple[RealGlyphPlan, int | None]:
+) -> tuple[GlyphPlan, int | None]:
     assert parameters.monospace_width is not None
     left_spacing = parameters.left_spacing
     right_spacing = parameters.right_spacing
-    glyph_plan = RealGlyphPlan(
+    glyph_plan = GlyphPlan(
         name=glyph.name,
         codepoint=glyph.codepoint,
         source_path=glyph.source_path,
@@ -412,7 +412,7 @@ def _plan_variant_glyph(
     top_accent_attachment: float | None = None,
     *,
     axis: _Axis,
-) -> tuple[RealGlyphPlan, int, int | None]:
+) -> tuple[GlyphPlan, int, int | None]:
     if not glyph.skeleton:
         raise PlanError(f"Math variant glyph {glyph.name!r} has no skeleton.")
 
@@ -441,7 +441,7 @@ def _plan_variant_glyph(
         )
     )
     left_spacing, right_spacing = _adjusted_spacing(parameters, adjustment)
-    glyph_plan = RealGlyphPlan(
+    glyph_plan = GlyphPlan(
         name=glyph.name,
         codepoint=glyph.codepoint,
         source_path=glyph.source_path,
@@ -494,19 +494,19 @@ def _plan_ordinary_glyphs(
     adjustment_by_name: Mapping[str, GlyphSpacingAdjustment],
     top_accent_attachments: Mapping[str, float],
 ) -> _OrdinaryGlyphPlans:
-    glyph_plans: dict[str, RealGlyphPlan] = {}
+    glyph_plans: dict[str, GlyphPlan] = {}
     planned_attachments: dict[str, int] = {}
     for name, glyph in glyphs.items():
         attachment = top_accent_attachments.get(name)
         if parameters.monospace_width is None:
-            glyph_plan, planned_attachment = _plan_proportional_real_glyph(
+            glyph_plan, planned_attachment = _plan_proportional_glyph(
                 glyph,
                 parameters,
                 adjustment_by_name.get(name, _EMPTY_SPACING_ADJUSTMENT),
                 attachment,
             )
         else:
-            glyph_plan, planned_attachment = _plan_monospace_real_glyph(
+            glyph_plan, planned_attachment = _plan_monospace_glyph(
                 glyph,
                 parameters,
                 attachment,
@@ -528,7 +528,7 @@ def _plan_variant_glyphs(
     *,
     axis: _Axis,
 ) -> _VariantGlyphPlans:
-    planned_glyphs: dict[str, RealGlyphPlan] = {}
+    planned_glyphs: dict[str, GlyphPlan] = {}
     full_advances: dict[str, int] = {}
     planned_attachments: dict[str, int] = {}
     for name, glyph in glyphs.items():
@@ -609,15 +609,39 @@ def _ssty_feature(
     )
 
 
+def _merge_ssty_substitutions(
+    automatic: Mapping[str, tuple[str, ...]],
+    explicit: Mapping[str, tuple[str, ...]],
+) -> Mapping[str, tuple[str, ...]]:
+    overlap = set(automatic) & set(explicit)
+    if overlap:
+        raise PlanError(
+            "Automatic and explicit ssty substitutions both define: "
+            f"{sorted(overlap)}"
+        )
+    return {**automatic, **explicit}
+
+
+def _inherited_top_accent_attachments(
+    source_attachments: Mapping[str, int],
+    source_by_target: Mapping[str, str],
+) -> Mapping[str, int]:
+    return {
+        target_name: source_attachments[source_name]
+        for target_name, source_name in source_by_target.items()
+        if source_name in source_attachments
+    }
+
+
 def _plan_accent_glyphs(
     glyphs: Mapping[str, AssembledGlyph],
     parameters: GlyphParameters,
-) -> Mapping[str, RealGlyphPlan]:
+) -> Mapping[str, GlyphPlan]:
     """Plan zero-advance combining accents around their authored origin."""
 
     return MappingProxyType(
         {
-            name: RealGlyphPlan(
+            name: GlyphPlan(
                 name=glyph.name,
                 codepoint=glyph.codepoint,
                 source_path=glyph.source_path,
@@ -671,7 +695,7 @@ def _group_top_accent_attachments_by_role(
         if role is None:
             raise PlanError(
                 "Math top accent attachment references a name not planned "
-                f"as a real glyph: {name!r}."
+                f"as an assembled glyph: {name!r}."
             )
         if role not in grouped:
             raise PlanError(
@@ -695,7 +719,7 @@ def _validate_math_kerns_by_role(
     kerns: Mapping[str, MathGlyphKernData],
     glyphs_by_role: Mapping[_GlyphRole, Mapping[str, AssembledGlyph]],
 ) -> Mapping[str, MathGlyphKernData]:
-    """Validate exact math-kern names against supported real-glyph roles."""
+    """Validate exact math-kern names against supported glyph roles."""
 
     role_by_name = {
         name: role
@@ -711,7 +735,8 @@ def _validate_math_kerns_by_role(
         role = role_by_name.get(name)
         if role is None:
             raise PlanError(
-                "Math kern references a name not planned as a real glyph: "
+                "Math kern references a name not planned as an assembled "
+                "glyph: "
                 f"{name!r}."
             )
         if role not in supported_roles:
@@ -770,7 +795,8 @@ def _group_glyphs_by_role(
     missing = referenced - glyph_names
     if missing:
         raise PlanError(
-            f"Glyph roles reference unknown real glyphs: {sorted(missing)}"
+            f"Glyph roles reference unknown assembled glyphs: "
+            f"{sorted(missing)}"
         )
 
     grouped: dict[_GlyphRole, dict[str, AssembledGlyph]] = {
@@ -989,8 +1015,8 @@ def _resolve_glyph_spacing_adjustments(
         role = role_by_name.get(glyph_name)
         if role is None:
             raise PlanError(
-                f"Glyph config references a name not planned as a real "
-                f"glyph: {glyph_name!r}."
+                f"Glyph config references a name not planned as an "
+                f"assembled glyph: {glyph_name!r}."
             )
         if role == "vertical_part":
             owners = sorted(part_owners.get(glyph_name, ()))
@@ -1026,7 +1052,7 @@ def _resolve_glyph_spacing_adjustments(
         adjustment_by_name[glyph_name] = source.adjustment
 
     return _ResolvedGlyphSpacingAdjustments(
-        real_glyph_spacing_by_name=MappingProxyType(adjustment_by_name),
+        glyph_spacing_by_name=MappingProxyType(adjustment_by_name),
         vertical_part_spacing_by_base=MappingProxyType(
             {
                 base: source.adjustment
@@ -1336,7 +1362,7 @@ def _plan_vertical_assemblies(
             ),
             glyph_name=glyph_name,
         )
-    glyph_plans: dict[str, RealGlyphPlan] = {}
+    glyph_plans: dict[str, GlyphPlan] = {}
     for glyph_name, layout in vertical_layout_by_glyph_name.items():
         glyph = glyphs[glyph_name]
         y_measurement = y_measurement_by_glyph_name[glyph_name]
@@ -1348,7 +1374,7 @@ def _plan_vertical_assemblies(
             + layout.right_spacing,
             glyph_name=glyph_name,
         )
-        glyph_plans[glyph_name] = RealGlyphPlan(
+        glyph_plans[glyph_name] = GlyphPlan(
             name=glyph.name,
             codepoint=glyph.codepoint,
             source_path=glyph.source_path,
@@ -1448,10 +1474,10 @@ def _plan_horizontal_assemblies(
             ),
             glyph_name=glyph_name,
         )
-    glyph_plans: dict[str, RealGlyphPlan] = {}
+    glyph_plans: dict[str, GlyphPlan] = {}
     for glyph_name, x_measurement in x_measurement_by_glyph_name.items():
         glyph = glyphs[glyph_name]
-        glyph_plans[glyph_name] = RealGlyphPlan(
+        glyph_plans[glyph_name] = GlyphPlan(
             name=glyph.name,
             codepoint=glyph.codepoint,
             source_path=glyph.source_path,
@@ -1533,9 +1559,9 @@ def plan_font(
 
     parameters = assembled_font.glyph_parameters
     config = {} if glyph_config is None else glyph_config
-    glyph_names = set(assembled_font.real_glyphs)
+    glyph_names = set(assembled_font.glyphs)
     glyph_names.update(
-        glyph.target_name for glyph in assembled_font.generated_glyphs
+        alias.target_name for alias in assembled_font.glyph_aliases
     )
     _validate_kerning(glyph_names, kerning)
 
@@ -1558,7 +1584,7 @@ def plan_font(
         else math_table_data.horizontal_assemblies
     )
     glyphs_by_role = _group_glyphs_by_role(
-        assembled_font.real_glyphs,
+        assembled_font.glyphs,
         frozenset() if accent_glyphs is None else accent_glyphs,
         vertical_variant_glyphs,
         horizontal_variant_glyphs,
@@ -1585,14 +1611,14 @@ def plan_font(
         else math_table_data.accent_attachments,
         glyphs_by_role,
     )
-    real_math_kerns = _validate_math_kerns_by_role(
+    validated_math_kerns = _validate_math_kerns_by_role(
         {} if math_table_data is None else math_table_data.kerns,
         glyphs_by_role,
     )
     ordinary_glyph_plans = _plan_ordinary_glyphs(
         glyphs_by_role["ordinary"],
         parameters,
-        resolved_spacing_adjustments.real_glyph_spacing_by_name,
+        resolved_spacing_adjustments.glyph_spacing_by_name,
         top_accent_attachment_inputs.ordinary,
     )
     accent_glyph_plans = _plan_accent_glyphs(
@@ -1602,13 +1628,13 @@ def plan_font(
     vertical_variant_glyph_plans = _plan_vertical_variant_glyphs(
         glyphs_by_role["vertical_variant_glyph"],
         parameters,
-        resolved_spacing_adjustments.real_glyph_spacing_by_name,
+        resolved_spacing_adjustments.glyph_spacing_by_name,
         top_accent_attachment_inputs.vertical_variant_glyph,
     )
     horizontal_variant_glyph_plans = _plan_horizontal_variant_glyphs(
         glyphs_by_role["horizontal_variant_glyph"],
         parameters,
-        resolved_spacing_adjustments.real_glyph_spacing_by_name,
+        resolved_spacing_adjustments.glyph_spacing_by_name,
         top_accent_attachment_inputs.horizontal_variant_glyph,
     )
     minimum_overlap = (
@@ -1630,7 +1656,7 @@ def plan_font(
         minimum_overlap,
     )
 
-    real_glyph_plans: dict[str, RealGlyphPlan] = {}
+    glyph_plans: dict[str, GlyphPlan] = {}
     for role, plans in (
         (
             "ordinary",
@@ -1657,13 +1683,13 @@ def plan_font(
             horizontal_assembly_plans.glyph_plans,
         ),
     ):
-        overlap = set(real_glyph_plans) & set(plans)
+        overlap = set(glyph_plans) & set(plans)
         if overlap:
             raise PlanError(
                 f"Internal glyph-role overlap while merging {role}: "
                 f"{sorted(overlap)}"
             )
-        real_glyph_plans.update(plans)
+        glyph_plans.update(plans)
 
     vertical_variant_records = _plan_variant_records(
         vertical_variant_glyphs,
@@ -1675,22 +1701,36 @@ def plan_font(
     )
     math_table_plan: MathTablePlan | None = None
     if math_table_data is not None:
-        real_top_accent_attachments = {
+        planned_top_accent_attachments = {
             **ordinary_glyph_plans.top_accent_attachments,
             **vertical_variant_glyph_plans.top_accent_attachments,
             **horizontal_variant_glyph_plans.top_accent_attachments,
         }
-        top_accent_attachments = dict(real_top_accent_attachments)
-        math_kerns = dict(real_math_kerns)
-        for generated in assembled_font.generated_glyphs:
-            attachment = real_top_accent_attachments.get(
-                generated.source_name
+        math_kerns = dict(validated_math_kerns)
+        alias_top_accent_attachments = (
+            _inherited_top_accent_attachments(
+                planned_top_accent_attachments,
+                {
+                    alias.target_name: alias.source_name
+                    for alias in assembled_font.glyph_aliases
+                },
             )
-            if attachment is not None:
-                top_accent_attachments[generated.target_name] = attachment
-            kern = real_math_kerns.get(generated.source_name)
+        )
+        ssty_top_accent_attachments = (
+            _inherited_top_accent_attachments(
+                planned_top_accent_attachments,
+                assembled_font.ssty_alternate_sources,
+            )
+        )
+        top_accent_attachments = {
+            **alias_top_accent_attachments,
+            **ssty_top_accent_attachments,
+            **planned_top_accent_attachments,
+        }
+        for alias in assembled_font.glyph_aliases:
+            kern = validated_math_kerns.get(alias.source_name)
             if kern is not None:
-                math_kerns[generated.target_name] = kern
+                math_kerns[alias.target_name] = kern
         math_table_plan = MathTablePlan(
             constants=math_table_data.constants,
             vertical_variant_records=vertical_variant_records,
@@ -1718,10 +1758,13 @@ def plan_font(
         point_radius_scale=assembled_font.point_radius_scale,
         kerning=kerning,
         ssty_feature=_ssty_feature(
-            {} if ssty_data is None else ssty_data.substitutions,
+            _merge_ssty_substitutions(
+                assembled_font.ssty_substitutions,
+                {} if ssty_data is None else ssty_data.substitutions,
+            ),
             glyph_names,
         ),
         math_table=math_table_plan,
-        real_glyphs=MappingProxyType(real_glyph_plans),
-        generated_glyphs=assembled_font.generated_glyphs,
+        glyphs=MappingProxyType(glyph_plans),
+        glyph_aliases=assembled_font.glyph_aliases,
     )

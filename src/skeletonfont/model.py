@@ -50,7 +50,7 @@ class GlyphSource:
 
 @dataclass(frozen=True, slots=True)
 class AssembledGlyph:
-    """A real glyph after source selection and optional remapping."""
+    """A glyph after source selection and optional remapping."""
 
     name: str
     codepoint: int | None
@@ -71,6 +71,15 @@ class SourceRule:
     include_unencoded: bool
     replace_existing: bool
     mapping_name: str | None
+    thickness_scale: float
+
+
+@dataclass(frozen=True, slots=True)
+class SstyGenerator:
+    """Generate script-style alternates from assembled encoded glyphs."""
+
+    unicode_domain: UnicodeDomain | None
+    ssty_alternate_name: str
     thickness_scale: float
 
 
@@ -186,7 +195,8 @@ class FontMeta:
     glyph_parameters: GlyphParameters
     point_radius_scale: float
     source_rules: tuple[SourceRule, ...]
-    glyph_generators: tuple[str, ...]
+    glyph_alias_generators: tuple[str, ...]
+    ssty_generators: tuple[SstyGenerator, ...]
     glyph_config_file: str | None
     accent_file: str | None
     kerning_file: str | None
@@ -196,8 +206,8 @@ class FontMeta:
 
 
 @dataclass(frozen=True, slots=True)
-class GeneratedGlyph:
-    """One glyph copied from a real glyph after rendering."""
+class GlyphAlias:
+    """One glyph identity that copies an assembled glyph after rendering."""
 
     source_name: str
     target_name: str
@@ -212,8 +222,10 @@ class AssembledFont:
     glyph_parameters: GlyphParameters
     output_stem: str
     point_radius_scale: float
-    real_glyphs: Mapping[str, AssembledGlyph]
-    generated_glyphs: tuple[GeneratedGlyph, ...]
+    glyphs: Mapping[str, AssembledGlyph]
+    glyph_aliases: tuple[GlyphAlias, ...]
+    ssty_substitutions: Mapping[str, tuple[str, ...]]
+    ssty_alternate_sources: Mapping[str, str]
 
 
 GlyphAdjustmentGroup = Literal["variant_glyphs", "parts", "variants"]
@@ -279,7 +291,7 @@ class StrokePlan:
 
 
 @dataclass(frozen=True, slots=True)
-class RealGlyphPlan:
+class GlyphPlan:
     """Resolved metrics and drawing inputs for one rendered glyph."""
 
     name: str
@@ -342,5 +354,5 @@ class FontPlan:
     kerning: KerningData | None
     ssty_feature: str | None
     math_table: MathTablePlan | None
-    real_glyphs: Mapping[str, RealGlyphPlan]
-    generated_glyphs: tuple[GeneratedGlyph, ...]
+    glyphs: Mapping[str, GlyphPlan]
+    glyph_aliases: tuple[GlyphAlias, ...]

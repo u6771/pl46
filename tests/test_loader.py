@@ -90,6 +90,22 @@ class FontMetaLoaderTests(unittest.TestCase):
             ((0x0041, 0x007A), (0x2202, 0x2202)),
         )
 
+    def test_ascii_digits_unicode_domain(self) -> None:
+        path = PROJECT_DIRECTORY / "meta" / "ascii.json"
+        data = json.loads(path.read_text(encoding="utf-8"))
+        data["source_rules"][1]["unicode_domain"] = "ascii_digits"
+
+        meta = parse_font_meta(
+            data,
+            build_name="ascii-digits",
+            meta_path=path,
+        )
+
+        domain = meta.source_rules[1].unicode_domain
+        self.assertIsNotNone(domain)
+        assert domain is not None
+        self.assertEqual(domain.ranges, ((0x0030, 0x0039),))
+
     def test_unicode_domain_keeps_full_range_compact(self) -> None:
         path = PROJECT_DIRECTORY / "meta" / "ascii.json"
         data = json.loads(path.read_text(encoding="utf-8"))
@@ -168,7 +184,7 @@ class FontMetaLoaderTests(unittest.TestCase):
         self.assertIsNone(meta.glyph_parameters.monospace_width)
         self.assertEqual(meta.glyph_parameters.radius, 25)
         self.assertEqual(
-            meta.glyph_generators,
+            meta.glyph_alias_generators,
             (
                 "upright_latin_to_italic_latin",
                 "upright_greek_to_italic_greek",
@@ -182,6 +198,84 @@ class FontMetaLoaderTests(unittest.TestCase):
         self.assertTrue(math_rule.replace_existing)
         self.assertIsNone(math_rule.mapping_name)
         self.assertEqual(math_rule.thickness_scale, 1)
+        self.assertEqual(
+            [
+                (generator.ssty_alternate_name, generator.thickness_scale)
+                for generator in meta.ssty_generators
+            ],
+            [("st", 1.2)],
+        )
+        assert meta.ssty_generators[0].unicode_domain is not None
+        self.assertIn(0x0041, meta.ssty_generators[0].unicode_domain)
+        self.assertIn(0x1D434, meta.ssty_generators[0].unicode_domain)
+
+    def test_ssty_generators_require_valid_complete_fields(self) -> None:
+        path = PROJECT_DIRECTORY / "meta" / "ascii.json"
+        original = json.loads(path.read_text(encoding="utf-8"))
+        valid_generator = {
+            "unicode_domain": "upright_latin",
+            "ssty_alternate_name": "st",
+            "thickness_scale": 1.4,
+        }
+        data = dict(original)
+        data["ssty_generators"] = [valid_generator]
+
+        meta = parse_font_meta(
+            data,
+            build_name="ssty-generator",
+            meta_path=path,
+        )
+
+        self.assertEqual(len(meta.ssty_generators), 1)
+        self.assertEqual(meta.ssty_generators[0].ssty_alternate_name, "st")
+        self.assertEqual(meta.ssty_generators[0].thickness_scale, 1.4)
+
+        for field in valid_generator:
+            with self.subTest(missing=field):
+                invalid = dict(original)
+                invalid["ssty_generators"] = [
+                    {
+                        key: value
+                        for key, value in valid_generator.items()
+                        if key != field
+                    }
+                ]
+                with self.assertRaisesRegex(
+                    ProjectDataError,
+                    "missing required fields",
+                ):
+                    parse_font_meta(
+                        invalid,
+                        build_name="invalid-ssty-generator",
+                        meta_path=path,
+                    )
+
+        for value in (None, True, "1.4", 0, -1, float("inf")):
+            with self.subTest(thickness_scale=value):
+                invalid = dict(original)
+                invalid["ssty_generators"] = [
+                    {**valid_generator, "thickness_scale": value}
+                ]
+                with self.assertRaisesRegex(
+                    ProjectDataError,
+                    "thickness_scale",
+                ):
+                    parse_font_meta(
+                        invalid,
+                        build_name="invalid-ssty-scale",
+                        meta_path=path,
+                    )
+
+        unknown = dict(original)
+        unknown["ssty_generators"] = [
+            {**valid_generator, "unexpected": 1}
+        ]
+        with self.assertRaisesRegex(ProjectDataError, "unexpected"):
+            parse_font_meta(
+                unknown,
+                build_name="unknown-ssty-field",
+                meta_path=path,
+            )
 
     def test_source_rule_thickness_scale_is_positive(self) -> None:
         path = PROJECT_DIRECTORY / "meta" / "ascii.json"
@@ -253,7 +347,8 @@ class FontMetaLoaderTests(unittest.TestCase):
             "monospace_width",
             "point_radius_scale",
             "use_scaled_edge_thickness",
-            "glyph_generators",
+            "glyph_alias_generators",
+            "ssty_generators",
             "glyph_config_file",
             "accent_file",
             "kerning_file",
@@ -261,7 +356,8 @@ class FontMetaLoaderTests(unittest.TestCase):
             "math_table",
         ):
             data.pop(key, None)
-        data["glyph_generators"] = None
+        data["glyph_alias_generators"] = None
+        data["ssty_generators"] = None
         data["math_table"] = None
 
         meta = parse_font_meta(
@@ -278,7 +374,8 @@ class FontMetaLoaderTests(unittest.TestCase):
         self.assertFalse(
             meta.glyph_parameters.use_scaled_edge_thickness
         )
-        self.assertEqual(meta.glyph_generators, ())
+        self.assertEqual(meta.glyph_alias_generators, ())
+        self.assertEqual(meta.ssty_generators, ())
         self.assertIsNone(meta.glyph_config_file)
         self.assertIsNone(meta.accent_file)
         self.assertIsNone(meta.kerning_file)
@@ -633,7 +730,7 @@ class MathTableDataLoaderTests(unittest.TestCase):
         self.assertEqual(dict(data.vertical_assemblies), {})
         self.assertEqual(dict(data.horizontal_assemblies), {})
 
-    def test_real_math_inputs_are_typed_and_read_only(self) -> None:
+    def test_project_math_inputs_are_typed_and_read_only(self) -> None:
         meta = load_font_meta(PROJECT_DIRECTORY, "math")
         assert meta.math_table is not None
 
@@ -648,7 +745,7 @@ class MathTableDataLoaderTests(unittest.TestCase):
             200,
         )
         self.assertEqual(set(data.italic_corrections.values()), {200})
-        self.assertEqual(data.accent_attachments["u1D453"], 1.0)
+        self.assertEqual(data.accent_attachments["f.italic"], 1.0)
         self.assertEqual(data.accent_attachments["uni210F"], -2.0)
         self.assertEqual(data.accent_attachments["dotlessj"], 1.0)
         self.assertEqual(data.accent_attachments["uni2113"], 0.0)

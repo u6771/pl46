@@ -14,7 +14,7 @@ from skeletonfont.loader import (
 )
 from skeletonfont.planner import plan_font
 from skeletonfont.renderer import render_font
-from skeletonfont.model import GeneratedGlyph
+from skeletonfont.model import GlyphAlias
 
 
 PROJECT_DIRECTORY = Path(__file__).resolve().parents[1]
@@ -37,7 +37,7 @@ class FontRendererTests(unittest.TestCase):
         assert meta.ssty_file is not None
         ssty_data = load_ssty_data(PROJECT_DIRECTORY, meta.ssty_file)
         cls.glyph_count = (
-            len(assembled.real_glyphs) + len(assembled.generated_glyphs)
+            len(assembled.glyphs) + len(assembled.glyph_aliases)
         )
         cls.font = render_font(
             plan_font(
@@ -58,7 +58,7 @@ class FontRendererTests(unittest.TestCase):
         self.assertEqual(font[".notdef"].width, 600)
         self.assertGreater(len(font[".notdef"].contours), 0)
 
-    def test_real_and_empty_glyphs_receive_resolved_metrics(self) -> None:
+    def test_rendered_and_empty_glyphs_receive_resolved_metrics(self) -> None:
         a = self.font["A"]
         space = self.font["space"]
 
@@ -68,21 +68,21 @@ class FontRendererTests(unittest.TestCase):
         self.assertEqual(space.width, 550)
         self.assertEqual(space.contours, [])
 
-    def test_generated_glyph_copies_rendered_source_outline(self) -> None:
+    def test_glyph_alias_copies_rendered_source_outline(self) -> None:
         source = self.font["A"]
-        generated = self.font["A.italic"]
+        alias = self.font["A.italic"]
 
-        self.assertEqual(generated.width, source.width)
-        self.assertEqual(generated.contours, source.contours)
-        self.assertEqual(generated.unicodes, [0x1D434])
+        self.assertEqual(alias.width, source.width)
+        self.assertEqual(alias.contours, source.contours)
+        self.assertEqual(alias.unicodes, [0x1D434])
         self.assertEqual(source.unicodes, [0x0041])
 
-    def test_generated_copy_does_not_depend_on_generator_order(self) -> None:
+    def test_alias_copy_does_not_depend_on_generator_order(self) -> None:
         meta = load_font_meta(PROJECT_DIRECTORY, "math")
         assembled = assemble_font(meta, GlyphCatalog(PROJECT_DIRECTORY))
         assembled = replace(
             assembled,
-            generated_glyphs=tuple(reversed(assembled.generated_glyphs)),
+            glyph_aliases=tuple(reversed(assembled.glyph_aliases)),
         )
         config = load_glyph_config(
             PROJECT_DIRECTORY,
@@ -97,14 +97,14 @@ class FontRendererTests(unittest.TestCase):
 
         self.assertEqual(font["A.italic"].contours, font["A"].contours)
 
-    def test_unencoded_generated_copy_has_no_unicode(self) -> None:
+    def test_unencoded_alias_copy_has_no_unicode(self) -> None:
         assembled = assemble_font(
             load_font_meta(PROJECT_DIRECTORY, "ascii"),
             GlyphCatalog(PROJECT_DIRECTORY),
         )
         plan = replace(
             plan_font(assembled),
-            generated_glyphs=(GeneratedGlyph("A", "A.st", None),),
+            glyph_aliases=(GlyphAlias("A", "A.st", None),),
         )
 
         font = render_font(plan)

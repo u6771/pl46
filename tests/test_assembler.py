@@ -6,7 +6,11 @@ from pathlib import Path
 from types import MappingProxyType
 from unittest.mock import patch
 
-from skeletonfont.assembler import GlyphCatalog, assemble_font
+from skeletonfont.assembler import (
+    GlyphCatalog,
+    _apply_ssty_generators,
+    assemble_font,
+)
 from skeletonfont.errors import AssemblyError
 from skeletonfont.loader import load_font_meta
 from skeletonfont.mappings import (
@@ -15,7 +19,12 @@ from skeletonfont.mappings import (
     _validate_mapping_domains,
     get_mapping,
 )
-from skeletonfont.model import AssembledGlyph, GlyphSource, UnicodeDomain
+from skeletonfont.model import (
+    AssembledGlyph,
+    GlyphSource,
+    SstyGenerator,
+    UnicodeDomain,
+)
 
 
 PROJECT_DIRECTORY = Path(__file__).resolve().parents[1]
@@ -71,16 +80,16 @@ class FontAssemblerTests(unittest.TestCase):
                     self.catalog,
                 )
                 self.assertEqual(
-                    len(assembled.real_glyphs)
-                    + len(assembled.generated_glyphs),
+                    len(assembled.glyphs)
+                    + len(assembled.glyph_aliases),
                     total,
                 )
                 self.assertEqual(
                     sum(
                         glyph.codepoint is not None
-                        for glyph in assembled.real_glyphs.values()
+                        for glyph in assembled.glyphs.values()
                     )
-                    + len(assembled.generated_glyphs),
+                    + len(assembled.glyph_aliases),
                     encoded,
                 )
 
@@ -93,7 +102,7 @@ class FontAssemblerTests(unittest.TestCase):
 
         fraktur_a = next(
             glyph
-            for glyph in assembled.real_glyphs.values()
+            for glyph in assembled.glyphs.values()
             if glyph.codepoint == 0x1D504
         )
         self.assertEqual(fraktur_a.name, "A.fraktur")
@@ -109,16 +118,16 @@ class FontAssemblerTests(unittest.TestCase):
         self.assertEqual(fraktur_a.source_path, original_fraktur_a.source_path)
 
         italic_a = next(
-            glyph
-            for glyph in assembled.generated_glyphs
-            if glyph.target_codepoint == 0x1D434
+            alias
+            for alias in assembled.glyph_aliases
+            if alias.target_codepoint == 0x1D434
         )
         self.assertEqual(italic_a.source_name, "A")
         self.assertEqual(italic_a.target_name, "A.italic")
 
         equal = next(
             glyph
-            for glyph in assembled.real_glyphs.values()
+            for glyph in assembled.glyphs.values()
             if glyph.codepoint == 0x003D
         )
         equal_source = self.catalog.load("math")["equal"]
@@ -129,7 +138,7 @@ class FontAssemblerTests(unittest.TestCase):
         self.assertEqual(equal.codepoint, equal_source.codepoint)
         self.assertIn("glyph_sources", str(equal.source_path))
         self.assertIn("math", equal.source_path.parts)
-        self.assertEqual(len(assembled.generated_glyphs), 108)
+        self.assertEqual(len(assembled.glyph_aliases), 108)
 
     def test_source_rule_scales_strokes_without_mutating_source(
         self,
@@ -148,7 +157,7 @@ class FontAssemblerTests(unittest.TestCase):
             self.catalog,
         )
 
-        scaled = assembled.real_glyphs["A"]
+        scaled = assembled.glyphs["A"]
         self.assertIsNot(scaled.skeleton, source.skeleton)
         self.assertEqual(len(scaled.skeleton), len(source.skeleton))
         for source_stroke, scaled_stroke in zip(
@@ -162,6 +171,169 @@ class FontAssemblerTests(unittest.TestCase):
             )
             self.assertIsNot(scaled_stroke, source_stroke)
 
+    def test_ssty_generators_derive_glyph_and_alias_bases(self) -> None:
+        assembled = assemble_font(
+            load_font_meta(PROJECT_DIRECTORY, "math"),
+            self.catalog,
+        )
+
+        self.assertEqual(
+            assembled.ssty_substitutions["A"],
+            ("A.st",),
+        )
+        self.assertEqual(
+            assembled.ssty_substitutions["A.italic"],
+            ("A.italic.st",),
+        )
+        self.assertNotIn("A.st.sts", assembled.glyphs)
+        self.assertIsNone(assembled.glyphs["A.st"].codepoint)
+        self.assertIsNone(assembled.glyphs["A.italic.st"].codepoint)
+        self.assertEqual(assembled.ssty_alternate_sources["A.st"], "A")
+        self.assertEqual(
+            assembled.ssty_alternate_sources["A.italic.st"],
+            "A",
+        )
+        with self.assertRaises(TypeError):
+            assembled.ssty_substitutions["new"] = (  # type: ignore[index]
+                "new.st",
+            )
+        with self.assertRaises(TypeError):
+            assembled.ssty_alternate_sources["new.st"] = "new"  # type: ignore[index]
+
+        source = assembled.glyphs["A"]
+        alternate = assembled.glyphs["A.st"]
+        for source_stroke, alternate_stroke in zip(
+            source.skeleton,
+            alternate.skeleton,
+            strict=True,
+        ):
+            self.assertAlmostEqual(
+                alternate_stroke.thickness_scale,
+                source_stroke.thickness_scale * 1.2,
+            )
+
+    def test_ssty_generator_scaling_multiplies_source_rule_scaling(self) -> None:
+        meta = load_font_meta(PROJECT_DIRECTORY, "ascii")
+        scaled_source = replace(
+            meta.source_rules[1],
+            thickness_scale=1.25,
+        )
+        ssty_generator = SstyGenerator(
+            UnicodeDomain(((0x0041, 0x0041),)),
+            "st",
+            1.4,
+        )
+
+        assembled = assemble_font(
+            replace(
+                meta,
+                source_rules=(meta.source_rules[0], scaled_source),
+                ssty_generators=(ssty_generator,),
+            ),
+            self.catalog,
+        )
+
+        authored = self.catalog.load("ascii")["A"]
+        alternate = assembled.glyphs["A.st"]
+        for authored_stroke, alternate_stroke in zip(
+            authored.skeleton,
+            alternate.skeleton,
+            strict=True,
+        ):
+            self.assertAlmostEqual(
+                alternate_stroke.thickness_scale,
+                authored_stroke.thickness_scale * 1.25 * 1.4,
+            )
+
+    def test_ssty_generators_skip_missing_codepoints(self) -> None:
+        meta = load_font_meta(PROJECT_DIRECTORY, "ascii")
+        assembled = assemble_font(
+            replace(
+                meta,
+                ssty_generators=(
+                    SstyGenerator(
+                        UnicodeDomain(((0xE000, 0xE000),)),
+                        "st",
+                        1.4,
+                    ),
+                ),
+            ),
+            self.catalog,
+        )
+
+        self.assertEqual(dict(assembled.ssty_substitutions), {})
+        self.assertEqual(dict(assembled.ssty_alternate_sources), {})
+
+    def test_ssty_generators_do_not_mutate_input_glyph_mapping(self) -> None:
+        meta = load_font_meta(PROJECT_DIRECTORY, "ascii")
+        assembled = assemble_font(
+            replace(meta, ssty_generators=()),
+            self.catalog,
+        )
+        glyphs_by_name = dict(assembled.glyphs)
+        glyphs_by_codepoint = {
+            glyph.codepoint: glyph
+            for glyph in assembled.glyphs.values()
+            if glyph.codepoint is not None
+        }
+        original_glyphs = dict(glyphs_by_name)
+
+        result = _apply_ssty_generators(
+            glyphs_by_name,
+            glyphs_by_codepoint,
+            assembled.glyph_aliases,
+            (
+                SstyGenerator(
+                    UnicodeDomain(((0x0041, 0x0041),)),
+                    "st",
+                    1.4,
+                ),
+            ),
+        )
+
+        self.assertEqual(glyphs_by_name, original_glyphs)
+        self.assertIn("A.st", result.glyphs)
+
+    def test_ssty_generators_reject_unknown_names_collisions_and_third_level(
+        self,
+    ) -> None:
+        meta = load_font_meta(PROJECT_DIRECTORY, "ascii")
+        domain = UnicodeDomain(((0x0041, 0x0041),))
+
+        with self.assertRaisesRegex(AssemblyError, "Unknown ssty"):
+            assemble_font(
+                replace(
+                    meta,
+                    ssty_generators=(SstyGenerator(domain, "unknown", 1.4),),
+                ),
+                self.catalog,
+            )
+
+        with self.assertRaisesRegex(AssemblyError, "already in use"):
+            assemble_font(
+                replace(
+                    meta,
+                    ssty_generators=(
+                        SstyGenerator(domain, "st", 1.4),
+                        SstyGenerator(domain, "st", 1.6),
+                    ),
+                ),
+                self.catalog,
+            )
+
+        with self.assertRaisesRegex(AssemblyError, "more than two"):
+            assemble_font(
+                replace(
+                    meta,
+                    ssty_generators=(
+                        SstyGenerator(domain, "st", 1.2),
+                        SstyGenerator(domain, "sts", 1.4),
+                        SstyGenerator(domain, "st", 1.6),
+                    ),
+                ),
+                self.catalog,
+            )
+
     def test_every_selected_source_crosses_assembly_type_boundary(self) -> None:
         assembled = assemble_font(
             load_font_meta(PROJECT_DIRECTORY, "ascii"),
@@ -171,13 +343,13 @@ class FontAssemblerTests(unittest.TestCase):
         self.assertTrue(
             all(
                 isinstance(glyph, AssembledGlyph)
-                for glyph in assembled.real_glyphs.values()
+                for glyph in assembled.glyphs.values()
             )
         )
         self.assertTrue(
             all(
                 name == glyph.name
-                for name, glyph in assembled.real_glyphs.items()
+                for name, glyph in assembled.glyphs.items()
             )
         )
 
@@ -194,11 +366,11 @@ class FontAssemblerTests(unittest.TestCase):
 
         assembled = assemble_font(uppercase_meta, self.catalog)
 
-        self.assertEqual(len(assembled.real_glyphs), 27)
+        self.assertEqual(len(assembled.glyphs), 27)
         self.assertEqual(
             {
                 glyph.codepoint
-                for glyph in assembled.real_glyphs.values()
+                for glyph in assembled.glyphs.values()
                 if glyph.codepoint is not None
             },
             set(range(0x41, 0x5B)),
@@ -216,7 +388,7 @@ class FontAssemblerTests(unittest.TestCase):
                 meta.source_rules[0],
                 replace(math_rule, include_unencoded=False),
             ),
-            glyph_generators=(),
+            glyph_alias_generators=(),
         )
         with_unencoded = replace(
             without_unencoded,
@@ -230,24 +402,24 @@ class FontAssemblerTests(unittest.TestCase):
         all_math = assemble_font(with_unencoded, self.catalog)
 
         added_names = (
-            set(all_math.real_glyphs) - set(encoded_only.real_glyphs)
+            set(all_math.glyphs) - set(encoded_only.glyphs)
         )
         self.assertTrue(added_names)
         self.assertTrue(
             all(
-                all_math.real_glyphs[name].codepoint is None
+                all_math.glyphs[name].codepoint is None
                 for name in added_names
             )
         )
         self.assertEqual(
             {
                 (glyph.name, glyph.codepoint)
-                for glyph in encoded_only.real_glyphs.values()
+                for glyph in encoded_only.glyphs.values()
                 if glyph.codepoint is not None
             },
             {
                 (glyph.name, glyph.codepoint)
-                for glyph in all_math.real_glyphs.values()
+                for glyph in all_math.glyphs.values()
                 if glyph.codepoint is not None
             },
         )
@@ -273,7 +445,7 @@ class FontAssemblerTests(unittest.TestCase):
             ),
         )
         assembled = assemble_font(replacing_meta, self.catalog)
-        self.assertEqual(len(assembled.real_glyphs), 96)
+        self.assertEqual(len(assembled.glyphs), 96)
 
     def test_notdef_is_required_after_assembly(self) -> None:
         meta = load_font_meta(PROJECT_DIRECTORY, "ascii")
@@ -282,15 +454,15 @@ class FontAssemblerTests(unittest.TestCase):
         with self.assertRaisesRegex(AssemblyError, r"\.notdef"):
             assemble_font(without_notdef, self.catalog)
 
-    def test_assembled_real_glyphs_are_read_only(self) -> None:
+    def test_assembled_glyphs_are_read_only(self) -> None:
         assembled = assemble_font(
             load_font_meta(PROJECT_DIRECTORY, "ascii"),
             self.catalog,
         )
 
         with self.assertRaises(TypeError):
-            assembled.real_glyphs["new"] = (  # type: ignore[index]
-                assembled.real_glyphs["A"]
+            assembled.glyphs["new"] = (  # type: ignore[index]
+                assembled.glyphs["A"]
             )
 
     def test_assembled_font_keeps_only_post_assembly_inputs(self) -> None:
@@ -306,10 +478,10 @@ class FontAssemblerTests(unittest.TestCase):
         )
         self.assertFalse(hasattr(assembled, "meta"))
 
-    def test_generator_sources_are_limited_to_real_glyphs(self) -> None:
+    def test_alias_generator_sources_are_limited_to_assembled_glyphs(self) -> None:
         meta = replace(
             load_font_meta(PROJECT_DIRECTORY, "ascii"),
-            glyph_generators=("first", "second"),
+            glyph_alias_generators=("first", "second"),
         )
         mappings = {
             "first": GlyphMapping(
@@ -328,15 +500,15 @@ class FontAssemblerTests(unittest.TestCase):
         ):
             assembled = assemble_font(meta, self.catalog)
 
-        self.assertEqual(len(assembled.generated_glyphs), 1)
-        self.assertEqual(assembled.generated_glyphs[0].source_name, "A")
-        self.assertEqual(assembled.generated_glyphs[0].target_name, "A.first")
-        self.assertEqual(assembled.generated_glyphs[0].target_codepoint, 0xE000)
+        self.assertEqual(len(assembled.glyph_aliases), 1)
+        self.assertEqual(assembled.glyph_aliases[0].source_name, "A")
+        self.assertEqual(assembled.glyph_aliases[0].target_name, "A.first")
+        self.assertEqual(assembled.glyph_aliases[0].target_codepoint, 0xE000)
 
     def test_generator_mapping_can_produce_an_unencoded_glyph(self) -> None:
         meta = replace(
             load_font_meta(PROJECT_DIRECTORY, "ascii"),
-            glyph_generators=("st",),
+            glyph_alias_generators=("st",),
         )
         mapping = GlyphMapping(
             MappingProxyType({0x0041: None}),
@@ -346,11 +518,11 @@ class FontAssemblerTests(unittest.TestCase):
         with patch("skeletonfont.assembler.get_mapping", return_value=mapping):
             assembled = assemble_font(meta, self.catalog)
 
-        self.assertEqual(len(assembled.generated_glyphs), 1)
-        generated = assembled.generated_glyphs[0]
-        self.assertEqual(generated.source_name, "A")
-        self.assertEqual(generated.target_name, "A.st")
-        self.assertIsNone(generated.target_codepoint)
+        self.assertEqual(len(assembled.glyph_aliases), 1)
+        alias = assembled.glyph_aliases[0]
+        self.assertEqual(alias.source_name, "A")
+        self.assertEqual(alias.target_name, "A.st")
+        self.assertIsNone(alias.target_codepoint)
 
     def test_unicode_mappings_are_shared_and_read_only(self) -> None:
         first = get_mapping("upright_latin_to_italic_latin")

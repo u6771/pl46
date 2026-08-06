@@ -30,6 +30,7 @@ from .model import (
     Point,
     SourceRule,
     SstyData,
+    SstyGenerator,
     StrokeRecord,
     UnicodeDomain,
     UnicodeRange,
@@ -56,7 +57,8 @@ META_FIELD_ORDER = (
     "left_spacing",
     "right_spacing",
     "source_rules",
-    "glyph_generators",
+    "glyph_alias_generators",
+    "ssty_generators",
     "glyph_config_file",
     "accent_file",
     "kerning_file",
@@ -85,6 +87,13 @@ _SOURCE_RULE_FIELDS = {
     "mapping_name",
     "thickness_scale",
 }
+
+_SSTY_GENERATOR_FIELDS = {
+    "unicode_domain",
+    "ssty_alternate_name",
+    "thickness_scale",
+}
+_REQUIRED_SSTY_GENERATOR_FIELDS = set(_SSTY_GENERATOR_FIELDS)
 
 _GLYPH_FIELDS = {
     "name",
@@ -496,6 +505,35 @@ def _parse_source_rule(
     )
 
 
+def _parse_ssty_generator(
+    value: object,
+    *,
+    location: str,
+) -> SstyGenerator:
+    data = _object(value, location=location)
+    _reject_unknown_fields(data, _SSTY_GENERATOR_FIELDS, location=location)
+    missing = _REQUIRED_SSTY_GENERATOR_FIELDS - set(data)
+    if missing:
+        raise ProjectDataError(
+            f"{location} is missing required fields: {sorted(missing)}"
+        )
+    return SstyGenerator(
+        unicode_domain=_parse_unicode_domain(
+            data["unicode_domain"],
+            location=f"{location}.unicode_domain",
+        ),
+        ssty_alternate_name=_safe_name(
+            data["ssty_alternate_name"],
+            location=f"{location}.ssty_alternate_name",
+        ),
+        thickness_scale=_number(
+            data["thickness_scale"],
+            location=f"{location}.thickness_scale",
+            positive=True,
+        ),
+    )
+
+
 def _optional_json_filename(
     value: object | None,
     *,
@@ -576,21 +614,37 @@ def parse_font_meta(
         for index, rule in enumerate(raw_source_rules)
     )
 
-    glyph_generators_value = data.get("glyph_generators")
-    raw_glyph_generators = (
+    glyph_alias_generators_value = data.get("glyph_alias_generators")
+    raw_glyph_alias_generators = (
         ()
-        if glyph_generators_value is None
+        if glyph_alias_generators_value is None
         else _array(
-            glyph_generators_value,
-            location=f"{location}.glyph_generators",
+            glyph_alias_generators_value,
+            location=f"{location}.glyph_alias_generators",
         )
     )
-    glyph_generators = tuple(
+    glyph_alias_generators = tuple(
         _safe_name(
             item,
-            location=f"{location}.glyph_generators[{index}]",
+            location=f"{location}.glyph_alias_generators[{index}]",
         )
-        for index, item in enumerate(raw_glyph_generators)
+        for index, item in enumerate(raw_glyph_alias_generators)
+    )
+    ssty_generators_value = data.get("ssty_generators")
+    raw_ssty_generators = (
+        ()
+        if ssty_generators_value is None
+        else _array(
+            ssty_generators_value,
+            location=f"{location}.ssty_generators",
+        )
+    )
+    ssty_generators = tuple(
+        _parse_ssty_generator(
+            item,
+            location=f"{location}.ssty_generators[{index}]",
+        )
+        for index, item in enumerate(raw_ssty_generators)
     )
 
     family = _string(data["family"], location=f"{location}.family")
@@ -676,7 +730,8 @@ def parse_font_meta(
             positive=True,
         ),
         source_rules=source_rules,
-        glyph_generators=glyph_generators,
+        glyph_alias_generators=glyph_alias_generators,
+        ssty_generators=ssty_generators,
         glyph_config_file=_optional_json_filename(
             data.get("glyph_config_file"),
             location=f"{location}.glyph_config_file",

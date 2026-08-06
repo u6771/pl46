@@ -31,6 +31,7 @@ from skeletonfont.model import (
     StrokeRecord,
 )
 from skeletonfont.planner import (
+    _inherited_top_accent_attachments,
     _measure_glyph_axis,
     _plan_variant_glyph,
     _transform_stroke,
@@ -191,17 +192,30 @@ class FontPlannerTests(unittest.TestCase):
         self.assertEqual(plan.output_stem, "PL46-Math")
         self.assertEqual(plan.point_radius_scale, 1.6)
         self.assertEqual(
-            set(plan.real_glyphs),
-            set(self.assembled_math.real_glyphs),
+            set(plan.glyphs),
+            set(self.assembled_math.glyphs),
         )
         self.assertEqual(
-            plan.generated_glyphs,
-            self.assembled_math.generated_glyphs,
+            plan.glyph_aliases,
+            self.assembled_math.glyph_aliases,
         )
-        self.assertEqual(plan.real_glyphs[".notdef"].width, 600)
-        self.assertTrue(plan.real_glyphs[".notdef"].strokes)
+        self.assertEqual(plan.glyphs[".notdef"].width, 600)
+        self.assertTrue(plan.glyphs[".notdef"].strokes)
         with self.assertRaises(TypeError):
-            plan.real_glyphs["new"] = plan.real_glyphs["A"]  # type: ignore[index]
+            plan.glyphs["new"] = plan.glyphs["A"]  # type: ignore[index]
+
+    def test_accent_attachment_inheritance_does_not_mutate_input(
+        self,
+    ) -> None:
+        source_attachments = {"A": 400}
+
+        inherited = _inherited_top_accent_attachments(
+            source_attachments,
+            {"A.st": "A", "B.st": "B"},
+        )
+
+        self.assertEqual(source_attachments, {"A": 400})
+        self.assertEqual(inherited, {"A.st": 400})
 
     def test_math_plan_resolves_ssty_and_variant_advances(self) -> None:
         math_plan = self.math_plan.math_table
@@ -212,6 +226,14 @@ class FontPlannerTests(unittest.TestCase):
             "sub minute by minute.st;",
             self.math_plan.ssty_feature,
         )
+        self.assertIn(
+            "sub A by A.st;",
+            self.math_plan.ssty_feature,
+        )
+        self.assertIn(
+            "sub A.italic by A.italic.st;",
+            self.math_plan.ssty_feature,
+        )
         self.assertEqual(len(math_plan.vertical_variant_records), 36)
         self.assertEqual(len(math_plan.horizontal_variant_records), 6)
         self.assertIn("parenleft", math_plan.extended_shapes)
@@ -219,19 +241,27 @@ class FontPlannerTests(unittest.TestCase):
             dict(math_plan.italic_corrections),
             dict(self.math_data.italic_corrections),
         )
-        self.assertEqual(math_plan.top_accent_attachments["u1D453"], 400)
+        self.assertEqual(math_plan.top_accent_attachments["f.italic"], 400)
         self.assertEqual(math_plan.top_accent_attachments["j"], 400)
         self.assertEqual(math_plan.top_accent_attachments["j.italic"], 400)
         self.assertEqual(math_plan.top_accent_attachments["t"], 200)
         self.assertEqual(math_plan.top_accent_attachments["t.italic"], 200)
         self.assertEqual(math_plan.top_accent_attachments["A.script"], 500)
-        for generated in self.assembled_math.generated_glyphs:
+        self.assertEqual(
+            math_plan.top_accent_attachments["J.st"],
+            math_plan.top_accent_attachments["J"],
+        )
+        self.assertEqual(
+            math_plan.top_accent_attachments["J.italic.st"],
+            math_plan.top_accent_attachments["J"],
+        )
+        for alias in self.assembled_math.glyph_aliases:
             source_attachment = math_plan.top_accent_attachments.get(
-                generated.source_name
+                alias.source_name
             )
             if source_attachment is not None:
                 self.assertEqual(
-                    math_plan.top_accent_attachments[generated.target_name],
+                    math_plan.top_accent_attachments[alias.target_name],
                     source_attachment,
                 )
         self.assertEqual(
@@ -260,6 +290,27 @@ class FontPlannerTests(unittest.TestCase):
         self.assertIsNone(plan.math_table)
         assert plan.ssty_feature is not None
         self.assertIn("sub minute by minute.st;", plan.ssty_feature)
+        self.assertIn("sub A by A.st;", plan.ssty_feature)
+
+    def test_automatic_ssty_without_explicit_data_or_math(self) -> None:
+        plan = plan_font(self.assembled_math)
+
+        self.assertIsNone(plan.math_table)
+        assert plan.ssty_feature is not None
+        self.assertIn("sub A by A.st;", plan.ssty_feature)
+        self.assertNotIn("sub minute by minute.st;", plan.ssty_feature)
+
+    def test_automatic_and_explicit_ssty_cannot_share_a_base(self) -> None:
+        conflicting = SstyData(
+            source_path=Path("ssty.json"),
+            substitutions=MappingProxyType({"A": ("A.st",)}),
+        )
+
+        with self.assertRaisesRegex(
+            PlanError,
+            "Automatic and explicit ssty",
+        ):
+            plan_font(self.assembled_math, ssty_data=conflicting)
 
     def test_math_italics_correction_rejects_unknown_glyphs(self) -> None:
         data = replace(
@@ -270,7 +321,7 @@ class FontPlannerTests(unittest.TestCase):
         with self.assertRaisesRegex(PlanError, "unknown glyphs"):
             plan_font(self.assembled_math, math_table_data=data)
 
-    def test_math_kerns_allow_supported_real_roles_and_inherit(self) -> None:
+    def test_math_kerns_allow_supported_glyph_roles_and_inherit(self) -> None:
         kern = glyph_kern()
         data = replace(
             self.math_data,
@@ -292,10 +343,10 @@ class FontPlannerTests(unittest.TestCase):
         self.assertEqual(math_plan.kerns["j"], kern)
         self.assertEqual(math_plan.kerns["j.italic"], kern)
 
-    def test_math_kerns_reject_unsupported_or_nonreal_names(self) -> None:
+    def test_math_kerns_reject_unsupported_or_alias_names(self) -> None:
         invalid = (
-            ("missing", frozenset(), "not planned as a real glyph"),
-            ("j.italic", frozenset(), "not planned as a real glyph"),
+            ("missing", frozenset(), "not planned as an assembled glyph"),
+            ("j.italic", frozenset(), "not planned as an assembled glyph"),
             ("tildecomb", self.accent_glyphs, "unsupported planning role"),
             ("uni239C", frozenset(), "unsupported planning role"),
         )
@@ -403,8 +454,8 @@ class FontPlannerTests(unittest.TestCase):
 
     def test_top_accent_attachment_rejects_unsupported_roles(self) -> None:
         invalid = (
-            ("missing", frozenset(), "not planned as a real glyph"),
-            ("j.italic", frozenset(), "not planned as a real glyph"),
+            ("missing", frozenset(), "not planned as an assembled glyph"),
+            ("j.italic", frozenset(), "not planned as an assembled glyph"),
             ("tildecomb", self.accent_glyphs, "unsupported planning role"),
             ("uni239C", frozenset(), "unsupported planning role"),
         )
@@ -422,7 +473,7 @@ class FontPlannerTests(unittest.TestCase):
                     )
 
     def test_accent_glyphs_have_zero_advance_and_authored_origin(self) -> None:
-        tilde = self.math_plan.real_glyphs["tildecomb"]
+        tilde = self.math_plan.glyphs["tildecomb"]
 
         self.assertEqual(tilde.width, 0)
         self.assertEqual(
@@ -445,7 +496,7 @@ class FontPlannerTests(unittest.TestCase):
             )
 
     def test_accent_glyphs_must_exist_and_have_one_role(self) -> None:
-        with self.assertRaisesRegex(PlanError, "unknown real glyphs"):
+        with self.assertRaisesRegex(PlanError, "unknown assembled glyphs"):
             plan_font(
                 self.assembled_math,
                 math_table_data=self.math_data,
@@ -480,14 +531,14 @@ class FontPlannerTests(unittest.TestCase):
 
         plan = plan_font(assembled, math_table_data=self.math_data)
 
-        self.assertEqual(plan.real_glyphs["parenleft"].width, 400)
-        self.assertEqual(plan.real_glyphs["parenleft.v4"].width, 620)
+        self.assertEqual(plan.glyphs["parenleft"].width, 400)
+        self.assertEqual(plan.glyphs["parenleft.v4"].width, 620)
         self.assertEqual(
-            plan.real_glyphs["parenleft"].strokes[0].centerline[0][0],
+            plan.glyphs["parenleft"].strokes[0].centerline[0][0],
             300,
         )
         self.assertEqual(
-            plan.real_glyphs["parenleft.v4"].strokes[0].centerline[0][0],
+            plan.glyphs["parenleft.v4"].strokes[0].centerline[0][0],
             510,
         )
 
@@ -579,8 +630,8 @@ class FontPlannerTests(unittest.TestCase):
         math_plan = plan.math_table
         assert math_plan is not None
 
-        paren_part = plan.real_glyphs["parenleft.v1"]
-        radical_part = plan.real_glyphs["radical.v1"]
+        paren_part = plan.glyphs["parenleft.v1"]
+        radical_part = plan.glyphs["radical.v1"]
         self.assertEqual(paren_part.width, 900)
         self.assertEqual(radical_part.width, 900)
         self.assertEqual(
@@ -607,7 +658,7 @@ class FontPlannerTests(unittest.TestCase):
             ],
         )
 
-        equal_part = plan.real_glyphs["equal"]
+        equal_part = plan.glyphs["equal"]
         self.assertEqual(equal_part.width, 600)
         self.assertEqual(equal_part.strokes[0].centerline[0], (0.0, 325.0))
         self.assertEqual(math_plan.min_connector_overlap, 20)
@@ -674,7 +725,7 @@ class FontPlannerTests(unittest.TestCase):
                 math_table_data=no_overlap_data,
             )
 
-    def test_math_references_must_exist_in_real_glyphs(self) -> None:
+    def test_math_references_must_exist_in_assembled_glyphs(self) -> None:
         missing_ssty = SstyData(
             source_path=Path("ssty.json"),
             substitutions=MappingProxyType(
@@ -725,8 +776,8 @@ class FontPlannerTests(unittest.TestCase):
         plan = plan_font(assembled, math_table_data=data)
         assert plan.math_table is not None
 
-        self.assertEqual(plan.real_glyphs["A"].width, 600)
-        self.assertEqual(plan.real_glyphs[".notdef"].width, 1050)
+        self.assertEqual(plan.glyphs["A"].width, 600)
+        self.assertEqual(plan.glyphs[".notdef"].width, 1050)
         self.assertEqual(
             [
                 record.glyph_name
@@ -819,7 +870,7 @@ class FontPlannerTests(unittest.TestCase):
             call.args[0] for call in transform.call_args_list
         ]
         for name in ("parenleft.v1", "radical.v1"):
-            skeleton = self.assembled_math.real_glyphs[name].skeleton
+            skeleton = self.assembled_math.glyphs[name].skeleton
             self.assertEqual(
                 sum(item is skeleton for item in transformed_skeletons),
                 1,
@@ -879,10 +930,10 @@ class FontPlannerTests(unittest.TestCase):
         backward = planned_with(reversed(tuple(constructions.items())))
 
         self.assertEqual(
-            forward.real_glyphs["parenleft.v1"],
-            backward.real_glyphs["parenleft.v1"],
+            forward.glyphs["parenleft.v1"],
+            backward.glyphs["parenleft.v1"],
         )
-        self.assertEqual(forward.real_glyphs["parenleft.v1"].width, 400)
+        self.assertEqual(forward.glyphs["parenleft.v1"].width, 400)
 
     def test_shared_vertical_part_rejects_scale_or_layout_mismatch(self) -> None:
         shared = MathAssemblyPartData(
@@ -1116,7 +1167,7 @@ class FontPlannerTests(unittest.TestCase):
             )
 
     def test_proportional_strokes_and_width_are_resolved(self) -> None:
-        glyph = self.math_plan.real_glyphs["A"]
+        glyph = self.math_plan.glyphs["A"]
 
         self.assertEqual(glyph.width, 600)
         self.assertEqual(glyph.strokes[0].radius, 25)
@@ -1132,13 +1183,13 @@ class FontPlannerTests(unittest.TestCase):
         )
 
     def test_empty_glyph_length_resolves_width(self) -> None:
-        space = self.math_plan.real_glyphs["space"]
+        space = self.math_plan.glyphs["space"]
 
         self.assertEqual(space.width, 550)
         self.assertEqual(space.strokes, ())
 
     def test_glyph_adjustment_is_applied_once(self) -> None:
-        parenleft = self.math_plan.real_glyphs["parenleft"]
+        parenleft = self.math_plan.glyphs["parenleft"]
 
         self.assertEqual(parenleft.width, 450)
 
@@ -1161,8 +1212,8 @@ class FontPlannerTests(unittest.TestCase):
 
         for name in names:
             self.assertEqual(
-                adjusted.real_glyphs[name].width,
-                baseline.real_glyphs[name].width + 70,
+                adjusted.glyphs[name].width,
+                baseline.glyphs[name].width + 70,
             )
         assert baseline.math_table is not None
         assert adjusted.math_table is not None
@@ -1187,13 +1238,13 @@ class FontPlannerTests(unittest.TestCase):
         }
 
         self.assertEqual(
-            adjusted.real_glyphs["parenleft"],
-            baseline.real_glyphs["parenleft"],
+            adjusted.glyphs["parenleft"],
+            baseline.glyphs["parenleft"],
         )
         for name in part_names:
             self.assertEqual(
-                adjusted.real_glyphs[name].width,
-                baseline.real_glyphs[name].width + 70,
+                adjusted.glyphs[name].width,
+                baseline.glyphs[name].width + 70,
             )
         assert baseline.math_table is not None
         assert adjusted.math_table is not None
@@ -1225,8 +1276,8 @@ class FontPlannerTests(unittest.TestCase):
 
         for name in names:
             self.assertEqual(
-                adjusted.real_glyphs[name].width,
-                baseline.real_glyphs[name].width + 40,
+                adjusted.glyphs[name].width,
+                baseline.glyphs[name].width + 40,
             )
 
     def test_horizontal_groups_allow_only_discrete_variants(self) -> None:
@@ -1247,8 +1298,8 @@ class FontPlannerTests(unittest.TestCase):
         )
         for name in names:
             self.assertEqual(
-                adjusted.real_glyphs[name].width,
-                baseline.real_glyphs[name].width + 20,
+                adjusted.glyphs[name].width,
+                baseline.glyphs[name].width + 20,
             )
         assert baseline.math_table is not None
         assert adjusted.math_table is not None
@@ -1378,12 +1429,12 @@ class FontPlannerTests(unittest.TestCase):
         ]
         self.assertEqual(planned_names.count("divides.v1"), 1)
         self.assertEqual(
-            adjusted.real_glyphs["divides.v1"].width,
-            baseline.real_glyphs["divides.v1"].width + 20,
+            adjusted.glyphs["divides.v1"].width,
+            baseline.glyphs["divides.v1"].width + 20,
         )
         self.assertEqual(
-            adjusted.real_glyphs["divides.ex"].width,
-            baseline.real_glyphs["divides.ex"].width + 20,
+            adjusted.glyphs["divides.ex"].width,
+            baseline.glyphs["divides.ex"].width + 20,
         )
         self.assertEqual(adjusted, reversed_plan)
 
@@ -1426,8 +1477,8 @@ class FontPlannerTests(unittest.TestCase):
         )
 
         self.assertEqual(
-            adjusted.real_glyphs["divides.ex"].width,
-            baseline.real_glyphs["divides.ex"].width + 20,
+            adjusted.glyphs["divides.ex"].width,
+            baseline.glyphs["divides.ex"].width + 20,
         )
         with self.assertRaisesRegex(PlanError, "owner assembly"):
             plan_font(
@@ -1470,7 +1521,7 @@ class FontPlannerTests(unittest.TestCase):
         )
 
     def test_scaled_edge_thickness_affects_metrics(self) -> None:
-        minute = self.math_plan.real_glyphs["minute.st"]
+        minute = self.math_plan.glyphs["minute.st"]
 
         self.assertEqual(minute.width, 420)
         self.assertEqual(minute.strokes[0].radius, 35)
@@ -1491,25 +1542,25 @@ class FontPlannerTests(unittest.TestCase):
             unscaled_assembled,
             self.math_table,
             math_table_data=self.math_data,
-        ).real_glyphs["minute.st"]
+        ).glyphs["minute.st"]
         self.assertEqual(unscaled.width, 400)
         self.assertEqual(unscaled.strokes[0].radius, 35)
 
-    def test_generated_glyph_records_only_its_copy_source(self) -> None:
-        generated = next(
-            glyph
-            for glyph in self.math_plan.generated_glyphs
-            if glyph.target_name == "A.italic"
+    def test_glyph_alias_records_only_its_copy_source(self) -> None:
+        alias = next(
+            glyph_alias
+            for glyph_alias in self.math_plan.glyph_aliases
+            if glyph_alias.target_name == "A.italic"
         )
 
-        self.assertEqual(generated.source_name, "A")
-        self.assertEqual(generated.target_codepoint, 0x1D434)
-        self.assertFalse(hasattr(generated, "strokes"))
+        self.assertEqual(alias.source_name, "A")
+        self.assertEqual(alias.target_codepoint, 0x1D434)
+        self.assertFalse(hasattr(alias, "strokes"))
 
     def test_monospace_uses_fixed_width_and_source_x_offset(self) -> None:
         mono_plan = plan_font(assembled_font("mono"))
-        a = mono_plan.real_glyphs["A"]
-        space = mono_plan.real_glyphs["space"]
+        a = mono_plan.glyphs["A"]
+        space = mono_plan.glyphs["space"]
 
         self.assertEqual(a.width, 600)
         self.assertEqual(space.width, 600)
@@ -1526,7 +1577,7 @@ class FontPlannerTests(unittest.TestCase):
             ),
         )
 
-        a = plan_font(narrow_assembled).real_glyphs["A"]
+        a = plan_font(narrow_assembled).glyphs["A"]
 
         self.assertEqual(a.width, 500)
         self.assertEqual(a.strokes[0].centerline[0], (50.0, 25.0))
@@ -1542,7 +1593,7 @@ class FontPlannerTests(unittest.TestCase):
             ),
         )
 
-        a = plan_font(thick_assembled).real_glyphs["A"]
+        a = plan_font(thick_assembled).glyphs["A"]
 
         self.assertEqual(a.strokes[0].centerline[0][0], 100.0)
         self.assertEqual(a.strokes[0].centerline[-1][0], 500.0)
@@ -1561,7 +1612,7 @@ class FontPlannerTests(unittest.TestCase):
             shifted_assembled,
             self.math_table,
             math_table_data=self.math_data,
-        ).real_glyphs["A"]
+        ).glyphs["A"]
 
         self.assertEqual(
             shifted.strokes[0].centerline[0],
@@ -1581,12 +1632,12 @@ class FontPlannerTests(unittest.TestCase):
         )
 
         plan = plan_font(spaced_assembled)
-        a = plan.real_glyphs["A"]
-        space = plan.real_glyphs["space"]
+        a = plan.glyphs["A"]
+        space = plan.glyphs["space"]
 
         self.assertEqual(a.width, 650)
         self.assertEqual(space.width, 650)
-        self.assertEqual(plan.real_glyphs[".notdef"].width, 650)
+        self.assertEqual(plan.glyphs[".notdef"].width, 650)
         self.assertEqual(a.strokes[0].centerline[0], (120.0, 25.0))
 
     def test_preloaded_kerning_is_retained_by_the_plan(self) -> None:

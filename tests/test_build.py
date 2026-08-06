@@ -89,6 +89,14 @@ class BuildPipelineTests(unittest.TestCase):
             self.assertEqual(serialized_accent_attachments["j.italic"], 400)
             self.assertEqual(serialized_accent_attachments["t"], 200)
             self.assertEqual(serialized_accent_attachments["t.italic"], 200)
+            self.assertEqual(
+                serialized_accent_attachments["J.st"],
+                serialized_accent_attachments["J"],
+            )
+            self.assertEqual(
+                serialized_accent_attachments["J.italic.st"],
+                serialized_accent_attachments["J"],
+            )
 
             self.assertIsNone(
                 font["MATH"].table.MathGlyphInfo.MathKernInfo
@@ -106,12 +114,28 @@ class BuildPipelineTests(unittest.TestCase):
                 ["ssty"],
             )
             ssty_feature = feature_records[math_feature_indexes[0]].Feature
+            ssty_lookups = [
+                font["GSUB"].table.LookupList.Lookup[index]
+                for index in ssty_feature.LookupListIndex
+            ]
             self.assertEqual(
-                [
-                    font["GSUB"].table.LookupList.Lookup[index].LookupType
-                    for index in ssty_feature.LookupListIndex
-                ],
-                [1],
+                {lookup.LookupType for lookup in ssty_lookups},
+                {1},
+            )
+            single_substitutions = {
+                base: alternate
+                for lookup in ssty_lookups
+                if lookup.LookupType == 1
+                for subtable in lookup.SubTable
+                for base, alternate in subtable.mapping.items()
+            }
+            self.assertEqual(
+                single_substitutions["A"],
+                "A.st",
+            )
+            self.assertEqual(
+                single_substitutions["A.italic"],
+                "A.italic.st",
             )
 
             variants = font["MATH"].table.MathVariants

@@ -29,6 +29,9 @@ def normalize_unicode_ranges(
 
 
 _DOMAIN_RANGES: Mapping[str, tuple[UnicodeRange, ...]] = MappingProxyType({
+    "ascii_digits": (
+        (0x0030, 0x0039),
+    ),
     "upright_latin": (
         (0x0041, 0x005A),
         (0x0061, 0x007A),
