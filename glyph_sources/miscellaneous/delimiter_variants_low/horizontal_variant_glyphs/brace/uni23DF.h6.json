@@ -1,0 +1,12 @@
+{
+  "name": "uni23DF.h6",
+  "unicode": null,
+  "monospace_x_offset": -10,
+  "y_offset": -4,
+  "skeleton": [
+    {
+      "centerline": [[0, 4], [2, 2], [8, 2], [10, 0], [12, 2], [18, 2], [20, 4]],
+      "thickness_scale": 1.4
+    }
+  ]
+}

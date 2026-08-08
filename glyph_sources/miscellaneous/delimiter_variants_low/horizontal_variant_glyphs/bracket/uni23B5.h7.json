@@ -1,0 +1,12 @@
+{
+  "name": "uni23B5.h7",
+  "unicode": null,
+  "monospace_x_offset": -11,
+  "y_offset": -4,
+  "skeleton": [
+    {
+      "centerline": [[0, 4], [0, 0], [22, 0], [22, 4]],
+      "thickness_scale": 1.4
+    }
+  ]
+}

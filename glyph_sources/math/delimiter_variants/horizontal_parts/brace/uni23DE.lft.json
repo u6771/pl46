@@ -2,7 +2,7 @@
   "name": "uni23DE.lft",
   "unicode": null,
   "monospace_x_offset": -4,
-  "y_offset": 4,
+  "y_offset": 6,
   "skeleton": [
     {
       "centerline": [[0, 0], [2, 2], [4, 2]],
