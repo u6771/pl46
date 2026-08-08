@@ -1142,7 +1142,7 @@ def load_ssty_data(
 ) -> SstyData:
     """Load explicit GSUB ssty substitutions."""
 
-    source_path = project_directory / "ssty" / filename
+    source_path = project_directory / "data" / "ssty" / filename
     return SstyData(
         source_path=source_path,
         substitutions=parse_ssty(
@@ -1158,9 +1158,8 @@ def load_math_table_data(
 ) -> MathTableData:
     """Load all OpenType MATH-table inputs declared by one meta file."""
 
-    constants_path = (
-        project_directory / "math_table" / "constants" / config.constants_file
-    )
+    math_data_directory = project_directory / "data" / "math_table"
+    constants_path = math_data_directory / "constants" / config.constants_file
     constants = parse_math_constants(
         read_json(constants_path),
         source_path=constants_path,
@@ -1169,8 +1168,7 @@ def load_math_table_data(
     italics_correction_path = (
         None
         if config.italics_correction_file is None
-        else project_directory
-        / "math_table"
+        else math_data_directory
         / "italics_correction"
         / config.italics_correction_file
     )
@@ -1186,8 +1184,7 @@ def load_math_table_data(
     accent_attachment_path = (
         None
         if config.accent_attachment_file is None
-        else project_directory
-        / "math_table"
+        else math_data_directory
         / "accent_attachment"
         / config.accent_attachment_file
     )
@@ -1203,7 +1200,7 @@ def load_math_table_data(
     kern_path = (
         None
         if config.kern_file is None
-        else project_directory / "math_table" / "kern" / config.kern_file
+        else math_data_directory / "kern" / config.kern_file
     )
     kerns = (
         MappingProxyType({})
@@ -1217,10 +1214,7 @@ def load_math_table_data(
     variants_path = (
         None
         if config.variants_file is None
-        else project_directory
-        / "math_table"
-        / "variants"
-        / config.variants_file
+        else math_data_directory / "variants" / config.variants_file
     )
     min_connector_overlap = 0
     vertical_variant_glyphs: Mapping[str, tuple[str, ...]] = (
@@ -1385,7 +1379,7 @@ def load_kerning_data(
     filename: object,
 ) -> KerningData:
     name = normalize_json_filename(filename, location="Kerning filename")
-    path = project_directory / "kerning" / name
+    path = project_directory / "data" / "kerning" / name
     return parse_kerning_data(read_json(path), source_path=path)
 
 
@@ -1412,7 +1406,7 @@ def load_accent_glyphs(
     project_directory: Path,
     filename: str,
 ) -> frozenset[str]:
-    path = project_directory / "accent" / filename
+    path = project_directory / "data" / "accent" / filename
     return parse_accent_glyphs(read_json(path), source_path=path)
 
 
@@ -1497,7 +1491,7 @@ def load_glyph_config(
         filename,
         location="Glyph config filename",
     )
-    path = project_directory / "config" / normalized_filename
+    path = project_directory / "data" / "glyph_config" / normalized_filename
     return parse_glyph_config(
         read_json(path),
         source_path=path,

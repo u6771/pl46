@@ -36,6 +36,7 @@ from skeletonfont.planner import (
     _plan_variant_glyph,
     _transform_stroke,
     _transformed_strokes,
+    _with_ssty_top_accent_attachments,
     plan_font,
 )
 
@@ -153,6 +154,30 @@ class GlyphConfigLoaderTests(unittest.TestCase):
             )
 
 
+class TopAccentAttachmentHelperTests(unittest.TestCase):
+    def test_ssty_expansion_uses_authored_coordinates_without_mutation(
+        self,
+    ) -> None:
+        authored = {"A": 1.0, "A.st": 1.25}
+
+        expanded = _with_ssty_top_accent_attachments(
+            authored,
+            {
+                "A.st": "A",
+                "A.sts": "A",
+                "B.st": "B",
+            },
+        )
+
+        self.assertEqual(authored, {"A": 1.0, "A.st": 1.25})
+        self.assertEqual(
+            dict(expanded),
+            {"A": 1.0, "A.st": 1.25, "A.sts": 1.0},
+        )
+        with self.assertRaises(TypeError):
+            expanded["new"] = 0.0  # type: ignore[index]
+
+
 class FontPlannerTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
@@ -247,13 +272,10 @@ class FontPlannerTests(unittest.TestCase):
         self.assertEqual(math_plan.top_accent_attachments["t"], 200)
         self.assertEqual(math_plan.top_accent_attachments["t.italic"], 200)
         self.assertEqual(math_plan.top_accent_attachments["A.script"], 500)
-        self.assertEqual(
-            math_plan.top_accent_attachments["J.st"],
-            math_plan.top_accent_attachments["J"],
-        )
+        self.assertEqual(math_plan.top_accent_attachments["J.st"], 505)
         self.assertEqual(
             math_plan.top_accent_attachments["J.italic.st"],
-            math_plan.top_accent_attachments["J"],
+            505,
         )
         for alias in self.assembled_math.glyph_aliases:
             source_attachment = math_plan.top_accent_attachments.get(

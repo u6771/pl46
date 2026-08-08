@@ -633,6 +633,26 @@ def _inherited_top_accent_attachments(
     }
 
 
+def _with_ssty_top_accent_attachments(
+    authored_attachments: Mapping[str, float],
+    source_by_target: Mapping[str, str],
+) -> Mapping[str, float]:
+    """Give each ssty glyph its source's authored grid coordinate.
+
+    The target glyph later converts this coordinate using its own planned
+    metrics.  An explicitly authored target value takes precedence over the
+    inherited source value.
+    """
+
+    inherited = {
+        target_name: authored_attachments[source_name]
+        for target_name, source_name in source_by_target.items()
+        if source_name in authored_attachments
+        and target_name not in authored_attachments
+    }
+    return MappingProxyType({**inherited, **authored_attachments})
+
+
 def _plan_accent_glyphs(
     glyphs: Mapping[str, AssembledGlyph],
     parameters: GlyphParameters,
@@ -1605,10 +1625,16 @@ def plan_font(
         vertical_assemblies,
         horizontal_assemblies,
     )
-    top_accent_attachment_inputs = _group_top_accent_attachments_by_role(
+    authored_top_accent_attachments = (
         {}
         if math_table_data is None
-        else math_table_data.accent_attachments,
+        else math_table_data.accent_attachments
+    )
+    top_accent_attachment_inputs = _group_top_accent_attachments_by_role(
+        _with_ssty_top_accent_attachments(
+            authored_top_accent_attachments,
+            assembled_font.ssty_alternate_sources,
+        ),
         glyphs_by_role,
     )
     validated_math_kerns = _validate_math_kerns_by_role(
@@ -1716,15 +1742,8 @@ def plan_font(
                 },
             )
         )
-        ssty_top_accent_attachments = (
-            _inherited_top_accent_attachments(
-                planned_top_accent_attachments,
-                assembled_font.ssty_alternate_sources,
-            )
-        )
         top_accent_attachments = {
             **alias_top_accent_attachments,
-            **ssty_top_accent_attachments,
             **planned_top_accent_attachments,
         }
         for alias in assembled_font.glyph_aliases:

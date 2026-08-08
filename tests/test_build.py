@@ -89,13 +89,10 @@ class BuildPipelineTests(unittest.TestCase):
             self.assertEqual(serialized_accent_attachments["j.italic"], 400)
             self.assertEqual(serialized_accent_attachments["t"], 200)
             self.assertEqual(serialized_accent_attachments["t.italic"], 200)
-            self.assertEqual(
-                serialized_accent_attachments["J.st"],
-                serialized_accent_attachments["J"],
-            )
+            self.assertEqual(serialized_accent_attachments["J.st"], 505)
             self.assertEqual(
                 serialized_accent_attachments["J.italic.st"],
-                serialized_accent_attachments["J"],
+                505,
             )
 
             self.assertIsNone(
