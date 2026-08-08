@@ -51,7 +51,6 @@ load -> assemble -> plan -> render -> compile
 
 - [`glyph_sources/`](glyph_sources/) - normalized glyph skeleton sources
 - [`meta/`](meta/) - font-build definitions
-- [`math_table/`](math_table/) - OpenType MATH inputs
-- [`accent/`](accent/) and [`kerning/`](kerning/) - optional font data
+- [`data/`](data/) - glyph configuration, accent, kerning, ssty, and MATH-table inputs
 - [`tests/`](tests/) - build-system tests
 - [`tex/`](tex/) - TeX specimens and regression documents

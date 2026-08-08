@@ -58,7 +58,7 @@ The load stage produces a small set of immutable objects:
 - `MathTableConfig` contains filenames only. Constants, italic corrections, top
   accent attachments, mathematical kerns, discrete variant glyphs, and
   assemblies are loaded into immutable `MathTableData` instead of being carried
-  through as raw dictionaries. Its files live under `math_table/`: respectively
+  through as raw dictionaries. Its files live under `data/math_table/`: respectively
   `constants/`, `italics_correction/`, `accent_attachment/`, `kern/`, and
   `variants/`.
   Omitting `math_table`, setting it to `null`, or using an empty object disables
@@ -158,7 +158,7 @@ objects. Version 1 supports optional additive `left_adjustment` and
 I/O: it receives an `AssembledFont` and the already-loaded adjustments, then
 resolves every remaining metric and transform decision.
 
-An optional top-level `accent_file` selects an `accent/*.json` array of exact
+An optional top-level `accent_file` selects a `data/accent/*.json` array of exact
 glyph names. It is independent of MATH and may be used by proportional or
 monospace builds:
 
@@ -275,7 +275,7 @@ multiplication. Generated glyphs are copied from the rendered source glyph rathe
 than being planned or expanded again.
 
 Discrete variants and MATH assemblies are authored together in an optional
-`math_table/variants/*.json` file. Its required `min_connector_overlap` is
+`data/math_table/variants/*.json` file. Its required `min_connector_overlap` is
 followed by `vertical` and `horizontal` construction mappings. Every construction key is a
 variant base. `variant_glyphs` may be omitted or empty, in which case planning
 still produces a base-only variant record and assigns that base to the
@@ -345,7 +345,7 @@ an error. An automatically derived alternate inherits the resolved MATH
 top-accent attachment of its final assembled source unless it has an
 explicit attachment of its own.
 
-An optional `math_table/italics_correction/*.json` file maps exact glyph names to
+An optional `data/math_table/italics_correction/*.json` file maps exact glyph names to
 non-negative italic-correction values in font units. It deliberately has no
 group-selector syntax; every glyph that needs a value, including a discrete
 size variant, is listed explicitly:
@@ -361,7 +361,7 @@ Loading validates names and values, and planning rejects references to glyphs
 that are not present in the build. The mapping is then written directly to
 `MathItalicsCorrectionInfo`.
 
-An optional `math_table/accent_attachment/*.json` file maps exact glyph names to top
+An optional `data/math_table/accent_attachment/*.json` file maps exact glyph names to top
 accent attachment points in the offset-applied grid coordinate system:
 
 ```json
@@ -398,7 +398,7 @@ font-unit value. Inheritance is deliberately limited to this direct
 source-to-alias relationship.
 
 Optional per-glyph mathematical kerning is authored in
-`math_table/kern/*.json` and enabled with `math_table.kern_file`. Keys are exact
+`data/math_table/kern/*.json` and enabled with `math_table.kern_file`. Keys are exact
 glyph names; group
 selectors such as `@variant_glyphs`, `@parts`, and `@variants` are not accepted.
 As with top accent attachments, only ordinary and vertical or horizontal
