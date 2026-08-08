@@ -1,12 +1,15 @@
 {
-  "min_connector_overlap": 20,
+  "min_connector_overlap": 25,
   "vertical": {
     "radical": {
       "variant_glyphs": [
         "radical.v1",
         "radical.v2",
         "radical.v3",
-        "radical.v4"
+        "radical.v4",
+        "radical.v5",
+        "radical.v6",
+        "radical.v7"
       ],
       "parts": [
         {
@@ -782,6 +785,17 @@
           "left_scale": 0,
           "extender": false
         }
+      ]
+    },
+    "tildecomb": {
+      "variant_glyphs": [
+        "tildecomb.h1",
+        "tildecomb.h2",
+        "tildecomb.h3",
+        "tildecomb.h4",
+        "tildecomb.h5",
+        "tildecomb.h6",
+        "tildecomb.h7"
       ]
     }
   }
