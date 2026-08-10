@@ -13,8 +13,6 @@ __pycache__/
 /tests/test_editor.py
 /tests/test_editor_settings.py
 /editor.cmd
-/editor_settings.json
-/latinmodern_map.json
 
 # Unfinished specimens and development reports
 /png/
