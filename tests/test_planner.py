@@ -259,8 +259,8 @@ class FontPlannerTests(unittest.TestCase):
             "sub A.italic by A.italic.st;",
             self.math_plan.ssty_feature,
         )
-        self.assertEqual(len(math_plan.vertical_variant_records), 36)
-        self.assertEqual(len(math_plan.horizontal_variant_records), 6)
+        self.assertEqual(len(math_plan.vertical_variant_records), 46)
+        self.assertEqual(len(math_plan.horizontal_variant_records), 14)
         self.assertIn("parenleft", math_plan.extended_shapes)
         self.assertEqual(
             dict(math_plan.italic_corrections),
@@ -302,6 +302,51 @@ class FontPlannerTests(unittest.TestCase):
                 ("parenleft.v7", 2270),
             ],
         )
+        expected_advances = (850, 1050, 1250, 1450, 1670, 1870, 2070, 2270)
+        vertical_bases = (
+            "uni27E8",
+            "uni27E9",
+            "uni27EA",
+            "uni27EB",
+            "uni2308",
+            "uni2309",
+            "uni230A",
+            "uni230B",
+            "uni27E6",
+            "uni27E7",
+        )
+        for base in vertical_bases:
+            with self.subTest(base=base):
+                self.assertEqual(
+                    [
+                        (record.glyph_name, record.full_advance)
+                        for record in math_plan.vertical_variant_records[base]
+                    ],
+                    [
+                        (base if index == 0 else f"{base}.v{index}", advance)
+                        for index, advance in enumerate(expected_advances)
+                    ],
+                )
+        expected_parts = (
+            ("bt", 0, 200, 835, False),
+            ("ex", 400, 400, 400, True),
+            ("tp", 200, 0, 835, False),
+        )
+        for base in vertical_bases[4:]:
+            with self.subTest(assembly_base=base):
+                self.assertEqual(
+                    [
+                        (
+                            part.glyph_name.removeprefix(f"{base}."),
+                            part.start_connector_length,
+                            part.end_connector_length,
+                            part.full_advance,
+                            part.extender,
+                        )
+                        for part in math_plan.vertical_assemblies[base].parts
+                    ],
+                    list(expected_parts),
+                )
 
     def test_explicit_ssty_does_not_require_a_math_table(self) -> None:
         plan = plan_font(
@@ -501,11 +546,48 @@ class FontPlannerTests(unittest.TestCase):
         self.assertEqual(
             tilde.strokes[0].centerline,
             (
-                (-100.0, 525.0),
                 (-100.0, 625.0),
-                (100.0, 525.0),
+                (-100.0, 725.0),
                 (100.0, 625.0),
+                (100.0, 725.0),
             ),
+        )
+        assert self.math_plan.math_table is not None
+        expected_advances = (250, 450, 650, 850, 1050, 1250, 1450, 1650)
+        for base in ("tildecomb", "circumflexcmb", "caroncmb"):
+            with self.subTest(base=base):
+                self.assertEqual(self.math_plan.glyphs[base].width, 0)
+                self.assertEqual(
+                    [
+                        (record.glyph_name, record.full_advance)
+                        for record in self.math_plan.math_table.horizontal_variant_records[
+                            base
+                        ]
+                    ],
+                    [
+                        (base if index == 0 else f"{base}.h{index}", advance)
+                        for index, advance in enumerate(expected_advances)
+                    ],
+                )
+
+    def test_horizontal_accent_base_is_measured_without_replanning(self) -> None:
+        with patch(
+            "skeletonfont.planner._measure_glyph_axis",
+            wraps=_measure_glyph_axis,
+        ) as measure_axis:
+            plan = plan_font(
+                self.assembled_math,
+                math_table_data=self.math_data,
+                accent_glyphs=self.accent_glyphs,
+            )
+
+        self.assertEqual(plan.glyphs["tildecomb"].width, 0)
+        self.assertEqual(
+            sum(
+                call.args[0].name == "tildecomb"
+                for call in measure_axis.call_args_list
+            ),
+            1,
         )
 
     def test_accent_glyphs_reject_spacing_adjustments(self) -> None:
@@ -517,7 +599,28 @@ class FontPlannerTests(unittest.TestCase):
                 accent_glyphs=self.accent_glyphs,
             )
 
-    def test_accent_glyphs_must_exist_and_have_one_role(self) -> None:
+        with self.assertRaisesRegex(PlanError, "includes combining accent"):
+            plan_font(
+                self.assembled_math,
+                adjustment_config(
+                    {"tildecomb@variant_glyphs": adjustment(left=10)}
+                ),
+                math_table_data=self.math_data,
+                accent_glyphs=self.accent_glyphs,
+            )
+
+        adjusted = plan_font(
+            self.assembled_math,
+            adjustment_config({"tildecomb.h1": adjustment(left=10)}),
+            math_table_data=self.math_data,
+            accent_glyphs=self.accent_glyphs,
+        )
+        self.assertEqual(
+            adjusted.glyphs["tildecomb.h1"].width,
+            self.math_plan.glyphs["tildecomb.h1"].width + 10,
+        )
+
+    def test_accent_glyphs_reject_unknown_and_unsupported_roles(self) -> None:
         with self.assertRaisesRegex(PlanError, "unknown assembled glyphs"):
             plan_font(
                 self.assembled_math,
@@ -530,7 +633,7 @@ class FontPlannerTests(unittest.TestCase):
             vertical_variant_glyphs=MappingProxyType(
                 {
                     **self.math_data.vertical_variant_glyphs,
-                    "tildecomb": (),
+                    "circumflexcmb": (),
                 }
             ),
         )
@@ -539,6 +642,15 @@ class FontPlannerTests(unittest.TestCase):
                 self.assembled_math,
                 math_table_data=overlapping,
                 accent_glyphs=self.accent_glyphs,
+            )
+
+        with self.assertRaisesRegex(PlanError, "multiple planning roles"):
+            plan_font(
+                self.assembled_math,
+                math_table_data=self.math_data,
+                accent_glyphs=(
+                    self.accent_glyphs | frozenset({"tildecomb.h1"})
+                ),
             )
 
     def test_monospace_variant_alternates_use_proportional_metrics(self) -> None:

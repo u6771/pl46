@@ -758,11 +758,11 @@ class MathTableDataLoaderTests(unittest.TestCase):
             data.vertical_variant_glyphs["parenleft"][:2],
             ("parenleft.v1", "parenleft.v2"),
         )
-        self.assertEqual(len(data.vertical_variant_glyphs), 36)
-        self.assertEqual(len(data.horizontal_variant_glyphs), 6)
-        self.assertEqual(data.min_connector_overlap, 20)
-        self.assertEqual(len(data.vertical_assemblies), 11)
-        self.assertEqual(len(data.horizontal_assemblies), 6)
+        self.assertEqual(len(data.vertical_variant_glyphs), 46)
+        self.assertEqual(len(data.horizontal_variant_glyphs), 14)
+        self.assertEqual(data.min_connector_overlap, 25)
+        self.assertEqual(len(data.vertical_assemblies), 17)
+        self.assertEqual(len(data.horizontal_assemblies), 11)
         self.assertLessEqual(
             set(data.vertical_assemblies),
             set(data.vertical_variant_glyphs),

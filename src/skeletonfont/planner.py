@@ -209,6 +209,36 @@ def _axis_length(
     )
 
 
+def _measure_and_validate_math_variant_axis(
+    glyph: AssembledGlyph,
+    *,
+    axis: _Axis,
+) -> _AxisMeasurement:
+    measurement = _measure_glyph_axis(glyph, axis=axis)
+    axis_name = "horizontal" if axis == 0 else "vertical"
+    if math.isclose(measurement.extent, 0, abs_tol=_EDGE_TOLERANCE):
+        raise PlanError(
+            f"Math {axis_name} variant glyph {glyph.name!r} has no positive "
+            "centerline extent."
+        )
+    return measurement
+
+
+def _math_variant_full_advance(
+    glyph: AssembledGlyph,
+    parameters: GlyphParameters,
+    measurement: _AxisMeasurement,
+) -> int:
+    return _rounded_width(
+        _axis_length(
+            measurement,
+            grid=parameters.grid,
+            radius=parameters.radius,
+        ),
+        glyph_name=glyph.name,
+    )
+
+
 def _points_equal(first: Point, second: Point) -> bool:
     return math.hypot(first[0] - second[0], first[1] - second[1]) < (
         _POINT_TOLERANCE
@@ -413,20 +443,10 @@ def _plan_variant_glyph(
     *,
     axis: _Axis,
 ) -> tuple[GlyphPlan, int, int | None]:
-    if not glyph.skeleton:
-        raise PlanError(f"Math variant glyph {glyph.name!r} has no skeleton.")
-
-    axis_measurement = _measure_glyph_axis(glyph, axis=axis)
-    axis_name = "horizontal" if axis == 0 else "vertical"
-    if math.isclose(
-        axis_measurement.extent,
-        0,
-        abs_tol=_EDGE_TOLERANCE,
-    ):
-        raise PlanError(
-            f"Math {axis_name} variant glyph {glyph.name!r} has no positive "
-            "centerline extent."
-        )
+    axis_measurement = _measure_and_validate_math_variant_axis(
+        glyph,
+        axis=axis,
+    )
     authored_x_scale = (
         None if parameters.use_scaled_edge_thickness else 1.0
     )
@@ -467,13 +487,10 @@ def _plan_variant_glyph(
             font_y_shift=parameters.y_shift + parameters.radius,
         ),
     )
-    full_advance = _rounded_width(
-        _axis_length(
-            axis_measurement,
-            grid=parameters.grid,
-            radius=parameters.radius,
-        ),
-        glyph_name=glyph.name,
+    full_advance = _math_variant_full_advance(
+        glyph,
+        parameters,
+        axis_measurement,
     )
     return (
         glyph_plan,
@@ -577,6 +594,24 @@ def _plan_horizontal_variant_glyphs(
         adjustment_by_name,
         top_accent_attachments,
         axis=0,
+    )
+
+
+def _plan_horizontal_accent_variant_advances(
+    glyphs: Mapping[str, AssembledGlyph],
+    parameters: GlyphParameters,
+) -> Mapping[str, int]:
+    """Measure accent construction bases without replanning their glyphs."""
+
+    return MappingProxyType(
+        {
+            name: _math_variant_full_advance(
+                glyph,
+                parameters,
+                _measure_and_validate_math_variant_axis(glyph, axis=0),
+            )
+            for name, glyph in glyphs.items()
+        }
     )
 
 
@@ -829,12 +864,22 @@ def _group_glyphs_by_role(
     }
     for name, glyph in glyphs.items():
         memberships = [role for role, members in role_members if name in members]
-        if len(memberships) > 1:
+        is_horizontal_accent_base = (
+            memberships == ["accent", "horizontal_variant_glyph"]
+            and name in horizontal_variant_glyphs
+        )
+        if len(memberships) > 1 and not is_horizontal_accent_base:
             raise PlanError(
                 f"Glyph {name!r} belongs to multiple planning roles: "
                 f"{memberships}."
             )
-        role: _GlyphRole = memberships[0] if memberships else "ordinary"
+        role: _GlyphRole = (
+            "accent"
+            if is_horizontal_accent_base
+            else memberships[0]
+            if memberships
+            else "ordinary"
+        )
         grouped[role][name] = glyph
     return MappingProxyType(
         {
@@ -937,6 +982,23 @@ def _resolve_glyph_spacing_adjustments(
                 )
             assign_parts(key, source)
         if group_kind in ("variant_glyphs", "variants"):
+            constructions = (
+                vertical_variant_glyphs
+                if axis == 1
+                else horizontal_variant_glyphs
+            )
+            accent_members = sorted(
+                glyph_name
+                for glyph_name in (base, *constructions[base])
+                if role_by_name[glyph_name] == "accent"
+            )
+            if accent_members:
+                raise PlanError(
+                    f"Glyph selector {selector.text!r} includes combining "
+                    f"accent glyphs {accent_members}, which cannot receive "
+                    "spacing adjustments; configure discrete variant glyphs "
+                    "individually."
+                )
             assign_variant(key, source)
 
     variant_owners: dict[str, set[tuple[_Axis, str]]] = {}
@@ -1663,6 +1725,16 @@ def plan_font(
         resolved_spacing_adjustments.glyph_spacing_by_name,
         top_accent_attachment_inputs.horizontal_variant_glyph,
     )
+    horizontal_accent_variant_advances = (
+        _plan_horizontal_accent_variant_advances(
+            {
+                name: glyph
+                for name, glyph in glyphs_by_role["accent"].items()
+                if name in horizontal_variant_glyphs
+            },
+            parameters,
+        )
+    )
     minimum_overlap = (
         0
         if math_table_data is None
@@ -1723,7 +1795,10 @@ def plan_font(
     )
     horizontal_variant_records = _plan_variant_records(
         horizontal_variant_glyphs,
-        horizontal_variant_glyph_plans.full_advances,
+        {
+            **horizontal_variant_glyph_plans.full_advances,
+            **horizontal_accent_variant_advances,
+        },
     )
     math_table_plan: MathTablePlan | None = None
     if math_table_data is not None:

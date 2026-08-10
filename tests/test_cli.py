@@ -1,16 +1,37 @@
 from __future__ import annotations
 
 import unittest
+from contextlib import redirect_stderr
+from io import StringIO
 from pathlib import Path
 from unittest.mock import patch
 
 from skeletonfont.cli import _parser, main
+from skeletonfont.errors import BuildError, PlanError
 
 
 PROJECT_DIRECTORY = Path(__file__).resolve().parents[1]
 
 
 class CommandLineTests(unittest.TestCase):
+    def test_build_failure_reports_meta_name(self) -> None:
+        error = BuildError("mono", PlanError("invalid glyph roles"))
+        stderr = StringIO()
+        with (
+            patch(
+                "skeletonfont.cli.build_fonts",
+                side_effect=error,
+            ),
+            redirect_stderr(stderr),
+        ):
+            exit_code = main(["mono"])
+
+        self.assertEqual(exit_code, 1)
+        self.assertEqual(
+            stderr.getvalue(),
+            "Build failed: Meta 'mono': invalid glyph roles\n",
+        )
+
     def test_project_directory_defaults_to_current_working_directory(self) -> None:
         with patch(
             "skeletonfont.cli.Path.cwd",

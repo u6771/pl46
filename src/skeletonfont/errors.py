@@ -23,3 +23,8 @@ class CompileError(ProjectDataError):
 
 class BuildError(ProjectDataError):
     """Raised when the complete build pipeline cannot run safely."""
+
+    def __init__(self, meta_name: str, cause: ProjectDataError) -> None:
+        self.meta_name = meta_name
+        self.cause = cause
+        super().__init__(f"Meta {meta_name!r}: {cause}")

@@ -3,16 +3,35 @@ from __future__ import annotations
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from fontTools.ttLib import TTFont
 
 from skeletonfont.build import build_font
+from skeletonfont.errors import BuildError, PlanError
 
 
 PROJECT_DIRECTORY = Path(__file__).resolve().parents[1]
 
 
 class BuildPipelineTests(unittest.TestCase):
+    def test_build_error_identifies_meta_and_preserves_cause(self) -> None:
+        cause = PlanError("invalid glyph roles")
+        with (
+            patch(
+                "skeletonfont.build.load_font_meta",
+                side_effect=cause,
+            ),
+            self.assertRaises(BuildError) as caught,
+        ):
+            build_font(PROJECT_DIRECTORY, "mono")
+
+        error = caught.exception
+        self.assertEqual(str(error), "Meta 'mono': invalid glyph roles")
+        self.assertEqual(error.meta_name, "mono")
+        self.assertIs(error.cause, cause)
+        self.assertIs(error.__cause__, cause)
+
     def test_ascii_is_built_directly_to_final_otf(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_directory:
             output_directory = Path(temporary_directory)
@@ -136,7 +155,7 @@ class BuildPipelineTests(unittest.TestCase):
             )
 
             variants = font["MATH"].table.MathVariants
-            self.assertEqual(variants.MinConnectorOverlap, 20)
+            self.assertEqual(variants.MinConnectorOverlap, 25)
             index = variants.VertGlyphCoverage.glyphs.index("parenleft")
             construction = variants.VertGlyphConstruction[index]
             self.assertEqual(
@@ -155,6 +174,87 @@ class BuildPipelineTests(unittest.TestCase):
                     ("parenleft.v7", 2270),
                 ],
             )
+            expected_vertical_advances = (
+                850,
+                1050,
+                1250,
+                1450,
+                1670,
+                1870,
+                2070,
+                2270,
+            )
+            vertical_bases = (
+                "uni27E8",
+                "uni27E9",
+                "uni27EA",
+                "uni27EB",
+                "uni2308",
+                "uni2309",
+                "uni230A",
+                "uni230B",
+                "uni27E6",
+                "uni27E7",
+            )
+            for base in vertical_bases:
+                index = variants.VertGlyphCoverage.glyphs.index(base)
+                construction = variants.VertGlyphConstruction[index]
+                self.assertEqual(
+                    [
+                        (record.VariantGlyph, record.AdvanceMeasurement)
+                        for record in construction.MathGlyphVariantRecord
+                    ],
+                    [
+                        (
+                            base if variant_index == 0 else f"{base}.v{variant_index}",
+                            advance,
+                        )
+                        for variant_index, advance in enumerate(
+                            expected_vertical_advances
+                        )
+                    ],
+                )
+                if base in vertical_bases[4:]:
+                    self.assertEqual(
+                        [
+                            (part.glyph, part.PartFlags)
+                            for part in construction.GlyphAssembly.PartRecords
+                        ],
+                        [
+                            (f"{base}.bt", 0),
+                            (f"{base}.ex", 1),
+                            (f"{base}.tp", 0),
+                        ],
+                    )
+            expected_advances = (
+                250,
+                450,
+                650,
+                850,
+                1050,
+                1250,
+                1450,
+                1650,
+            )
+            for base in ("tildecomb", "circumflexcmb", "caroncmb"):
+                index = variants.HorizGlyphCoverage.glyphs.index(base)
+                construction = variants.HorizGlyphConstruction[index]
+                self.assertEqual(
+                    [
+                        (record.VariantGlyph, record.AdvanceMeasurement)
+                        for record in construction.MathGlyphVariantRecord
+                    ],
+                    [
+                        (
+                            base if variant_index == 0 else f"{base}.h{variant_index}",
+                            advance,
+                        )
+                        for variant_index, advance in enumerate(
+                            expected_advances
+                        )
+                    ],
+                )
+                self.assertEqual(font["hmtx"].metrics[base][0], 0)
             self.assertIn(
                 "parenleft",
                 font[

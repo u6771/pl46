@@ -5,6 +5,7 @@ from pathlib import Path
 
 from .assembler import GlyphCatalog, assemble_font
 from .compiler import compile_font, save_otf
+from .errors import BuildError, ProjectDataError
 from .loader import (
     load_accent_glyphs,
     load_font_meta,
@@ -26,6 +27,26 @@ def build_font(
     catalog: GlyphCatalog | None = None,
 ) -> Path:
     """Run the complete in-memory build pipeline for one font."""
+
+    try:
+        return _build_font(
+            project_directory,
+            meta_name,
+            output_directory=output_directory,
+            catalog=catalog,
+        )
+    except ProjectDataError as error:
+        raise BuildError(meta_name, error) from error
+
+
+def _build_font(
+    project_directory: Path,
+    meta_name: str,
+    *,
+    output_directory: Path | None,
+    catalog: GlyphCatalog | None,
+) -> Path:
+    """Run one font build before adding its meta-name error context."""
 
     meta = load_font_meta(project_directory, meta_name)
     active_catalog = catalog or GlyphCatalog(project_directory)
