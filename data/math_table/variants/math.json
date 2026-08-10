@@ -278,6 +278,260 @@
         }
       ]
     },
+    "uni27E8": {
+      "variant_glyphs": [
+        "uni27E8.v1",
+        "uni27E8.v2",
+        "uni27E8.v3",
+        "uni27E8.v4",
+        "uni27E8.v5",
+        "uni27E8.v6",
+        "uni27E8.v7"
+      ]
+    },
+    "uni27E9": {
+      "variant_glyphs": [
+        "uni27E9.v1",
+        "uni27E9.v2",
+        "uni27E9.v3",
+        "uni27E9.v4",
+        "uni27E9.v5",
+        "uni27E9.v6",
+        "uni27E9.v7"
+      ]
+    },
+    "uni27EA": {
+      "variant_glyphs": [
+        "uni27EA.v1",
+        "uni27EA.v2",
+        "uni27EA.v3",
+        "uni27EA.v4",
+        "uni27EA.v5",
+        "uni27EA.v6",
+        "uni27EA.v7"
+      ]
+    },
+    "uni27EB": {
+      "variant_glyphs": [
+        "uni27EB.v1",
+        "uni27EB.v2",
+        "uni27EB.v3",
+        "uni27EB.v4",
+        "uni27EB.v5",
+        "uni27EB.v6",
+        "uni27EB.v7"
+      ]
+    },
+    "uni2308": {
+      "variant_glyphs": [
+        "uni2308.v1",
+        "uni2308.v2",
+        "uni2308.v3",
+        "uni2308.v4",
+        "uni2308.v5",
+        "uni2308.v6",
+        "uni2308.v7"
+      ],
+      "parts": [
+        {
+          "glyph": "uni2308.bt",
+          "start_connector_extent": 0,
+          "end_connector_extent": 2,
+          "top_scale": 0,
+          "extender": false
+        },
+        {
+          "glyph": "uni23A2",
+          "start_connector_extent": 4,
+          "end_connector_extent": 4,
+          "top_scale": 0,
+          "bottom_scale": 0,
+          "extender": true
+        },
+        {
+          "glyph": "uni23A1",
+          "start_connector_extent": 2,
+          "end_connector_extent": 0,
+          "bottom_scale": 0,
+          "extender": false
+        }
+      ]
+    },
+    "uni2309": {
+      "variant_glyphs": [
+        "uni2309.v1",
+        "uni2309.v2",
+        "uni2309.v3",
+        "uni2309.v4",
+        "uni2309.v5",
+        "uni2309.v6",
+        "uni2309.v7"
+      ],
+      "parts": [
+        {
+          "glyph": "uni2309.bt",
+          "start_connector_extent": 0,
+          "end_connector_extent": 2,
+          "top_scale": 0,
+          "extender": false
+        },
+        {
+          "glyph": "uni23A5",
+          "start_connector_extent": 4,
+          "end_connector_extent": 4,
+          "top_scale": 0,
+          "bottom_scale": 0,
+          "extender": true
+        },
+        {
+          "glyph": "uni23A4",
+          "start_connector_extent": 2,
+          "end_connector_extent": 0,
+          "bottom_scale": 0,
+          "extender": false
+        }
+      ]
+    },
+    "uni230A": {
+      "variant_glyphs": [
+        "uni230A.v1",
+        "uni230A.v2",
+        "uni230A.v3",
+        "uni230A.v4",
+        "uni230A.v5",
+        "uni230A.v6",
+        "uni230A.v7"
+      ],
+      "parts": [
+        {
+          "glyph": "uni23A3",
+          "start_connector_extent": 0,
+          "end_connector_extent": 2,
+          "top_scale": 0,
+          "extender": false
+        },
+        {
+          "glyph": "uni23A2",
+          "start_connector_extent": 4,
+          "end_connector_extent": 4,
+          "top_scale": 0,
+          "bottom_scale": 0,
+          "extender": true
+        },
+        {
+          "glyph": "uni230A.tp",
+          "start_connector_extent": 2,
+          "end_connector_extent": 0,
+          "bottom_scale": 0,
+          "extender": false
+        }
+      ]
+    },
+    "uni230B": {
+      "variant_glyphs": [
+        "uni230B.v1",
+        "uni230B.v2",
+        "uni230B.v3",
+        "uni230B.v4",
+        "uni230B.v5",
+        "uni230B.v6",
+        "uni230B.v7"
+      ],
+      "parts": [
+        {
+          "glyph": "uni23A6",
+          "start_connector_extent": 0,
+          "end_connector_extent": 2,
+          "top_scale": 0,
+          "extender": false
+        },
+        {
+          "glyph": "uni23A5",
+          "start_connector_extent": 4,
+          "end_connector_extent": 4,
+          "top_scale": 0,
+          "bottom_scale": 0,
+          "extender": true
+        },
+        {
+          "glyph": "uni230B.tp",
+          "start_connector_extent": 2,
+          "end_connector_extent": 0,
+          "bottom_scale": 0,
+          "extender": false
+        }
+      ]
+    },
+    "uni27E6": {
+      "variant_glyphs": [
+        "uni27E6.v1",
+        "uni27E6.v2",
+        "uni27E6.v3",
+        "uni27E6.v4",
+        "uni27E6.v5",
+        "uni27E6.v6",
+        "uni27E6.v7"
+      ],
+      "parts": [
+        {
+          "glyph": "uni27E6.bt",
+          "start_connector_extent": 0,
+          "end_connector_extent": 2,
+          "top_scale": 0,
+          "extender": false
+        },
+        {
+          "glyph": "uni27E6.ex",
+          "start_connector_extent": 4,
+          "end_connector_extent": 4,
+          "top_scale": 0,
+          "bottom_scale": 0,
+          "extender": true
+        },
+        {
+          "glyph": "uni27E6.tp",
+          "start_connector_extent": 2,
+          "end_connector_extent": 0,
+          "bottom_scale": 0,
+          "extender": false
+        }
+      ]
+    },
+    "uni27E7": {
+      "variant_glyphs": [
+        "uni27E7.v1",
+        "uni27E7.v2",
+        "uni27E7.v3",
+        "uni27E7.v4",
+        "uni27E7.v5",
+        "uni27E7.v6",
+        "uni27E7.v7"
+      ],
+      "parts": [
+        {
+          "glyph": "uni27E7.bt",
+          "start_connector_extent": 0,
+          "end_connector_extent": 2,
+          "top_scale": 0,
+          "extender": false
+        },
+        {
+          "glyph": "uni27E7.ex",
+          "start_connector_extent": 4,
+          "end_connector_extent": 4,
+          "top_scale": 0,
+          "bottom_scale": 0,
+          "extender": true
+        },
+        {
+          "glyph": "uni27E7.tp",
+          "start_connector_extent": 2,
+          "end_connector_extent": 0,
+          "bottom_scale": 0,
+          "extender": false
+        }
+      ]
+    },
     "bar": {
       "variant_glyphs": [
         "divides.v1",
@@ -785,6 +1039,158 @@
           "left_scale": 0,
           "extender": false
         }
+      ]
+    },
+    "overlinecmb": {
+      "parts": [
+        {
+          "glyph": "overlinecmb.lft",
+          "start_connector_extent": 0,
+          "end_connector_extent": 1,
+          "right_scale": 0,
+          "extender": false
+        },
+        {
+          "glyph": "overlinecmb.ex",
+          "start_connector_extent": 2,
+          "end_connector_extent": 2,
+          "left_scale": 0,
+          "right_scale": 0,
+          "extender": true
+        },
+        {
+          "glyph": "overlinecmb.rt",
+          "start_connector_extent": 1,
+          "end_connector_extent": 0,
+          "left_scale": 0,
+          "extender": false
+        }
+      ]
+    },
+    "lowlinecmb": {
+      "parts": [
+        {
+          "glyph": "lowlinecmb.lft",
+          "start_connector_extent": 0,
+          "end_connector_extent": 1,
+          "right_scale": 0,
+          "extender": false
+        },
+        {
+          "glyph": "lowlinecmb.ex",
+          "start_connector_extent": 2,
+          "end_connector_extent": 2,
+          "left_scale": 0,
+          "right_scale": 0,
+          "extender": true
+        },
+        {
+          "glyph": "lowlinecmb.rt",
+          "start_connector_extent": 1,
+          "end_connector_extent": 0,
+          "left_scale": 0,
+          "extender": false
+        }
+      ]
+    },
+    "uni20D0": {
+      "parts": [
+        {
+          "glyph": "uni20D0.lft",
+          "start_connector_extent": 0,
+          "end_connector_extent": 1,
+          "right_scale": 0,
+          "extender": false
+        },
+        {
+          "glyph": "uni20D0.ex",
+          "start_connector_extent": 2,
+          "end_connector_extent": 2,
+          "left_scale": 0,
+          "right_scale": 0,
+          "extender": true
+        },
+        {
+          "glyph": "uni20D0.rt",
+          "start_connector_extent": 1,
+          "end_connector_extent": 0,
+          "left_scale": 0,
+          "extender": false
+        }
+      ]
+    },
+    "uni20D1": {
+      "parts": [
+        {
+          "glyph": "uni20D1.lft",
+          "start_connector_extent": 0,
+          "end_connector_extent": 1,
+          "right_scale": 0,
+          "extender": false
+        },
+        {
+          "glyph": "uni20D1.ex",
+          "start_connector_extent": 2,
+          "end_connector_extent": 2,
+          "left_scale": 0,
+          "right_scale": 0,
+          "extender": true
+        },
+        {
+          "glyph": "uni20D1.rt",
+          "start_connector_extent": 1,
+          "end_connector_extent": 0,
+          "left_scale": 0,
+          "extender": false
+        }
+      ]
+    },
+    "uni20D7": {
+      "parts": [
+        {
+          "glyph": "uni20D7.lft",
+          "start_connector_extent": 0,
+          "end_connector_extent": 1,
+          "right_scale": 0,
+          "extender": false
+        },
+        {
+          "glyph": "uni20D7.ex",
+          "start_connector_extent": 2,
+          "end_connector_extent": 2,
+          "left_scale": 0,
+          "right_scale": 0,
+          "extender": true
+        },
+        {
+          "glyph": "uni20D7.rt",
+          "start_connector_extent": 1,
+          "end_connector_extent": 0,
+          "left_scale": 0,
+          "extender": false
+        }
+      ]
+    },
+    "circumflexcmb": {
+      "variant_glyphs": [
+        "circumflexcmb.h1",
+        "circumflexcmb.h2",
+        "circumflexcmb.h3",
+        "circumflexcmb.h4",
+        "circumflexcmb.h5",
+        "circumflexcmb.h6",
+        "circumflexcmb.h7"
+      ]
+    },
+    "caroncmb": {
+      "variant_glyphs": [
+        "caroncmb.h1",
+        "caroncmb.h2",
+        "caroncmb.h3",
+        "caroncmb.h4",
+        "caroncmb.h5",
+        "caroncmb.h6",
+        "caroncmb.h7"
       ]
     },
     "tildecomb": {

@@ -2,7 +2,7 @@
   "family": "PL46",
   "style": "Mono",
   "units_per_em": 1000,
-  "ascender": 800,
+  "ascender": 850,
   "descender": -200,
   "cap_height": 650,
   "x_height": 450,
@@ -15,10 +15,10 @@
       "include_unencoded": true
     },
     {
-      "source_directory": "ascii"
+      "source_directory": "latin"
     },
     {
-      "source_directory": "latin"
+      "source_directory": "latin_extended"
     },
     {
       "source_directory": "greek"
@@ -27,17 +27,9 @@
       "source_directory": "cyrillic"
     },
     {
-      "source_directory": "math",
-      "unicode_domain": [
-        ["2010", "20C0"]
-      ]
-    },
-    {
       "source_directory": "uni6771",
-      "unicode_domain": [
-        ["6771"]
-      ]
+      "unicode_domain": [["6771"]]
     }
   ],
-  "accent_file": "math.json"
+  "accent_file": "mono.json"
 }

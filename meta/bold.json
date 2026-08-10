@@ -2,7 +2,7 @@
   "family": "PL46",
   "style": "Bold",
   "units_per_em": 1000,
-  "ascender": 800,
+  "ascender": 850,
   "descender": -200,
   "cap_height": 650,
   "x_height": 450,
@@ -15,15 +15,15 @@
       "include_unencoded": true
     },
     {
-      "source_directory": "ascii_bold"
+      "source_directory": "latin"
+    },
+    {
+      "source_directory": "bold",
+      "replace_existing": true
     },
     {
       "source_directory": "uni6771",
-      "unicode_domain": [
-        [
-          "6771"
-        ]
-      ]
+      "unicode_domain": [["6771"]]
     }
   ]
 }

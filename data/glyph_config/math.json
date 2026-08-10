@@ -17,16 +17,16 @@
   "braceright@variants": {
     "right_adjustment": 50
   },
-  "uni2308": {
+  "uni2308@variants": {
     "left_adjustment": 50
   },
-  "uni2309": {
+  "uni2309@variants": {
     "right_adjustment": 50
   },
-  "uni230A": {
+  "uni230A@variants": {
     "left_adjustment": 50
   },
-  "uni230B": {
+  "uni230B@variants": {
     "right_adjustment": 50
   },
   "uni231C": {
@@ -47,22 +47,22 @@
   "angleright": {
     "right_adjustment": 50
   },
-  "uni27E6": {
+  "uni27E6@variants": {
     "left_adjustment": 50
   },
-  "uni27E7": {
+  "uni27E7@variants": {
     "right_adjustment": 50
   },
-  "uni27E8": {
+  "uni27E8@variant_glyphs": {
     "left_adjustment": 50
   },
-  "uni27E9": {
+  "uni27E9@variant_glyphs": {
     "right_adjustment": 50
   },
-  "uni27EA": {
+  "uni27EA@variant_glyphs": {
     "left_adjustment": 50
   },
-  "uni27EB": {
+  "uni27EB@variant_glyphs": {
     "right_adjustment": 50
   },
   "uni27EE": {
@@ -91,6 +91,22 @@
     "right_adjustment": -200
   },
   "multiply": {
+    "left_adjustment": 100,
+    "right_adjustment": 100
+  },
+  "uni22C9": {
+    "left_adjustment": 100,
+    "right_adjustment": 100
+  },
+  "uni22CA": {
+    "left_adjustment": 100,
+    "right_adjustment": 100
+  },
+  "uni22CB": {
+    "left_adjustment": 100,
+    "right_adjustment": 100
+  },
+  "uni22CC": {
     "left_adjustment": 100,
     "right_adjustment": 100
   }

@@ -2,7 +2,7 @@
   "family": "PL46",
   "style": "Math",
   "units_per_em": 1000,
-  "ascender": 800,
+  "ascender": 850,
   "descender": -200,
   "cap_height": 650,
   "x_height": 450,
@@ -17,10 +17,10 @@
       "include_unencoded": true
     },
     {
-      "source_directory": "ascii"
+      "source_directory": "latin"
     },
     {
-      "source_directory": "latin"
+      "source_directory": "latin_extended"
     },
     {
       "source_directory": "greek"
@@ -50,11 +50,12 @@
       "mapping_name": "upright_latin_to_blackboard_latin"
     },
     {
-      "source_directory": "ascii_bold",
+      "source_directory": "bold",
       "mapping_name": "upright_latin_to_bold_latin"
     },
     {
-      "source_directory": "uni6771"
+      "source_directory": "uni6771",
+      "unicode_domain": [["6771"]]
     }
   ],
   "glyph_alias_generators": [
