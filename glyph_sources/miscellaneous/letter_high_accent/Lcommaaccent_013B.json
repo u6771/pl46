@@ -1,0 +1,14 @@
+{
+  "name": "Lcommaaccent",
+  "unicode": "013B",
+  "monospace_x_offset": -2,
+  "y_offset": -3,
+  "skeleton": [
+    {
+      "centerline": [[0, 9], [0, 3], [4, 3]]
+    },
+    {
+      "centerline": [[2, 1], [1, 0]]
+    }
+  ]
+}

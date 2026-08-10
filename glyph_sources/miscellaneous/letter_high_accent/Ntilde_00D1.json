@@ -1,0 +1,14 @@
+{
+  "name": "Ntilde",
+  "unicode": "00D1",
+  "monospace_x_offset": -2,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[0, 0], [0, 6], [4, 0], [4, 6]]
+    },
+    {
+      "centerline": [[1, 8], [1, 9], [3, 8], [3, 9]]
+    }
+  ]
+}

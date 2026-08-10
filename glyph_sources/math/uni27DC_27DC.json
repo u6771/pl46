@@ -1,0 +1,15 @@
+{
+  "name": "uni27DC",
+  "unicode": "27DC",
+  "monospace_x_offset": -4,
+  "y_offset": 1,
+  "skeleton": [
+    {
+      "centerline": [[1, 0], [0, 1], [1, 2], [2, 1], [1, 0]]
+    },
+    {
+      "centerline": [[2, 1], [7, 1]],
+      "start_cap": "flat"
+    }
+  ]
+}

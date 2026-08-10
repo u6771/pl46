@@ -1,0 +1,30 @@
+{
+  "name": "uni30F8",
+  "unicode": "30F8",
+  "monospace_x_offset": -2,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[0, 5], [4, 5]]
+    },
+    {
+      "centerline": [[0, 2], [4, 2]]
+    },
+    {
+      "centerline": [[3, 6], [3, 0]]
+    },
+    {
+      "centerline": [[4, 6.5], [4.5, 6]],
+      "thickness_scale": 0.6
+    },
+    {
+      "centerline": [[3.5, 6], [4, 5.5]],
+      "thickness_scale": 0.6
+    },
+    {
+      "centerline": [[1, 5], [1, 2]],
+      "start_cap": "flat",
+      "end_cap": "flat"
+    }
+  ]
+}

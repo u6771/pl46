@@ -1,0 +1,11 @@
+{
+  "name": "ordmasculine",
+  "unicode": "00BA",
+  "monospace_x_offset": -2,
+  "y_offset": 2,
+  "skeleton": [
+    {
+      "centerline": [[1, 0], [0, 1], [0, 3], [1, 4], [3, 4], [4, 3], [4, 1], [3, 0], [1, 0]]
+    }
+  ]
+}

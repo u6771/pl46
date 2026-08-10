@@ -1,0 +1,19 @@
+{
+  "name": "uni27E6.bt",
+  "unicode": null,
+  "monospace_x_offset": -2,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[0, 8], [0, 0], [4, 0]],
+      "thickness_scale": 1.4,
+      "start_cap": "flat"
+    },
+    {
+      "centerline": [[2, 8], [2, 0]],
+      "thickness_scale": 1.4,
+      "start_cap": "flat",
+      "end_cap": "flat"
+    }
+  ]
+}

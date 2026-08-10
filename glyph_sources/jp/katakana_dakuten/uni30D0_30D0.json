@@ -1,0 +1,22 @@
+{
+  "name": "uni30D0",
+  "unicode": "30D0",
+  "monospace_x_offset": -2,
+  "y_offset": 1,
+  "skeleton": [
+    {
+      "centerline": [[1, 4], [0, 0]]
+    },
+    {
+      "centerline": [[3, 4], [4, 0]]
+    },
+    {
+      "centerline": [[4, 5.5], [4.5, 5]],
+      "thickness_scale": 0.6
+    },
+    {
+      "centerline": [[3.5, 5], [4, 4.5]],
+      "thickness_scale": 0.6
+    }
+  ]
+}

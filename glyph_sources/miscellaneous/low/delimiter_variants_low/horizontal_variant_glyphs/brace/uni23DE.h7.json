@@ -1,0 +1,12 @@
+{
+  "name": "uni23DE.h7",
+  "unicode": null,
+  "monospace_x_offset": -11,
+  "y_offset": 5,
+  "skeleton": [
+    {
+      "centerline": [[0, 0], [2, 2], [9, 2], [11, 4], [13, 2], [20, 2], [22, 0]],
+      "thickness_scale": 1.4
+    }
+  ]
+}

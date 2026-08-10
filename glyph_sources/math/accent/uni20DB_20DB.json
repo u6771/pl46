@@ -1,0 +1,17 @@
+{
+  "name": "uni20DB",
+  "unicode": "20DB",
+  "monospace_x_offset": -2,
+  "y_offset": 6,
+  "skeleton": [
+    {
+      "centerline": [[2, 0]]
+    },
+    {
+      "centerline": [[0, 0]]
+    },
+    {
+      "centerline": [[4, 0]]
+    }
+  ]
+}

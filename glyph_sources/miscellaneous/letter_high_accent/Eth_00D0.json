@@ -1,0 +1,14 @@
+{
+  "name": "Eth",
+  "unicode": "00D0",
+  "monospace_x_offset": -3,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[1, 0], [1, 6], [4, 6], [5, 5], [5, 1], [4, 0], [1, 0]]
+    },
+    {
+      "centerline": [[0, 3], [2, 3]]
+    }
+  ]
+}

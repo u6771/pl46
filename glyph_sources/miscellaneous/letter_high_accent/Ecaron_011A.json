@@ -1,0 +1,18 @@
+{
+  "name": "Ecaron",
+  "unicode": "011A",
+  "monospace_x_offset": -2,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[4, 6], [0, 6], [0, 0], [4, 0]]
+    },
+    {
+      "centerline": [[0, 3], [3, 3]],
+      "start_cap": "flat"
+    },
+    {
+      "centerline": [[1, 9], [2, 8], [3, 9]]
+    }
+  ]
+}

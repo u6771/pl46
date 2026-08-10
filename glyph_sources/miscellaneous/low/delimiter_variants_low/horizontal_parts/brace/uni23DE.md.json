@@ -1,0 +1,14 @@
+{
+  "name": "uni23DE.md",
+  "unicode": null,
+  "monospace_x_offset": -4,
+  "y_offset": 7,
+  "skeleton": [
+    {
+      "centerline": [[0, 0], [2, 0], [4, 2], [6, 0], [8, 0]],
+      "thickness_scale": 1.4,
+      "start_cap": "flat",
+      "end_cap": "flat"
+    }
+  ]
+}

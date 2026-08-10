@@ -1,0 +1,11 @@
+{
+  "name": "circumflexcmb.h2",
+  "unicode": null,
+  "monospace_x_offset": -3,
+  "y_offset": 6,
+  "skeleton": [
+    {
+      "centerline": [[0, 0], [3, 1], [6, 0]]
+    }
+  ]
+}

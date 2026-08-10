@@ -1,0 +1,14 @@
+{
+  "name": "uni300A",
+  "unicode": "300A",
+  "monospace_x_offset": -1,
+  "y_offset": -2,
+  "skeleton": [
+    {
+      "centerline": [[1, 8], [0, 4], [1, 0]]
+    },
+    {
+      "centerline": [[2, 8], [1, 4], [2, 0]]
+    }
+  ]
+}

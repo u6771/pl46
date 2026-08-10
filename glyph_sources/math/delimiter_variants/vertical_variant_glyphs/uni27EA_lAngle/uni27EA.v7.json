@@ -1,0 +1,16 @@
+{
+  "name": "uni27EA.v7",
+  "unicode": null,
+  "monospace_x_offset": -2,
+  "y_offset": -9,
+  "skeleton": [
+    {
+      "centerline": [[2, 22], [0, 11], [2, 0]],
+      "thickness_scale": 1.4
+    },
+    {
+      "centerline": [[4, 22], [2, 11], [4, 0]],
+      "thickness_scale": 1.4
+    }
+  ]
+}

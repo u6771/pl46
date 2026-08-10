@@ -1,0 +1,16 @@
+{
+  "name": "uni301B",
+  "unicode": "301B",
+  "monospace_x_offset": -1,
+  "y_offset": -2,
+  "skeleton": [
+    {
+      "centerline": [[1, 8], [1, 0]],
+      "start_cap": "flat",
+      "end_cap": "flat"
+    },
+    {
+      "centerline": [[0, 8], [2, 8], [2, 0], [0, 0]]
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "name": "equal.ex",
+  "unicode": null,
+  "monospace_x_offset": -2,
+  "y_offset": 1,
+  "skeleton": [
+    {
+      "centerline": [[0, 2], [4, 2]],
+      "start_cap": "flat",
+      "end_cap": "flat"
+    },
+    {
+      "centerline": [[0, 0], [4, 0]],
+      "start_cap": "flat",
+      "end_cap": "flat"
+    }
+  ]
+}

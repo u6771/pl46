@@ -1,0 +1,14 @@
+{
+  "name": "oacute",
+  "unicode": "00F3",
+  "monospace_x_offset": -2,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[0, 1], [0, 3], [1, 4], [3, 4], [4, 3], [4, 1], [3, 0], [1, 0], [0, 1]]
+    },
+    {
+      "centerline": [[2, 6], [3, 7]]
+    }
+  ]
+}

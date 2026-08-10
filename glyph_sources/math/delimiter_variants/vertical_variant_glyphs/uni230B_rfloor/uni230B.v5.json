@@ -1,0 +1,12 @@
+{
+  "name": "uni230B.v5",
+  "unicode": null,
+  "monospace_x_offset": -2,
+  "y_offset": -7,
+  "skeleton": [
+    {
+      "centerline": [[4, 18], [4, 0], [0, 0]],
+      "thickness_scale": 1.4
+    }
+  ]
+}

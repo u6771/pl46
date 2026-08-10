@@ -1,0 +1,11 @@
+{
+  "name": "overlinecmb",
+  "unicode": "0305",
+  "monospace_x_offset": -2,
+  "y_offset": 6,
+  "skeleton": [
+    {
+      "centerline": [[0, 0], [4, 0]]
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "name": "lowlinecmb.rt",
+  "unicode": null,
+  "monospace_x_offset": 0,
+  "y_offset": -2,
+  "skeleton": [
+    {
+      "centerline": [[0, 0], [2, 0]],
+      "start_cap": "flat"
+    }
+  ]
+}

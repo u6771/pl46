@@ -1,0 +1,14 @@
+{
+  "name": "cacute",
+  "unicode": "0107",
+  "monospace_x_offset": -2,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[4, 3], [3, 4], [1, 4], [0, 3], [0, 1], [1, 0], [3, 0], [4, 1]]
+    },
+    {
+      "centerline": [[2, 6], [3, 7]]
+    }
+  ]
+}

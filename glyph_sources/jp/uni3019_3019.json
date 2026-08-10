@@ -1,0 +1,16 @@
+{
+  "name": "uni3019",
+  "unicode": "3019",
+  "monospace_x_offset": -1,
+  "y_offset": -2,
+  "skeleton": [
+    {
+      "centerline": [[0, 8], [2, 6], [2, 2], [0, 0]]
+    },
+    {
+      "centerline": [[1, 7], [1, 1]],
+      "start_cap": "flat",
+      "end_cap": "flat"
+    }
+  ]
+}

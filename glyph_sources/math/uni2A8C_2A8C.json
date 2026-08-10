@@ -1,0 +1,20 @@
+{
+  "name": "uni2A8C",
+  "unicode": "2A8C",
+  "monospace_x_offset": -3,
+  "y_offset": -4,
+  "skeleton": [
+    {
+      "centerline": [[0, 7], [6, 7]]
+    },
+    {
+      "centerline": [[0, 5], [6, 5]]
+    },
+    {
+      "centerline": [[0, 12], [6, 10], [0, 8]]
+    },
+    {
+      "centerline": [[6, 4], [0, 2], [6, 0]]
+    }
+  ]
+}

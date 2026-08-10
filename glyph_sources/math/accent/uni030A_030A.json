@@ -1,0 +1,11 @@
+{
+  "name": "uni030A",
+  "unicode": "030A",
+  "monospace_x_offset": -1,
+  "y_offset": 5,
+  "skeleton": [
+    {
+      "centerline": [[1, 0], [0, 1], [1, 2], [2, 1], [1, 0]]
+    }
+  ]
+}

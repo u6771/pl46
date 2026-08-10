@@ -1,0 +1,12 @@
+{
+  "name": "arrowright.lft",
+  "unicode": null,
+  "monospace_x_offset": -4,
+  "y_offset": 2,
+  "skeleton": [
+    {
+      "centerline": [[0, 0], [4, 0]],
+      "end_cap": "flat"
+    }
+  ]
+}

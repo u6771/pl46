@@ -1,0 +1,11 @@
+{
+  "name": "brevebelowcmb",
+  "unicode": "032E",
+  "monospace_x_offset": -2,
+  "y_offset": -2,
+  "skeleton": [
+    {
+      "centerline": [[0, 1], [1, 0], [3, 0], [4, 1]]
+    }
+  ]
+}

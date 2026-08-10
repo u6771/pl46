@@ -1,0 +1,16 @@
+{
+  "name": "uni3018",
+  "unicode": "3018",
+  "monospace_x_offset": -1,
+  "y_offset": -2,
+  "skeleton": [
+    {
+      "centerline": [[2, 8], [0, 6], [0, 2], [2, 0]]
+    },
+    {
+      "centerline": [[1, 7], [1, 1]],
+      "start_cap": "flat",
+      "end_cap": "flat"
+    }
+  ]
+}

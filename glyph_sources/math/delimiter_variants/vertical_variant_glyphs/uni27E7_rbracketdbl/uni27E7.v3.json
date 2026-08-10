@@ -1,0 +1,16 @@
+{
+  "name": "uni27E7.v3",
+  "unicode": null,
+  "monospace_x_offset": -1,
+  "y_offset": -5,
+  "skeleton": [
+    {
+      "centerline": [[0, 14], [2, 14], [2, 0], [0, 0]]
+    },
+    {
+      "centerline": [[1, 14], [1, 0]],
+      "start_cap": "flat",
+      "end_cap": "flat"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "name": "Iogonek",
+  "unicode": "012E",
+  "monospace_x_offset": -2,
+  "y_offset": -2,
+  "skeleton": [
+    {
+      "centerline": [[0, 8], [4, 8]]
+    },
+    {
+      "centerline": [[0, 2], [4, 2]]
+    },
+    {
+      "centerline": [[2, 8], [2, 2]],
+      "start_cap": "flat",
+      "end_cap": "flat"
+    },
+    {
+      "centerline": [[2, 2], [1, 1], [2, 0]],
+      "start_cap": "flat"
+    }
+  ]
+}

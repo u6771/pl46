@@ -1,0 +1,17 @@
+{
+  "name": "uni2A88",
+  "unicode": "2A88",
+  "monospace_x_offset": -3,
+  "y_offset": -2,
+  "skeleton": [
+    {
+      "centerline": [[0, 7], [6, 5], [0, 3]]
+    },
+    {
+      "centerline": [[0, 1], [6, 1]]
+    },
+    {
+      "centerline": [[4, 2], [2, 0]]
+    }
+  ]
+}

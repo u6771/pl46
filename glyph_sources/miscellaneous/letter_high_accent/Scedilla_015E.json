@@ -1,0 +1,15 @@
+{
+  "name": "Scedilla",
+  "unicode": "015E",
+  "monospace_x_offset": -2,
+  "y_offset": -2,
+  "skeleton": [
+    {
+      "centerline": [[4, 7], [3, 8], [1, 8], [0, 7], [0, 6], [1, 5], [3, 5], [4, 4], [4, 3], [3, 2], [1, 2], [0, 3]]
+    },
+    {
+      "centerline": [[2, 2], [2, 1], [1, 0]],
+      "start_cap": "flat"
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "name": "equal.rt",
+  "unicode": null,
+  "monospace_x_offset": 0,
+  "y_offset": 1,
+  "skeleton": [
+    {
+      "centerline": [[0, 2], [3, 2]],
+      "start_cap": "flat"
+    },
+    {
+      "centerline": [[0, 0], [3, 0]],
+      "start_cap": "flat"
+    }
+  ]
+}

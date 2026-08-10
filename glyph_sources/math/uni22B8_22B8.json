@@ -1,15 +1,15 @@
 {
   "name": "uni22B8",
   "unicode": "22B8",
-  "monospace_x_offset": -4,
+  "monospace_x_offset": -3,
   "y_offset": 1,
   "skeleton": [
     {
-      "centerline": [[7, 0], [6, 1], [7, 2], [8, 1], [7, 0]]
+      "centerline": [[6, 0], [5, 1], [6, 2], [7, 1], [6, 0]]
     },
     {
-      "centerline": [[0, 1], [6, 1]],
-      "end_cap": "flat"
+      "centerline": [[5, 1], [0, 1]],
+      "start_cap": "flat"
     }
   ]
 }

@@ -1,0 +1,19 @@
+{
+  "name": "uni30B4",
+  "unicode": "30B4",
+  "monospace_x_offset": -2,
+  "y_offset": 1,
+  "skeleton": [
+    {
+      "centerline": [[0, 4], [4, 4], [4, 0], [0, 0]]
+    },
+    {
+      "centerline": [[4, 5.5], [4.5, 5]],
+      "thickness_scale": 0.6
+    },
+    {
+      "centerline": [[3.5, 5], [4, 4.5]],
+      "thickness_scale": 0.6
+    }
+  ]
+}

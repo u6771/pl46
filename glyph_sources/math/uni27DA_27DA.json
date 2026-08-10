@@ -1,0 +1,30 @@
+{
+  "name": "uni27DA",
+  "unicode": "27DA",
+  "monospace_x_offset": -4,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[5, 6], [5, 0]]
+    },
+    {
+      "centerline": [[3, 6], [3, 0]]
+    },
+    {
+      "centerline": [[3, 4], [0, 4]],
+      "start_cap": "flat"
+    },
+    {
+      "centerline": [[3, 2], [0, 2]],
+      "start_cap": "flat"
+    },
+    {
+      "centerline": [[5, 4], [8, 4]],
+      "start_cap": "flat"
+    },
+    {
+      "centerline": [[5, 2], [8, 2]],
+      "start_cap": "flat"
+    }
+  ]
+}

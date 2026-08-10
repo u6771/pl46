@@ -1,0 +1,23 @@
+{
+  "name": "uni2B31",
+  "unicode": "2B31",
+  "monospace_x_offset": -4,
+  "y_offset": -4,
+  "skeleton": [
+    {
+      "centerline": [[2, 12], [0, 10], [2, 8], [0, 6], [2, 4], [0, 2], [2, 0]]
+    },
+    {
+      "centerline": [[8, 10], [0, 10]],
+      "end_cap": "flat"
+    },
+    {
+      "centerline": [[8, 6], [0, 6]],
+      "end_cap": "flat"
+    },
+    {
+      "centerline": [[8, 2], [0, 2]],
+      "end_cap": "flat"
+    }
+  ]
+}

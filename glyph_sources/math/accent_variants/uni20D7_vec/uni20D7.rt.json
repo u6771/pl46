@@ -1,0 +1,16 @@
+{
+  "name": "uni20D7.rt",
+  "unicode": null,
+  "monospace_x_offset": 0,
+  "y_offset": 5,
+  "skeleton": [
+    {
+      "centerline": [[1, 2], [2, 1], [1, 0]]
+    },
+    {
+      "centerline": [[0, 1], [2, 1]],
+      "start_cap": "flat",
+      "end_cap": "flat"
+    }
+  ]
+}

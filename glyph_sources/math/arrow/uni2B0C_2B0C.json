@@ -1,0 +1,12 @@
+{
+  "name": "uni2B0C",
+  "unicode": "2B0C",
+  "monospace_x_offset": -4,
+  "y_offset": -1,
+  "skeleton": [
+    {
+      "centerline": [[3, 0], [0, 3], [3, 6], [3, 4], [5, 4], [5, 6], [8, 3], [5, 0], [5, 2], [3, 2], [3, 0]],
+      "filled": true
+    }
+  ]
+}

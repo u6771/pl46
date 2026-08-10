@@ -1,0 +1,16 @@
+{
+  "name": "arrowright.rt",
+  "unicode": null,
+  "monospace_x_offset": 0,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[2, 4], [4, 2], [2, 0]]
+    },
+    {
+      "centerline": [[0, 2], [4, 2]],
+      "start_cap": "flat",
+      "end_cap": "flat"
+    }
+  ]
+}

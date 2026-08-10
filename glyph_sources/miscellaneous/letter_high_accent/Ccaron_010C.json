@@ -1,0 +1,14 @@
+{
+  "name": "Ccaron",
+  "unicode": "010C",
+  "monospace_x_offset": -2,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[4, 5], [3, 6], [1, 6], [0, 5], [0, 1], [1, 0], [3, 0], [4, 1]]
+    },
+    {
+      "centerline": [[1, 9], [2, 8], [3, 9]]
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "name": "uni30F7",
+  "unicode": "30F7",
+  "monospace_x_offset": -2,
+  "y_offset": 0,
+  "skeleton": [
+    {
+      "centerline": [[0, 3], [0, 5], [4, 5], [4, 3], [3, 1], [1, 0]]
+    },
+    {
+      "centerline": [[4, 6.5], [4.5, 6]],
+      "thickness_scale": 0.6
+    },
+    {
+      "centerline": [[3.5, 6], [4, 5.5]],
+      "thickness_scale": 0.6
+    }
+  ]
+}

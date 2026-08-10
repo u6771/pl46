@@ -1,0 +1,19 @@
+{
+  "name": "uni3005",
+  "unicode": "3005",
+  "monospace_x_offset": -2,
+  "y_offset": 1,
+  "skeleton": [
+    {
+      "centerline": [[3, 5], [0, 2]]
+    },
+    {
+      "centerline": [[1, 2], [3, 0]]
+    },
+    {
+      "centerline": [[2, 4], [4, 4], [4, 3], [2, 1]],
+      "start_cap": "flat",
+      "end_cap": "flat"
+    }
+  ]
+}

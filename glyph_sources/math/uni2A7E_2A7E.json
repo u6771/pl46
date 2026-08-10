@@ -1,0 +1,14 @@
+{
+  "name": "uni2A7E",
+  "unicode": "2A7E",
+  "monospace_x_offset": -3,
+  "y_offset": -1,
+  "skeleton": [
+    {
+      "centerline": [[0, 6], [6, 4], [0, 2]]
+    },
+    {
+      "centerline": [[6, 2], [0, 0]]
+    }
+  ]
+}

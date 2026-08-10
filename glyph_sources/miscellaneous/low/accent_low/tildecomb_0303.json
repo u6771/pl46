@@ -1,0 +1,11 @@
+{
+  "name": "tildecomb",
+  "unicode": "0303",
+  "monospace_x_offset": -1,
+  "y_offset": 5,
+  "skeleton": [
+    {
+      "centerline": [[0, 0], [0, 1], [2, 0], [2, 1]]
+    }
+  ]
+}

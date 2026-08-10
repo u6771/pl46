@@ -1,0 +1,20 @@
+{
+  "name": "uni20DC",
+  "unicode": "20DC",
+  "monospace_x_offset": -3,
+  "y_offset": 6,
+  "skeleton": [
+    {
+      "centerline": [[0, 0]]
+    },
+    {
+      "centerline": [[2, 0]]
+    },
+    {
+      "centerline": [[4, 0]]
+    },
+    {
+      "centerline": [[6, 0]]
+    }
+  ]
+}
