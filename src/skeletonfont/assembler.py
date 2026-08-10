@@ -5,7 +5,7 @@ from dataclasses import dataclass, replace
 from pathlib import Path
 from types import MappingProxyType
 
-from .errors import AssemblyError
+from .errors import AssemblyError, ProjectDataError
 from .loader import load_glyph_source_directory
 from .mappings import GlyphIdentity, get_mapping
 from .model import (
@@ -40,11 +40,7 @@ class GlyphCatalog:
         )
         try:
             glyphs = load_glyph_source_directory(path)
-        except FileNotFoundError as error:
-            raise AssemblyError(
-                f"Glyph source directory does not exist: {path}"
-            ) from error
-        except ValueError as error:
+        except ProjectDataError as error:
             raise AssemblyError(str(error)) from error
 
         result = MappingProxyType(glyphs)

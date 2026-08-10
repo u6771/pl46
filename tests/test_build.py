@@ -2,19 +2,48 @@ from __future__ import annotations
 
 import tempfile
 import unittest
+from dataclasses import replace
 from pathlib import Path
 from unittest.mock import patch
 
 from fontTools.ttLib import TTFont
 
-from skeletonfont.build import build_font
-from skeletonfont.errors import BuildError, PlanError
+from skeletonfont.build import build_font, build_fonts
+from skeletonfont.errors import BuildError, PlanError, ProjectDataError
+from skeletonfont.loader import load_font_meta
 
 
 PROJECT_DIRECTORY = Path(__file__).resolve().parents[1]
 
 
 class BuildPipelineTests(unittest.TestCase):
+    def test_batch_rejects_duplicate_meta_names_before_loading(self) -> None:
+        with (
+            patch("skeletonfont.build.load_font_meta") as load_meta,
+            self.assertRaisesRegex(ProjectDataError, "duplicate meta"),
+        ):
+            build_fonts(PROJECT_DIRECTORY, ["ascii", "ascii.json"])
+
+        load_meta.assert_not_called()
+
+    def test_batch_rejects_output_collisions_before_building(self) -> None:
+        first = load_font_meta(PROJECT_DIRECTORY, "ascii")
+        second = replace(
+            load_font_meta(PROJECT_DIRECTORY, "bold"),
+            output_stem=first.output_stem.upper(),
+        )
+        with (
+            patch(
+                "skeletonfont.build.load_font_meta",
+                side_effect=(first, second),
+            ),
+            patch("skeletonfont.build._build_loaded_font") as build_loaded,
+            self.assertRaisesRegex(ProjectDataError, "duplicate OTF"),
+        ):
+            build_fonts(PROJECT_DIRECTORY, ["ascii", "bold"])
+
+        build_loaded.assert_not_called()
+
     def test_build_error_identifies_meta_and_preserves_cause(self) -> None:
         cause = PlanError("invalid glyph roles")
         with (
@@ -196,6 +225,14 @@ class BuildPipelineTests(unittest.TestCase):
                 "uni27E6",
                 "uni27E7",
             )
+            expected_parts_by_base = {
+                "uni2308": ("uni2308.bt", "uni23A2", "uni23A1"),
+                "uni2309": ("uni2309.bt", "uni23A5", "uni23A4"),
+                "uni230A": ("uni23A3", "uni23A2", "uni230A.tp"),
+                "uni230B": ("uni23A6", "uni23A5", "uni230B.tp"),
+                "uni27E6": ("uni27E6.bt", "uni27E6.ex", "uni27E6.tp"),
+                "uni27E7": ("uni27E7.bt", "uni27E7.ex", "uni27E7.tp"),
+            }
             for base in vertical_bases:
                 index = variants.VertGlyphCoverage.glyphs.index(base)
                 construction = variants.VertGlyphConstruction[index]
@@ -221,9 +258,9 @@ class BuildPipelineTests(unittest.TestCase):
                             for part in construction.GlyphAssembly.PartRecords
                         ],
                         [
-                            (f"{base}.bt", 0),
-                            (f"{base}.ex", 1),
-                            (f"{base}.tp", 0),
+                            (expected_parts_by_base[base][0], 0),
+                            (expected_parts_by_base[base][1], 1),
+                            (expected_parts_by_base[base][2], 0),
                         ],
                     )
             expected_advances = (

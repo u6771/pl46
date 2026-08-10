@@ -51,14 +51,19 @@ def glyph_source_data(source: GlyphSource) -> dict[str, object]:
             if source.codepoint is None
             else f"{source.codepoint:04X}"
         ),
-        "monospace_x_offset": _normalized_number(
-            source.monospace_x_offset
-        ),
-        "y_offset": _normalized_number(source.y_offset),
     }
     if has_skeleton:
+        data["monospace_x_offset"] = _normalized_number(
+            source.monospace_x_offset
+        )
+        data["y_offset"] = _normalized_number(source.y_offset)
         data["skeleton"] = [_stroke_data(stroke) for stroke in source.skeleton]
     else:
+        if source.monospace_x_offset != 0 or source.y_offset != 0:
+            raise ProjectDataError(
+                f"Empty glyph source {source.name!r} has meaningless "
+                "monospace_x_offset or y_offset data."
+            )
         data["x_extent"] = _normalized_number(source.x_extent)
     return data
 

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import os
+import tempfile
 from pathlib import Path
 
 from fontTools.ttLib import TTFont
@@ -42,14 +44,26 @@ def compile_font(ufo: Font) -> TTFont:
 
 
 def save_otf(font: TTFont, output_path: Path) -> None:
-    """Serialize a compiled font exactly once to its final OTF path."""
+    """Serialize once and atomically replace the final OTF."""
 
     if output_path.suffix.lower() != ".otf":
         raise CompileError(
             f"Compiled font output must use the .otf extension: {output_path}"
         )
+    temporary_path: Path | None = None
     try:
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        font.save(output_path)
-    except OSError as error:
+        descriptor, temporary_name = tempfile.mkstemp(
+            dir=output_path.parent,
+            prefix=f".{output_path.stem}.",
+            suffix=".otf",
+        )
+        os.close(descriptor)
+        temporary_path = Path(temporary_name)
+        font.save(temporary_path)
+        os.replace(temporary_path, output_path)
+    except Exception as error:
         raise CompileError(f"Cannot save {output_path}: {error}") from error
+    finally:
+        if temporary_path is not None:
+            temporary_path.unlink(missing_ok=True)

@@ -45,6 +45,34 @@ def _outline_digest(glyph) -> str:
 
 
 class CubicStrokeGeometryTests(unittest.TestCase):
+    def test_isolated_point_uses_point_radius_scale(self) -> None:
+        stroke = StrokePlan(
+            centerline=((100.0, 200.0),),
+            radius=20.0,
+            start_cap="round",
+            end_cap="round",
+            closed=False,
+            filled=False,
+        )
+
+        path = stroke_to_path(stroke, point_radius_scale=1.5)
+
+        self.assertEqual(path.bounds, (70.0, 170.0, 130.0, 230.0))
+
+    def test_open_stroke_supports_different_end_caps(self) -> None:
+        stroke = StrokePlan(
+            centerline=((0.0, 0.0), (100.0, 0.0)),
+            radius=10.0,
+            start_cap="flat",
+            end_cap="round",
+            closed=False,
+            filled=False,
+        )
+
+        path = stroke_to_path(stroke, point_radius_scale=1.5)
+
+        self.assertEqual(path.bounds, (0.0, -10.0, 110.0, 10.0))
+
     def test_round_cap_segment_count_is_rotation_invariant(self) -> None:
         horizontal = StrokePlan(
             ((0.0, 0.0), (100.0, 0.0)),

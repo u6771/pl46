@@ -83,7 +83,7 @@ class GlyphConfigLoaderTests(unittest.TestCase):
     def test_math_adjustments_are_typed_and_read_only(self) -> None:
         config = load_glyph_config(PROJECT_DIRECTORY, "math.json")
 
-        self.assertEqual(len(config), 30)
+        self.assertEqual(len(config), 34)
         self.assertEqual(
             config[selector("parenleft@variants")],
             adjustment(left=50.0),
@@ -327,17 +327,25 @@ class FontPlannerTests(unittest.TestCase):
                         for index, advance in enumerate(expected_advances)
                     ],
                 )
-        expected_parts = (
-            ("bt", 0, 200, 835, False),
-            ("ex", 400, 400, 400, True),
-            ("tp", 200, 0, 835, False),
+        expected_glyphs_by_base = {
+            "uni2308": ("uni2308.bt", "uni23A2", "uni23A1"),
+            "uni2309": ("uni2309.bt", "uni23A5", "uni23A4"),
+            "uni230A": ("uni23A3", "uni23A2", "uni230A.tp"),
+            "uni230B": ("uni23A6", "uni23A5", "uni230B.tp"),
+            "uni27E6": ("uni27E6.bt", "uni27E6.ex", "uni27E6.tp"),
+            "uni27E7": ("uni27E7.bt", "uni27E7.ex", "uni27E7.tp"),
+        }
+        expected_metrics = (
+            (0, 200, 835, False),
+            (400, 400, 400, True),
+            (200, 0, 835, False),
         )
         for base in vertical_bases[4:]:
             with self.subTest(assembly_base=base):
                 self.assertEqual(
                     [
                         (
-                            part.glyph_name.removeprefix(f"{base}."),
+                            part.glyph_name,
                             part.start_connector_length,
                             part.end_connector_length,
                             part.full_advance,
@@ -345,7 +353,14 @@ class FontPlannerTests(unittest.TestCase):
                         )
                         for part in math_plan.vertical_assemblies[base].parts
                     ],
-                    list(expected_parts),
+                    [
+                        (glyph_name, *metrics)
+                        for glyph_name, metrics in zip(
+                            expected_glyphs_by_base[base],
+                            expected_metrics,
+                            strict=True,
+                        )
+                    ],
                 )
 
     def test_explicit_ssty_does_not_require_a_math_table(self) -> None:
@@ -439,7 +454,7 @@ class FontPlannerTests(unittest.TestCase):
         config[selector("j")] = adjustment(left=20)
 
         with patch(
-            "skeletonfont.planner._measure_glyph_axis",
+            "skeletonfont.planning.glyphs._measure_glyph_axis",
             wraps=_measure_glyph_axis,
         ) as measure_axis:
             math_plan = plan_font(
@@ -472,7 +487,7 @@ class FontPlannerTests(unittest.TestCase):
         )
 
         with patch(
-            "skeletonfont.planner._measure_glyph_axis",
+            "skeletonfont.planning.glyphs._measure_glyph_axis",
             wraps=_measure_glyph_axis,
         ) as measure_axis:
             math_plan = plan_font(assembled, math_table_data=data).math_table
@@ -495,7 +510,7 @@ class FontPlannerTests(unittest.TestCase):
         )
 
         with patch(
-            "skeletonfont.planner._measure_glyph_axis",
+            "skeletonfont.planning.glyphs._measure_glyph_axis",
             wraps=_measure_glyph_axis,
         ) as measure_axis:
             math_plan = plan_font(self.assembled_math, math_table_data=data).math_table
@@ -572,7 +587,7 @@ class FontPlannerTests(unittest.TestCase):
 
     def test_horizontal_accent_base_is_measured_without_replanning(self) -> None:
         with patch(
-            "skeletonfont.planner._measure_glyph_axis",
+            "skeletonfont.planning.glyphs._measure_glyph_axis",
             wraps=_measure_glyph_axis,
         ) as measure_axis:
             plan = plan_font(
@@ -990,11 +1005,11 @@ class FontPlannerTests(unittest.TestCase):
 
         with (
             patch(
-                "skeletonfont.planner._transformed_strokes",
+                "skeletonfont.planning.assemblies._transformed_strokes",
                 wraps=_transformed_strokes,
             ) as transform,
             patch(
-                "skeletonfont.planner._measure_glyph_axis",
+                "skeletonfont.planning.assemblies._measure_glyph_axis",
                 wraps=_measure_glyph_axis,
             ) as measure_axis,
         ):
@@ -1322,6 +1337,56 @@ class FontPlannerTests(unittest.TestCase):
         self.assertEqual(space.width, 550)
         self.assertEqual(space.strokes, ())
 
+    def test_empty_glyph_can_receive_a_top_accent_attachment(self) -> None:
+        data = replace(
+            self.math_data,
+            accent_attachments=MappingProxyType({"space": 1.0}),
+        )
+
+        plan = plan_font(self.assembled_math, math_table_data=data)
+
+        assert plan.math_table is not None
+        self.assertEqual(plan.math_table.top_accent_attachments["space"], 175)
+
+    def test_resolved_opentype_values_must_fit_storage_ranges(self) -> None:
+        oversized_font = replace(
+            self.assembled_math,
+            glyph_parameters=replace(
+                self.assembled_math.glyph_parameters,
+                grid=20000,
+            ),
+        )
+        with self.assertRaisesRegex(PlanError, "UFWORD"):
+            plan_font(oversized_font)
+
+        oversized_attachment = replace(
+            self.math_data,
+            accent_attachments=MappingProxyType({"A": 1000.0}),
+        )
+        with self.assertRaisesRegex(PlanError, "FWORD"):
+            plan_font(
+                self.assembled_math,
+                math_table_data=oversized_attachment,
+            )
+
+        with self.assertRaisesRegex(PlanError, "minConnectorOverlap"):
+            plan_font(
+                self.assembled_math,
+                math_table_data=replace(
+                    self.math_data,
+                    min_connector_overlap=65536,
+                ),
+            )
+
+        with self.assertRaisesRegex(PlanError, "Math kern"):
+            plan_font(
+                self.assembled_math,
+                math_table_data=replace(
+                    self.math_data,
+                    kerns=MappingProxyType({"A": glyph_kern(32768)}),
+                ),
+            )
+
     def test_glyph_adjustment_is_applied_once(self) -> None:
         parenleft = self.math_plan.glyphs["parenleft"]
 
@@ -1544,7 +1609,7 @@ class FontPlannerTests(unittest.TestCase):
         )
 
         with patch(
-            "skeletonfont.planner._plan_variant_glyph",
+            "skeletonfont.planning.glyphs._plan_variant_glyph",
             wraps=_plan_variant_glyph,
         ) as variant_planner:
             adjusted = plan_font(

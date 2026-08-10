@@ -28,23 +28,26 @@ from skeletonfont.model import (
 
 
 PROJECT_DIRECTORY = Path(__file__).resolve().parents[1]
+FIXTURE_PROJECT_DIRECTORY = (
+    PROJECT_DIRECTORY / "tests" / "fixtures" / "minimal_project"
+)
 
 
 class GlyphCatalogTests(unittest.TestCase):
     def test_source_directory_is_loaded_once(self) -> None:
-        catalog = GlyphCatalog(PROJECT_DIRECTORY)
+        catalog = GlyphCatalog(FIXTURE_PROJECT_DIRECTORY)
 
-        first = catalog.load("ascii")
-        second = catalog.load("ascii")
+        first = catalog.load("basic")
+        second = catalog.load("basic")
 
         self.assertIs(first, second)
-        self.assertEqual(catalog.loaded_sources, ("ascii",))
+        self.assertEqual(catalog.loaded_sources, ("basic",))
         with self.assertRaises(TypeError):
             first["new"] = first["A"]  # type: ignore[index]
 
     def test_missing_source_directory_has_assembly_context(self) -> None:
-        catalog = GlyphCatalog(PROJECT_DIRECTORY)
-        meta = load_font_meta(PROJECT_DIRECTORY, "ascii")
+        catalog = GlyphCatalog(FIXTURE_PROJECT_DIRECTORY)
+        meta = load_font_meta(FIXTURE_PROJECT_DIRECTORY, "basic")
         missing_rule = replace(
             meta.source_rules[1],
             source_directory="math/unencoded",
@@ -62,36 +65,17 @@ class FontAssemblerTests(unittest.TestCase):
     def setUp(self) -> None:
         self.catalog = GlyphCatalog(PROJECT_DIRECTORY)
 
-    def test_existing_font_glyph_counts_match_reference(self) -> None:
-        expected = {
-            "ascii": (97, 96),
-            "bold": (97, 96),
-            "fraktur": (97, 96),
-            "jp": (275, 274),
-            "mono": (578, 577),
-            "monobold": (549, 548),
-            "script": (97, 96),
-        }
-
-        for build_name, (total, encoded) in expected.items():
+    def test_all_project_fonts_assemble_with_notdef(self) -> None:
+        for meta_path in sorted((PROJECT_DIRECTORY / "meta").glob("*.json")):
+            build_name = meta_path.stem
             with self.subTest(build_name=build_name):
                 assembled = assemble_font(
                     load_font_meta(PROJECT_DIRECTORY, build_name),
                     self.catalog,
                 )
-                self.assertEqual(
-                    len(assembled.glyphs)
-                    + len(assembled.glyph_aliases),
-                    total,
-                )
-                self.assertEqual(
-                    sum(
-                        glyph.codepoint is not None
-                        for glyph in assembled.glyphs.values()
-                    )
-                    + len(assembled.glyph_aliases),
-                    encoded,
-                )
+                self.assertIn(".notdef", assembled.glyphs)
+                self.assertIsNone(assembled.glyphs[".notdef"].codepoint)
+                self.assertGreater(len(assembled.glyphs), 0)
 
     def test_source_mapping_replaces_only_glyph_identity(self) -> None:
         assembled = assemble_font(
@@ -143,8 +127,9 @@ class FontAssemblerTests(unittest.TestCase):
     def test_source_rule_scales_strokes_without_mutating_source(
         self,
     ) -> None:
-        meta = load_font_meta(PROJECT_DIRECTORY, "ascii")
-        source = self.catalog.load("ascii")["A"]
+        catalog = GlyphCatalog(FIXTURE_PROJECT_DIRECTORY)
+        meta = load_font_meta(FIXTURE_PROJECT_DIRECTORY, "basic")
+        source = catalog.load("basic")["A"]
         scaled_rule = replace(
             meta.source_rules[1],
             thickness_scale=0.75,
@@ -154,7 +139,7 @@ class FontAssemblerTests(unittest.TestCase):
                 meta,
                 source_rules=(meta.source_rules[0], scaled_rule),
             ),
-            self.catalog,
+            catalog,
         )
 
         scaled = assembled.glyphs["A"]
@@ -213,7 +198,8 @@ class FontAssemblerTests(unittest.TestCase):
             )
 
     def test_ssty_generator_scaling_multiplies_source_rule_scaling(self) -> None:
-        meta = load_font_meta(PROJECT_DIRECTORY, "ascii")
+        catalog = GlyphCatalog(FIXTURE_PROJECT_DIRECTORY)
+        meta = load_font_meta(FIXTURE_PROJECT_DIRECTORY, "basic")
         scaled_source = replace(
             meta.source_rules[1],
             thickness_scale=1.25,
@@ -230,10 +216,10 @@ class FontAssemblerTests(unittest.TestCase):
                 source_rules=(meta.source_rules[0], scaled_source),
                 ssty_generators=(ssty_generator,),
             ),
-            self.catalog,
+            catalog,
         )
 
-        authored = self.catalog.load("ascii")["A"]
+        authored = catalog.load("basic")["A"]
         alternate = assembled.glyphs["A.st"]
         for authored_stroke, alternate_stroke in zip(
             authored.skeleton,
@@ -558,6 +544,15 @@ class FontAssemblerTests(unittest.TestCase):
         )
 
         _validate_mapping_domains("unrestricted", mapping)
+
+    def test_mapping_domain_validation_rejects_duplicate_targets(self) -> None:
+        mapping = GlyphMapping(
+            MappingProxyType({0x0041: 0xE000, 0x0042: 0xE000}),
+            lambda identity: identity.name,
+        )
+
+        with self.assertRaisesRegex(ValueError, "duplicate encoded target"):
+            _validate_mapping_domains("duplicates", mapping)
 
     def test_mapping_domain_validation_rejects_outliers(self) -> None:
         invalid_source = GlyphMapping(

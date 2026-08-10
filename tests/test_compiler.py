@@ -3,6 +3,7 @@ from __future__ import annotations
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from fontTools.ttLib import TTFont
 from ufoLib2 import Font
@@ -87,6 +88,28 @@ class FontCompilerTests(unittest.TestCase):
     def test_save_rejects_non_otf_destination(self) -> None:
         with self.assertRaisesRegex(CompileError, "\.otf"):
             save_otf(self.otf, Path("font.ttf"))
+
+    def test_failed_save_preserves_existing_output_and_removes_temp(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            path = Path(temporary_directory) / "font.otf"
+            path.write_bytes(b"existing")
+
+            def fail_after_partial_write(temporary_path: Path) -> None:
+                Path(temporary_path).write_bytes(b"partial")
+                raise RuntimeError("serialization failed")
+
+            with (
+                patch.object(
+                    self.otf,
+                    "save",
+                    side_effect=fail_after_partial_write,
+                ),
+                self.assertRaisesRegex(CompileError, "serialization failed"),
+            ):
+                save_otf(self.otf, path)
+
+            self.assertEqual(path.read_bytes(), b"existing")
+            self.assertEqual(list(path.parent.iterdir()), [path])
 
     def test_compile_requires_notdef_in_source_font(self) -> None:
         with self.assertRaisesRegex(CompileError, r"\.notdef"):

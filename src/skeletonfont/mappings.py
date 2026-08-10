@@ -226,6 +226,21 @@ def _validate_mapping_domains(
     name: str,
     mapping: GlyphMapping,
 ) -> None:
+    sources_by_target: dict[int, int] = {}
+    duplicate_targets: set[int] = set()
+    for source, target in mapping.codepoints.items():
+        if target is None:
+            continue
+        if target in sources_by_target:
+            duplicate_targets.add(target)
+        else:
+            sources_by_target[target] = source
+    if duplicate_targets:
+        raise ValueError(
+            f"Mapping {name!r} has duplicate encoded target codepoints: "
+            f"{_format_codepoints(duplicate_targets)}"
+        )
+
     if mapping.source_domain is not None:
         source_domain = _domain_for_mapping(
             name,

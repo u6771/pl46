@@ -18,22 +18,52 @@ from skeletonfont.loader import (
     load_kerning_data,
     load_math_table_data,
     load_ssty_data,
+    normalize_meta_name,
     parse_font_meta,
     parse_accent_glyphs,
     parse_glyph_source,
+    parse_kerning_data,
     parse_math_accent_attachments,
     parse_math_constants,
     parse_math_italics_correction,
     parse_math_kerns,
     parse_ssty,
     parse_stroke_record,
+    read_json,
 )
+from skeletonfont.unicode_domains import UNICODE_DOMAINS
 
 
 PROJECT_DIRECTORY = Path(__file__).resolve().parents[1]
+FIXTURE_SOURCE_DIRECTORY = (
+    PROJECT_DIRECTORY
+    / "tests"
+    / "fixtures"
+    / "minimal_project"
+    / "glyph_sources"
+    / "basic"
+)
 
 
 class FontMetaLoaderTests(unittest.TestCase):
+    def test_json_rejects_duplicate_object_keys(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            path = Path(temporary_directory) / "duplicate.json"
+            path.write_text('{"A": 1, "A": 2}', encoding="utf-8")
+
+            with self.assertRaisesRegex(ProjectDataError, "duplicate.*'A'"):
+                read_json(path)
+
+    def test_meta_name_cannot_be_only_json_extension(self) -> None:
+        with self.assertRaisesRegex(ProjectDataError, "non-empty"):
+            normalize_meta_name(".json")
+
+    def test_blackboard_domain_ends_at_double_struck_z(self) -> None:
+        domain = UNICODE_DOMAINS["blackboard_latin"]
+
+        self.assertIn(0x1D56B, domain)
+        self.assertNotIn(0x1D56C, domain)
+
     def test_all_copied_meta_files_load(self) -> None:
         paths = sorted((PROJECT_DIRECTORY / "meta").glob("*.json"))
 
@@ -371,7 +401,7 @@ class FontMetaLoaderTests(unittest.TestCase):
         self.assertEqual(meta.glyph_parameters.right_spacing, 0)
         self.assertIsNone(meta.glyph_parameters.monospace_width)
         self.assertEqual(meta.point_radius_scale, 1.6)
-        self.assertFalse(
+        self.assertTrue(
             meta.glyph_parameters.use_scaled_edge_thickness
         )
         self.assertEqual(meta.glyph_alias_generators, ())
@@ -431,6 +461,36 @@ class FontMetaLoaderTests(unittest.TestCase):
                         meta_path=path,
                     )
 
+    def test_opentype_meta_metric_ranges_are_validated(self) -> None:
+        path = PROJECT_DIRECTORY / "meta" / "ascii.json"
+        original = json.loads(path.read_text(encoding="utf-8"))
+        invalid_fields = (
+            ("units_per_em", 15),
+            ("units_per_em", 16385),
+            ("ascender", 32768),
+            ("descender", -32769),
+        )
+
+        for field, value in invalid_fields:
+            with self.subTest(field=field, value=value):
+                data = dict(original)
+                data[field] = value
+                with self.assertRaisesRegex(ProjectDataError, field):
+                    parse_font_meta(
+                        data,
+                        build_name="invalid-range",
+                        meta_path=path,
+                    )
+
+        data = dict(original)
+        data["grid"] = 10**400
+        with self.assertRaisesRegex(ProjectDataError, "finite"):
+            parse_font_meta(
+                data,
+                build_name="overflowing-number",
+                meta_path=path,
+            )
+
     def test_legacy_width_and_monospace_fields_are_rejected(self) -> None:
         path = PROJECT_DIRECTORY / "meta" / "math.json"
         data = json.loads(path.read_text(encoding="utf-8"))
@@ -471,15 +531,12 @@ class GlyphSourceLoaderTests(unittest.TestCase):
 
     def test_empty_space_uses_normalized_x_extent(self) -> None:
         glyph = load_glyph_source(
-            PROJECT_DIRECTORY
-            / "glyph_sources"
-            / "ascii"
-            / "space_0020.json"
+            FIXTURE_SOURCE_DIRECTORY / "space_0020.json"
         )
 
         self.assertEqual(glyph.name, "space")
         self.assertEqual(glyph.codepoint, 0x20)
-        self.assertEqual(glyph.monospace_x_offset, -3)
+        self.assertEqual(glyph.monospace_x_offset, 0)
         self.assertEqual(glyph.y_offset, 0)
         self.assertEqual(glyph.x_extent, 4.0)
         self.assertIsNone(glyph.y_extent)
@@ -587,12 +644,23 @@ class GlyphSourceLoaderTests(unittest.TestCase):
                 source_path=Path("broken.json"),
             )
 
+    def test_empty_glyph_rejects_meaningless_offsets(self) -> None:
+        for field in ("monospace_x_offset", "y_offset"):
+            with self.subTest(field=field):
+                with self.assertRaisesRegex(ProjectDataError, field):
+                    parse_glyph_source(
+                        {
+                            "name": "space",
+                            "unicode": "0020",
+                            "x_extent": 4,
+                            field: 0,
+                        },
+                        source_path=Path("broken.json"),
+                    )
+
     def test_loaded_objects_are_immutable(self) -> None:
         glyph = load_glyph_source(
-            PROJECT_DIRECTORY
-            / "glyph_sources"
-            / "ascii"
-            / "space_0020.json"
+            FIXTURE_SOURCE_DIRECTORY / "space_0020.json"
         )
 
         with self.assertRaises(FrozenInstanceError):
@@ -610,6 +678,17 @@ class GlyphSourceLoaderTests(unittest.TestCase):
 
         with self.assertRaisesRegex(ProjectDataError, "advance"):
             parse_glyph_source(data, source_path=path)
+
+    def test_glyph_name_uses_safe_external_name_syntax(self) -> None:
+        with self.assertRaisesRegex(ProjectDataError, "unsupported"):
+            parse_glyph_source(
+                {
+                    "name": "bad name",
+                    "unicode": None,
+                    "x_extent": 1,
+                },
+                source_path=Path("broken.json"),
+            )
 
     def test_legacy_x_offset_name_is_rejected(self) -> None:
         path = Path("broken.json")
@@ -676,6 +755,43 @@ class KerningLoaderTests(unittest.TestCase):
         self.assertEqual(kerning.pairs[0].value, -100)
         with self.assertRaises(TypeError):
             kerning.groups["new"] = ("A",)  # type: ignore[index]
+
+    def test_kerning_rejects_invalid_group_sides_and_membership(self) -> None:
+        invalid_values = (
+            {
+                "groups": {"group.left": ["A"]},
+                "pairs": [],
+            },
+            {
+                "groups": {
+                    "public.kern1.first": ["A"],
+                    "public.kern1.second": ["A"],
+                },
+                "pairs": [],
+            },
+            {
+                "groups": {
+                    "public.kern1.left": ["A"],
+                    "public.kern2.right": ["V"],
+                },
+                "pairs": [["public.kern2.right", "V", -10]],
+            },
+        )
+
+        for value in invalid_values:
+            with self.subTest(value=value):
+                with self.assertRaises(ProjectDataError):
+                    parse_kerning_data(
+                        value,
+                        source_path=Path("kerning.json"),
+                    )
+
+    def test_kerning_value_must_fit_an_opentype_fword(self) -> None:
+        with self.assertRaisesRegex(ProjectDataError, "32767"):
+            parse_kerning_data(
+                {"pairs": [["A", "V", 32768]]},
+                source_path=Path("kerning.json"),
+            )
 
 
 class MathTableDataLoaderTests(unittest.TestCase):
@@ -838,6 +954,22 @@ class MathTableDataLoaderTests(unittest.TestCase):
                     }
                 }
             },
+            {
+                "A": {
+                    "bottom_right": {
+                        "correction_height": [32768],
+                        "kern_values": [-40, -30],
+                    }
+                }
+            },
+            {
+                "A": {
+                    "bottom_right": {
+                        "correction_height": [0],
+                        "kern_values": [-40, -32769],
+                    }
+                }
+            },
         )
         for value in invalid_inputs:
             with self.subTest(value=value):
@@ -906,7 +1038,7 @@ class MathTableDataLoaderTests(unittest.TestCase):
                         source_path=Path("italics_correction.json"),
                     )
 
-        for value in (-1, True, 1.5, "200"):
+        for value in (-1, 32768, True, 1.5, "200"):
             with self.subTest(value=value):
                 with self.assertRaises(ProjectDataError):
                     parse_math_italics_correction(
@@ -928,6 +1060,20 @@ class MathTableDataLoaderTests(unittest.TestCase):
                 constants,
                 source_path=Path("constants.json"),
             )
+
+        for name, value in (
+            ("AxisHeight", 32768),
+            ("DelimitedSubFormulaMinHeight", -1),
+            ("DisplayOperatorMinHeight", 65536),
+        ):
+            with self.subTest(name=name, value=value):
+                invalid = dict(data.constants)
+                invalid[name] = value
+                with self.assertRaisesRegex(ProjectDataError, name):
+                    parse_math_constants(
+                        invalid,
+                        source_path=Path("constants.json"),
+                    )
 
     def test_ssty_rejects_duplicate_and_base_alternates(self) -> None:
         with self.assertRaisesRegex(ProjectDataError, "duplicate"):
@@ -1118,7 +1264,10 @@ class MathTableDataLoaderTests(unittest.TestCase):
                 return {"vertical": {}, "horizontal": {}}
             raise AssertionError(path)
 
-        with patch("skeletonfont.loader.read_json", side_effect=fake_read_json):
+        with patch(
+            "skeletonfont.loading.math.read_json",
+            side_effect=fake_read_json,
+        ):
             with self.assertRaisesRegex(
                 ProjectDataError,
                 "min_connector_overlap",

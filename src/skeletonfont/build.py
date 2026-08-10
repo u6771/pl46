@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections import Counter
 from collections.abc import Iterable
 from pathlib import Path
 
@@ -13,8 +14,10 @@ from .loader import (
     load_kerning_data,
     load_math_table_data,
     load_ssty_data,
+    normalize_meta_name,
 )
 from .math_tables import apply_math_table
+from .model import FontMeta
 from .planner import plan_font
 from .renderer import render_font
 
@@ -49,6 +52,23 @@ def _build_font(
     """Run one font build before adding its meta-name error context."""
 
     meta = load_font_meta(project_directory, meta_name)
+    return _build_loaded_font(
+        project_directory,
+        meta,
+        output_directory=output_directory,
+        catalog=catalog,
+    )
+
+
+def _build_loaded_font(
+    project_directory: Path,
+    meta: FontMeta,
+    *,
+    output_directory: Path | None,
+    catalog: GlyphCatalog | None,
+) -> Path:
+    """Build one already-loaded meta after batch preflight."""
+
     active_catalog = catalog or GlyphCatalog(project_directory)
     assembled = assemble_font(meta, active_catalog)
     glyph_config = (
@@ -105,15 +125,56 @@ def build_fonts(
     *,
     output_directory: Path | None = None,
 ) -> tuple[Path, ...]:
-    """Build several fonts while sharing one glyph-source catalog."""
+    """Preflight and build several fonts with one source catalog."""
+
+    names = tuple(normalize_meta_name(name) for name in meta_names)
+    duplicate_names = sorted(
+        name for name, count in Counter(names).items() if count > 1
+    )
+    if duplicate_names:
+        raise ProjectDataError(
+            f"Font build contains duplicate meta names: {duplicate_names}"
+        )
+
+    metas = []
+    for name in names:
+        try:
+            metas.append(load_font_meta(project_directory, name))
+        except ProjectDataError as error:
+            raise BuildError(name, error) from error
+
+    metas_by_output: dict[str, list[str]] = {}
+    for meta in metas:
+        metas_by_output.setdefault(meta.output_stem.casefold(), []).append(
+            meta.build_name
+        )
+    collisions = {
+        output: builds
+        for output, builds in metas_by_output.items()
+        if len(builds) > 1
+    }
+    if collisions:
+        descriptions = ", ".join(
+            f"{output!r}: {builds}"
+            for output, builds in sorted(collisions.items())
+        )
+        raise ProjectDataError(
+            "Font builds resolve to duplicate OTF output stems: "
+            f"{descriptions}"
+        )
 
     catalog = GlyphCatalog(project_directory)
-    return tuple(
-        build_font(
-            project_directory,
-            meta_name,
-            output_directory=output_directory,
-            catalog=catalog,
-        )
-        for meta_name in meta_names
-    )
+    paths: list[Path] = []
+    for meta in metas:
+        try:
+            paths.append(
+                _build_loaded_font(
+                    project_directory,
+                    meta,
+                    output_directory=output_directory,
+                    catalog=catalog,
+                )
+            )
+        except ProjectDataError as error:
+            raise BuildError(meta.build_name, error) from error
+    return tuple(paths)
