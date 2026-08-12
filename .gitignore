@@ -8,12 +8,6 @@ __pycache__/
 .venv/
 *.prof
 
-# Unfinished editor
-/tools/
-/tests/test_editor.py
-/tests/test_editor_settings.py
-/editor.cmd
-
 # Unfinished specimens and development reports
 /png/
 /reports/
@@ -24,6 +18,7 @@ __pycache__/
 
 # Windows source-tree shortcut
 /build.cmd
+/editor.cmd
 
 # XeLaTeX outputs
 /tex/math-glyph-positioning-test.tex
