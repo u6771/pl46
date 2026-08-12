@@ -9,20 +9,14 @@ __pycache__/
 *.prof
 
 # Unfinished specimens and development reports
-/png/
 /reports/
-/__pdf2png.py
-
-# Reference data not used by the build
-/data/math_table/constants/latin_modern_math.json
 
 # Windows source-tree shortcut
 /build.cmd
 /editor.cmd
 
 # XeLaTeX outputs
-/tex/math-glyph-positioning-test.tex
-/tex/*.pdf
+docs/tex/*.pdf
 *.aux
 *.log
 *.synctex.gz
