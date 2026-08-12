@@ -1,0 +1,16 @@
+{
+  "version": "1.000",
+  "copyright": "Copyright 2026 Test Author",
+  "designer": "Test Author",
+  "designer_url": "https://example.com/designer",
+  "manufacturer": "Test Foundry",
+  "manufacturer_url": "https://example.com/foundry",
+  "description": "A release-info integration test font.",
+  "trademark": "Test is a trademark of Test Author.",
+  "vendor_id": "TEST",
+  "license": {
+    "identifier": "OFL-1.1",
+    "url": "https://openfontlicense.org"
+  },
+  "embedding_permissions": "installable"
+}

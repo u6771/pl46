@@ -1,7 +1,8 @@
 {
   "family": "Test",
-  "style": "Regular",
-  "weight_class": 400,
+  "style": "Bold",
+  "weight_class": 700,
+  "output_stem": "Test-Released",
   "units_per_em": 1000,
   "ascender": 850,
   "descender": -200,
@@ -18,5 +19,6 @@
     {
       "source_directory": "basic"
     }
-  ]
+  ],
+  "release_info_file": "ofl.json"
 }

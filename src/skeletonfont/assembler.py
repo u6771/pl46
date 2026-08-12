@@ -327,10 +327,7 @@ def _apply_ssty_generators(
             generator.ssty_alternate_name
         )
         for codepoint, base in sorted(bases.items()):
-            if (
-                generator.unicode_domain is not None
-                and codepoint not in generator.unicode_domain
-            ):
+            if codepoint not in generator.unicode_domain:
                 continue
 
             alternates = substitutions.setdefault(base.name, [])

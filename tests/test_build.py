@@ -10,10 +10,13 @@ from fontTools.ttLib import TTFont
 
 from skeletonfont.build import build_font, build_fonts
 from skeletonfont.errors import BuildError, PlanError, ProjectDataError
-from skeletonfont.loader import load_font_meta
+from skeletonfont.loader import load_font_meta, parse_release_info
 
 
 PROJECT_DIRECTORY = Path(__file__).resolve().parents[1]
+FIXTURE_PROJECT_DIRECTORY = (
+    PROJECT_DIRECTORY / "tests" / "fixtures" / "minimal_project"
+)
 
 
 class BuildPipelineTests(unittest.TestCase):
@@ -41,6 +44,24 @@ class BuildPipelineTests(unittest.TestCase):
             self.assertRaisesRegex(ProjectDataError, "duplicate OTF"),
         ):
             build_fonts(PROJECT_DIRECTORY, ["ascii", "bold"])
+
+        build_loaded.assert_not_called()
+
+    def test_batch_validates_release_info_before_building(self) -> None:
+        released = load_font_meta(FIXTURE_PROJECT_DIRECTORY, "released")
+        with (
+            patch(
+                "skeletonfont.build.load_font_meta",
+                return_value=released,
+            ),
+            patch(
+                "skeletonfont.build.load_release_info",
+                side_effect=ProjectDataError("invalid release info"),
+            ),
+            patch("skeletonfont.build._build_loaded_font") as build_loaded,
+            self.assertRaisesRegex(BuildError, "invalid release info"),
+        ):
+            build_fonts(FIXTURE_PROJECT_DIRECTORY, ["released"])
 
         build_loaded.assert_not_called()
 
@@ -77,6 +98,128 @@ class BuildPipelineTests(unittest.TestCase):
             self.assertEqual(font.getBestCmap()[0x0041], "A")
             self.assertEqual(font["hmtx"].metrics["A"][0], 600)
             self.assertNotIn("MATH", font)
+            self.assertEqual(font["OS/2"].usWeightClass, 400)
+            self.assertEqual(font["OS/2"].fsType, 0)
+            self.assertEqual(font["post"].isFixedPitch, 1)
+            self.assertEqual(font["name"].getDebugName(5), "Version 0.100")
+            self.assertAlmostEqual(
+                font["head"].fontRevision,
+                0.1,
+                places=4,
+            )
+            self.assertEqual(font["name"].getDebugName(9), "u6771")
+            self.assertEqual(
+                font["name"].getDebugName(12),
+                "https://github.com/u6771",
+            )
+            self.assertEqual(
+                font["name"].getDebugName(13),
+                "This Font Software is licensed under the SIL Open Font "
+                "License, Version 1.1.",
+            )
+            self.assertEqual(
+                font["name"].getDebugName(0),
+                "Copyright (c) 2026, u6771 "
+                "(https://github.com/u6771),\n"
+                "with Reserved Font Name PL46.",
+            )
+            font.close()
+
+    def test_omitted_release_info_keeps_development_defaults(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            output_path = build_font(
+                FIXTURE_PROJECT_DIRECTORY,
+                "basic",
+                output_directory=Path(temporary_directory),
+            )
+
+            font = TTFont(output_path)
+            self.assertEqual(font["name"].getDebugName(5), "Version 0.000")
+            self.assertEqual(font["head"].fontRevision, 0.0)
+            self.assertEqual(font["OS/2"].fsType, 4)
+            self.assertEqual(font["OS/2"].achVendID, "NONE")
+            self.assertIsNone(font["name"].getDebugName(0))
+            self.assertIsNone(font["name"].getDebugName(13))
+            self.assertIsNone(font["name"].getDebugName(14))
+            font.close()
+
+    def test_partial_license_omits_unwritten_name_records(self) -> None:
+        release_info = parse_release_info(
+            {
+                "license": {"identifier": "OFL-1.1"},
+                "embedding_permissions": "installable",
+            },
+            source_path=PROJECT_DIRECTORY / "partial-release.json",
+        )
+        with (
+            tempfile.TemporaryDirectory() as temporary_directory,
+            patch(
+                "skeletonfont.build.load_release_info",
+                return_value=release_info,
+            ),
+        ):
+            output_path = build_font(
+                FIXTURE_PROJECT_DIRECTORY,
+                "released",
+                output_directory=Path(temporary_directory),
+            )
+
+            font = TTFont(output_path)
+            self.assertEqual(font["name"].getDebugName(5), "Version 0.000")
+            self.assertEqual(font["OS/2"].fsType, 0)
+            self.assertEqual(
+                font["name"].getDebugName(13),
+                "This Font Software is licensed under the SIL Open Font "
+                "License, Version 1.1.",
+            )
+            self.assertIsNone(font["name"].getDebugName(0))
+            self.assertIsNone(font["name"].getDebugName(9))
+            self.assertIsNone(font["name"].getDebugName(14))
+            font.close()
+
+    def test_release_info_is_embedded_in_the_final_otf(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            output_directory = Path(temporary_directory)
+
+            output_path = build_font(
+                FIXTURE_PROJECT_DIRECTORY,
+                "released",
+                output_directory=output_directory,
+            )
+
+            font = TTFont(output_path)
+            self.assertEqual(output_path.name, "Test-Released.otf")
+            self.assertEqual(font["OS/2"].usWeightClass, 700)
+            self.assertEqual(font["OS/2"].fsType, 0)
+            self.assertEqual(font["OS/2"].achVendID, "TEST")
+            self.assertEqual(font["post"].isFixedPitch, 1)
+            self.assertEqual(font["head"].fontRevision, 1.0)
+            self.assertEqual(font["name"].getDebugName(5), "Version 1.000")
+            self.assertEqual(font["name"].getDebugName(8), "Test Foundry")
+            self.assertEqual(font["name"].getDebugName(9), "Test Author")
+            self.assertEqual(
+                font["name"].getDebugName(10),
+                "A release-info integration test font.",
+            )
+            self.assertEqual(
+                font["name"].getDebugName(13),
+                "This Font Software is licensed under the SIL Open Font "
+                "License, Version 1.1.",
+            )
+            self.assertEqual(
+                font["name"].getDebugName(14),
+                "https://openfontlicense.org",
+            )
+            self.assertEqual(
+                font["name"].getDebugName(0),
+                "Copyright 2026 Test Author",
+            )
+            cff_metadata = font["CFF "].cff.topDictIndex[0].rawDict
+            self.assertEqual(cff_metadata["version"], "1.0")
+            self.assertEqual(
+                cff_metadata["Copyright"],
+                "Copyright 2026 Test Author",
+            )
             font.close()
 
     def test_math_is_built_with_math_and_ssty_tables(self) -> None:
@@ -93,6 +236,7 @@ class BuildPipelineTests(unittest.TestCase):
             font = TTFont(output_path)
             self.assertIn("MATH", font)
             self.assertIn("GSUB", font)
+            self.assertEqual(font["post"].isFixedPitch, 0)
             self.assertEqual(
                 font["MATH"].table.MathConstants.AxisHeight.Value,
                 225,

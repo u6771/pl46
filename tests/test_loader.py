@@ -17,6 +17,7 @@ from skeletonfont.loader import (
     load_glyph_source,
     load_kerning_data,
     load_math_table_data,
+    load_release_info,
     load_ssty_data,
     normalize_meta_name,
     parse_font_meta,
@@ -27,6 +28,7 @@ from skeletonfont.loader import (
     parse_math_constants,
     parse_math_italics_correction,
     parse_math_kerns,
+    parse_release_info,
     parse_ssty,
     parse_stroke_record,
     read_json,
@@ -223,6 +225,8 @@ class FontMetaLoaderTests(unittest.TestCase):
         self.assertEqual(meta.glyph_config_file, "math.json")
         self.assertEqual(meta.accent_file, "math.json")
         self.assertEqual(meta.output_stem, "PL46-Math")
+        self.assertEqual(meta.info.weight_class, 400)
+        self.assertEqual(meta.release_info_file, "pl46.json")
         self.assertTrue(meta.glyph_parameters.use_scaled_edge_thickness)
         self.assertEqual(math_rule.source_directory, "math")
         self.assertTrue(math_rule.replace_existing)
@@ -259,6 +263,20 @@ class FontMetaLoaderTests(unittest.TestCase):
         self.assertEqual(len(meta.ssty_generators), 1)
         self.assertEqual(meta.ssty_generators[0].ssty_alternate_name, "st")
         self.assertEqual(meta.ssty_generators[0].thickness_scale, 1.4)
+
+        empty_domain_data = dict(original)
+        empty_domain_data["ssty_generators"] = [
+            {**valid_generator, "unicode_domain": []}
+        ]
+        empty_domain_meta = parse_font_meta(
+            empty_domain_data,
+            build_name="empty-ssty-domain",
+            meta_path=path,
+        )
+        self.assertEqual(
+            empty_domain_meta.ssty_generators[0].unicode_domain.ranges,
+            (),
+        )
 
         for field in valid_generator:
             with self.subTest(missing=field):
@@ -342,18 +360,23 @@ class FontMetaLoaderTests(unittest.TestCase):
 
         self.assertIsNone(meta.math_table)
 
-    def test_empty_math_table_is_none(self) -> None:
+    def test_math_table_requires_explicit_constants_file(self) -> None:
         path = PROJECT_DIRECTORY / "meta" / "ascii.json"
-        data = json.loads(path.read_text(encoding="utf-8"))
-        data["math_table"] = {}
+        original = json.loads(path.read_text(encoding="utf-8"))
 
-        meta = parse_font_meta(
-            data,
-            build_name="empty-math",
-            meta_path=path,
-        )
-
-        self.assertIsNone(meta.math_table)
+        for math_table in ({}, {"variants_file": "math.json"}):
+            with self.subTest(math_table=math_table):
+                data = dict(original)
+                data["math_table"] = math_table
+                with self.assertRaisesRegex(
+                    ProjectDataError,
+                    "missing required fields.*constants_file",
+                ):
+                    parse_font_meta(
+                        data,
+                        build_name="missing-math-constants",
+                        meta_path=path,
+                    )
 
     def test_math_table_does_not_accept_enabled_switch(self) -> None:
         path = PROJECT_DIRECTORY / "meta" / "ascii.json"
@@ -382,13 +405,12 @@ class FontMetaLoaderTests(unittest.TestCase):
             "glyph_config_file",
             "accent_file",
             "kerning_file",
+            "ssty_file",
+            "release_info_file",
             "output_stem",
             "math_table",
         ):
             data.pop(key, None)
-        data["glyph_alias_generators"] = None
-        data["ssty_generators"] = None
-        data["math_table"] = None
 
         meta = parse_font_meta(
             data,
@@ -409,8 +431,82 @@ class FontMetaLoaderTests(unittest.TestCase):
         self.assertIsNone(meta.glyph_config_file)
         self.assertIsNone(meta.accent_file)
         self.assertIsNone(meta.kerning_file)
+        self.assertIsNone(meta.ssty_file)
+        self.assertIsNone(meta.release_info_file)
         self.assertEqual(meta.output_stem, "PL46-Ascii")
         self.assertIsNone(meta.math_table)
+
+    def test_meta_fields_reject_explicit_null(self) -> None:
+        path = PROJECT_DIRECTORY / "meta" / "ascii.json"
+        original = json.loads(path.read_text(encoding="utf-8"))
+
+        top_level_fields = (
+            "output_stem",
+            "glyph_alias_generators",
+            "ssty_generators",
+            "glyph_config_file",
+            "accent_file",
+            "kerning_file",
+            "ssty_file",
+            "release_info_file",
+            "math_table",
+        )
+        for field in top_level_fields:
+            with self.subTest(field=field):
+                data = dict(original)
+                data[field] = None
+                with self.assertRaisesRegex(ProjectDataError, field):
+                    parse_font_meta(
+                        data,
+                        build_name="null-meta-field",
+                        meta_path=path,
+                    )
+
+        for field in ("unicode_domain", "mapping_name"):
+            with self.subTest(source_rule_field=field):
+                data = json.loads(path.read_text(encoding="utf-8"))
+                data["source_rules"][1][field] = None
+                with self.assertRaisesRegex(ProjectDataError, field):
+                    parse_font_meta(
+                        data,
+                        build_name="null-source-rule-field",
+                        meta_path=path,
+                    )
+
+        math_file_fields = (
+            "variants_file",
+            "italics_correction_file",
+            "accent_attachment_file",
+            "kern_file",
+        )
+        for field in math_file_fields:
+            with self.subTest(math_file_field=field):
+                data = dict(original)
+                data["math_table"] = {
+                    "constants_file": "math.json",
+                    field: None,
+                }
+                with self.assertRaisesRegex(ProjectDataError, field):
+                    parse_font_meta(
+                        data,
+                        build_name="null-math-file-field",
+                        meta_path=path,
+                    )
+
+        data = dict(original)
+        data["ssty_generators"] = [
+            {
+                "unicode_domain": None,
+                "ssty_alternate_name": "st",
+                "thickness_scale": 1.2,
+            }
+        ]
+        with self.assertRaisesRegex(ProjectDataError, "unicode_domain"):
+            parse_font_meta(
+                data,
+                build_name="null-ssty-domain",
+                meta_path=path,
+            )
 
     def test_required_meta_field_cannot_be_omitted(self) -> None:
         path = PROJECT_DIRECTORY / "meta" / "ascii.json"
@@ -423,6 +519,36 @@ class FontMetaLoaderTests(unittest.TestCase):
                 build_name="broken",
                 meta_path=path,
             )
+
+    def test_weight_class_is_required_and_bounded(self) -> None:
+        path = PROJECT_DIRECTORY / "meta" / "bold.json"
+        original = json.loads(path.read_text(encoding="utf-8"))
+
+        self.assertEqual(
+            parse_font_meta(
+                original,
+                build_name="bold",
+                meta_path=path,
+            ).info.weight_class,
+            700,
+        )
+
+        for value in (None, True, 0, 1001, "700"):
+            with self.subTest(value=value):
+                data = dict(original)
+                if value is None:
+                    del data["weight_class"]
+                else:
+                    data["weight_class"] = value
+                with self.assertRaisesRegex(
+                    ProjectDataError,
+                    "weight_class",
+                ):
+                    parse_font_meta(
+                        data,
+                        build_name="broken-weight",
+                        meta_path=path,
+                    )
 
     def test_math_table_rejects_legacy_variant_fields(self) -> None:
         path = PROJECT_DIRECTORY / "meta" / "ascii.json"
@@ -446,6 +572,37 @@ class FontMetaLoaderTests(unittest.TestCase):
             meta_path=path,
         )
         self.assertIsNone(proportional.glyph_parameters.monospace_width)
+
+    def test_fixed_pitch_requires_monospace_without_math(self) -> None:
+        mono_path = PROJECT_DIRECTORY / "meta" / "mono.json"
+        mono_data = json.loads(mono_path.read_text(encoding="utf-8"))
+
+        mono = parse_font_meta(
+            mono_data,
+            build_name="mono",
+            meta_path=mono_path,
+        )
+        self.assertTrue(mono.info.is_fixed_pitch)
+
+        mono_with_math_data = dict(mono_data)
+        mono_with_math_data["math_table"] = {
+            "constants_file": "math.json",
+        }
+        mono_with_math = parse_font_meta(
+            mono_with_math_data,
+            build_name="mono-with-math",
+            meta_path=mono_path,
+        )
+        self.assertFalse(mono_with_math.info.is_fixed_pitch)
+
+        proportional_data = dict(mono_data)
+        del proportional_data["monospace_width"]
+        proportional = parse_font_meta(
+            proportional_data,
+            build_name="proportional",
+            meta_path=mono_path,
+        )
+        self.assertFalse(proportional.info.is_fixed_pitch)
 
     def test_monospace_width_must_be_positive_when_present(self) -> None:
         path = PROJECT_DIRECTORY / "meta" / "ascii.json"
@@ -518,6 +675,216 @@ class FontMetaLoaderTests(unittest.TestCase):
                 load_build_list(project_directory),
                 ("ascii", "bold"),
             )
+
+
+class ReleaseInfoLoaderTests(unittest.TestCase):
+    fixture_path = (
+        PROJECT_DIRECTORY
+        / "tests"
+        / "fixtures"
+        / "minimal_project"
+        / "data"
+        / "release_info"
+        / "ofl.json"
+    )
+
+    def test_release_info_is_loaded_from_its_data_directory(self) -> None:
+        project_directory = self.fixture_path.parents[2]
+
+        release_info = load_release_info(project_directory, "ofl")
+
+        self.assertEqual(release_info.version, "1.000")
+        self.assertEqual(release_info.version_major, 1)
+        self.assertEqual(release_info.version_minor, 0)
+        self.assertEqual(release_info.designer, "Test Author")
+        self.assertEqual(release_info.vendor_id, "TEST")
+        self.assertEqual(release_info.license.identifier, "OFL-1.1")
+        self.assertEqual(
+            release_info.embedding_permissions,
+            "installable",
+        )
+
+    def test_pl46_release_info_uses_the_selected_identity(self) -> None:
+        release_info = load_release_info(PROJECT_DIRECTORY, "pl46")
+
+        self.assertEqual(release_info.version, "0.100")
+        self.assertEqual(release_info.designer, "u6771")
+        self.assertEqual(
+            release_info.designer_url,
+            "https://github.com/u6771",
+        )
+        self.assertEqual(
+            release_info.copyright,
+            "Copyright (c) 2026, u6771 (https://github.com/u6771),\n"
+            "with Reserved Font Name PL46.",
+        )
+
+    def test_release_info_is_immutable(self) -> None:
+        project_directory = self.fixture_path.parents[2]
+        release_info = load_release_info(project_directory, "ofl")
+
+        with self.assertRaises(FrozenInstanceError):
+            release_info.version = "2.000"
+
+    def test_release_info_requires_non_empty_known_fields(self) -> None:
+        with self.assertRaisesRegex(ProjectDataError, "cannot be empty"):
+            parse_release_info({}, source_path=self.fixture_path)
+
+        unknown = {"unexpected": True}
+        with self.assertRaisesRegex(ProjectDataError, "unexpected"):
+            parse_release_info(unknown, source_path=self.fixture_path)
+
+    def test_release_info_fields_are_independently_optional(self) -> None:
+        designer = parse_release_info(
+            {"designer": "Only Designer"},
+            source_path=self.fixture_path,
+        )
+        self.assertEqual(designer.designer, "Only Designer")
+        self.assertIsNone(designer.version)
+        self.assertIsNone(designer.copyright)
+        self.assertIsNone(designer.license)
+        self.assertIsNone(designer.embedding_permissions)
+
+        version = parse_release_info(
+            {"version": "1.023"},
+            source_path=self.fixture_path,
+        )
+        self.assertEqual(version.version, "1.023")
+        self.assertEqual(version.version_major, 1)
+        self.assertEqual(version.version_minor, 23)
+
+        embedding = parse_release_info(
+            {"embedding_permissions": "editable"},
+            source_path=self.fixture_path,
+        )
+        self.assertEqual(embedding.embedding_permissions, "editable")
+        self.assertIsNone(embedding.license)
+
+    def test_release_info_rejects_explicit_null(self) -> None:
+        fields = (
+            "version",
+            "copyright",
+            "designer",
+            "designer_url",
+            "manufacturer",
+            "manufacturer_url",
+            "description",
+            "trademark",
+            "vendor_id",
+            "license",
+            "embedding_permissions",
+        )
+        for field in fields:
+            with self.subTest(field=field):
+                with self.assertRaisesRegex(ProjectDataError, field):
+                    parse_release_info(
+                        {field: None},
+                        source_path=self.fixture_path,
+                    )
+
+    def test_release_info_rejects_invalid_publication_values(self) -> None:
+        original = json.loads(self.fixture_path.read_text(encoding="utf-8"))
+        cases = (
+            ("version", "1.0"),
+            ("embedding_permissions", "open"),
+            ("vendor_id", "TOO-LONG"),
+            ("designer_url", "example.com/designer"),
+            ("designer_url", "ftp://example.com/designer"),
+            ("designer_url", "file:///tmp/designer"),
+        )
+
+        for field, value in cases:
+            with self.subTest(field=field):
+                data = {**original, field: value}
+                with self.assertRaisesRegex(ProjectDataError, field):
+                    parse_release_info(data, source_path=self.fixture_path)
+
+    def test_release_info_rejects_old_and_unknown_license_fields(self) -> None:
+        original = json.loads(self.fixture_path.read_text(encoding="utf-8"))
+
+        unknown_license = dict(original)
+        unknown_license["license"] = {
+            **original["license"],
+            "identifier": "Custom-1.0",
+        }
+        with self.assertRaisesRegex(ProjectDataError, "unsupported license"):
+            parse_release_info(
+                unknown_license,
+                source_path=self.fixture_path,
+            )
+
+        old_identifier = dict(original)
+        old_identifier["license"] = {"id": "OFL-1.1"}
+        with self.assertRaisesRegex(ProjectDataError, "id"):
+            parse_release_info(
+                old_identifier,
+                source_path=self.fixture_path,
+            )
+
+        structured_rfn = dict(original)
+        structured_rfn["license"] = {
+            **original["license"],
+            "reserved_font_names": ["Test"],
+        }
+        with self.assertRaisesRegex(ProjectDataError, "reserved_font_names"):
+            parse_release_info(
+                structured_rfn,
+                source_path=self.fixture_path,
+            )
+
+    def test_license_url_is_optional(self) -> None:
+        release_info = parse_release_info(
+            {
+                "license": {"identifier": "OFL-1.1"},
+                "embedding_permissions": "installable",
+            },
+            source_path=self.fixture_path,
+        )
+        self.assertIsNotNone(release_info.license)
+        assert release_info.license is not None
+        self.assertIsNone(release_info.license.url)
+
+    def test_license_requires_non_null_identifier_and_url(self) -> None:
+        invalid_licenses = (
+            {},
+            {"identifier": None},
+            {"identifier": "OFL-1.1", "url": None},
+        )
+        for license_data in invalid_licenses:
+            with self.subTest(license=license_data):
+                with self.assertRaisesRegex(
+                    ProjectDataError,
+                    "identifier|url",
+                ):
+                    parse_release_info(
+                        {
+                            "license": license_data,
+                            "embedding_permissions": "installable",
+                        },
+                        source_path=self.fixture_path,
+                    )
+
+    def test_ofl_requires_explicit_installable_embedding(self) -> None:
+        original = json.loads(self.fixture_path.read_text(encoding="utf-8"))
+        for embedding_permissions in (None, "editable"):
+            with self.subTest(embedding_permissions=embedding_permissions):
+                data = {"license": original["license"]}
+                if embedding_permissions is not None:
+                    data["embedding_permissions"] = embedding_permissions
+                with self.assertRaisesRegex(
+                    ProjectDataError,
+                    "explicitly set to 'installable' for OFL-1.1",
+                ):
+                    parse_release_info(data, source_path=self.fixture_path)
+
+        release_info = parse_release_info(
+            {
+                "license": original["license"],
+                "embedding_permissions": "installable",
+            },
+            source_path=self.fixture_path,
+        )
+        self.assertEqual(release_info.embedding_permissions, "installable")
 
 
 class GlyphSourceLoaderTests(unittest.TestCase):
@@ -756,8 +1123,22 @@ class KerningLoaderTests(unittest.TestCase):
         with self.assertRaises(TypeError):
             kerning.groups["new"] = ("A",)  # type: ignore[index]
 
+    def test_empty_kerning_collections_are_valid(self) -> None:
+        for value in ({}, {"groups": {}, "pairs": []}):
+            with self.subTest(value=value):
+                kerning = parse_kerning_data(
+                    value,
+                    source_path=Path("kerning.json"),
+                )
+                self.assertEqual(dict(kerning.groups), {})
+                self.assertEqual(kerning.pairs, ())
+
     def test_kerning_rejects_invalid_group_sides_and_membership(self) -> None:
         invalid_values = (
+            {
+                "groups": {"public.kern1.empty": []},
+                "pairs": [],
+            },
             {
                 "groups": {"group.left": ["A"]},
                 "pairs": [],
@@ -1230,6 +1611,32 @@ class MathTableDataLoaderTests(unittest.TestCase):
                 axis="vertical",
                 source_path=Path("variants.json"),
             )
+
+    def test_optional_assembly_scales_reject_explicit_null(self) -> None:
+        for axis, fields in (
+            ("vertical", ("bottom_scale", "top_scale")),
+            ("horizontal", ("left_scale", "right_scale")),
+        ):
+            for field in fields:
+                with self.subTest(axis=axis, field=field):
+                    with self.assertRaisesRegex(ProjectDataError, field):
+                        _parse_math_variants_axis(
+                            {
+                                "base": {
+                                    "parts": [
+                                        {
+                                            "glyph": "part",
+                                            "start_connector_extent": 0,
+                                            "end_connector_extent": 0,
+                                            field: None,
+                                            "extender": False,
+                                        }
+                                    ]
+                                }
+                            },
+                            axis=axis,
+                            source_path=Path("variants.json"),
+                        )
 
     def test_construction_requires_parts_for_italic_correction(self) -> None:
         with self.assertRaisesRegex(ProjectDataError, "requires parts"):

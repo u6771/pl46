@@ -8,6 +8,12 @@ from typing import Literal, Mapping
 Point = tuple[float, float]
 UnicodeRange = tuple[int, int]
 CapStyle = Literal["round", "flat"]
+EmbeddingPermissions = Literal[
+    "installable",
+    "restricted",
+    "preview_and_print",
+    "editable",
+]
 
 
 @dataclass(frozen=True, slots=True)
@@ -78,7 +84,7 @@ class SourceRule:
 class SstyGenerator:
     """Generate script-style alternates from assembled encoded glyphs."""
 
-    unicode_domain: UnicodeDomain | None
+    unicode_domain: UnicodeDomain
     ssty_alternate_name: str
     thickness_scale: float
 
@@ -160,11 +166,42 @@ class SstyData:
 
 
 @dataclass(frozen=True, slots=True)
+class FontLicense:
+    """Validated license identity shared by one release."""
+
+    identifier: str
+    description: str
+    url: str | None
+
+
+@dataclass(frozen=True, slots=True)
+class ReleaseInfo:
+    """Optional publication metadata applied after design planning."""
+
+    source_path: Path
+    version: str | None
+    version_major: int | None
+    version_minor: int | None
+    copyright: str | None
+    designer: str | None
+    designer_url: str | None
+    manufacturer: str | None
+    manufacturer_url: str | None
+    description: str | None
+    trademark: str | None
+    vendor_id: str | None
+    license: FontLicense | None
+    embedding_permissions: EmbeddingPermissions | None
+
+
+@dataclass(frozen=True, slots=True)
 class FontInfo:
-    """Immutable identity and vertical metrics for one font."""
+    """Immutable identity, classification, and vertical font metrics."""
 
     family: str
     style: str
+    weight_class: int
+    is_fixed_pitch: bool
     units_per_em: int
     ascender: float
     descender: float
@@ -201,6 +238,7 @@ class FontMeta:
     accent_file: str | None
     kerning_file: str | None
     ssty_file: str | None
+    release_info_file: str | None
     output_stem: str
     math_table: MathTableConfig | None
 

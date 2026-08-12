@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
+from typing import Mapping
 
 from ..errors import ProjectDataError
 from ..model import (
@@ -38,6 +39,7 @@ from ._json import (
 META_FIELD_ORDER = (
     "family",
     "style",
+    "weight_class",
     "output_stem",
     "units_per_em",
     "ascender",
@@ -59,6 +61,7 @@ META_FIELD_ORDER = (
     "accent_file",
     "kerning_file",
     "ssty_file",
+    "release_info_file",
     "math_table",
 )
 
@@ -66,6 +69,7 @@ _META_FIELDS = set(META_FIELD_ORDER)
 _REQUIRED_META_FIELDS = {
     "family",
     "style",
+    "weight_class",
     "units_per_em",
     "ascender",
     "descender",
@@ -99,6 +103,7 @@ _MATH_TABLE_FIELDS = {
     "accent_attachment_file",
     "kern_file",
 }
+_REQUIRED_MATH_TABLE_FIELDS = {"constants_file"}
 
 
 def _parse_source_rule(
@@ -113,12 +118,11 @@ def _parse_source_rule(
         location=location,
     )
 
-    mapping_value = data.get("mapping_name")
     mapping_name = (
         None
-        if mapping_value is None
+        if "mapping_name" not in data
         else _safe_name(
-            mapping_value,
+            data["mapping_name"],
             location=f"{location}.mapping_name",
         )
     )
@@ -127,9 +131,13 @@ def _parse_source_rule(
             data.get("source_directory"),
             location=f"{location}.source_directory",
         ),
-        unicode_domain=_parse_unicode_domain(
-            data.get("unicode_domain"),
-            location=f"{location}.unicode_domain",
+        unicode_domain=(
+            None
+            if "unicode_domain" not in data
+            else _parse_unicode_domain(
+                data["unicode_domain"],
+                location=f"{location}.unicode_domain",
+            )
         ),
         include_unencoded=_boolean(
             data.get("include_unencoded", False),
@@ -178,48 +186,52 @@ def _parse_ssty_generator(
 
 
 def _optional_json_filename(
-    value: object | None,
+    data: Mapping[str, object],
+    field_name: str,
     *,
     location: str,
 ) -> str | None:
-    if value is None:
+    if field_name not in data:
         return None
-    return normalize_json_filename(value, location=location)
+    return normalize_json_filename(data[field_name], location=location)
 
 
 def _parse_math_table_config(
-    value: object | None,
+    value: object,
     *,
-    build_name: str,
     location: str,
-) -> MathTableConfig | None:
-    if value is None:
-        return None
-
+) -> MathTableConfig:
     data = _object(value, location=location)
     _reject_unknown_fields(data, _MATH_TABLE_FIELDS, location=location)
-    if not data:
-        return None
+    missing = _REQUIRED_MATH_TABLE_FIELDS - set(data)
+    if missing:
+        raise ProjectDataError(
+            f"{location} is missing required fields: {sorted(missing)}"
+        )
 
     return MathTableConfig(
         constants_file=normalize_json_filename(
-            data.get("constants_file", build_name),
+            data["constants_file"],
             location=f"{location}.constants_file",
         ),
         variants_file=_optional_json_filename(
-            data.get("variants_file"),
+            data,
+            "variants_file",
             location=f"{location}.variants_file",
         ),
         italics_correction_file=_optional_json_filename(
-            data.get("italics_correction_file"),
+            data,
+            "italics_correction_file",
             location=f"{location}.italics_correction_file",
         ),
         accent_attachment_file=_optional_json_filename(
-            data.get("accent_attachment_file"),
+            data,
+            "accent_attachment_file",
             location=f"{location}.accent_attachment_file",
         ),
         kern_file=_optional_json_filename(
-            data.get("kern_file"),
+            data,
+            "kern_file",
             location=f"{location}.kern_file",
         ),
     )
@@ -257,12 +269,11 @@ def parse_font_meta(
         for index, rule in enumerate(raw_source_rules)
     )
 
-    glyph_alias_generators_value = data.get("glyph_alias_generators")
     raw_glyph_alias_generators = (
         ()
-        if glyph_alias_generators_value is None
+        if "glyph_alias_generators" not in data
         else _array(
-            glyph_alias_generators_value,
+            data["glyph_alias_generators"],
             location=f"{location}.glyph_alias_generators",
         )
     )
@@ -273,12 +284,11 @@ def parse_font_meta(
         )
         for index, item in enumerate(raw_glyph_alias_generators)
     )
-    ssty_generators_value = data.get("ssty_generators")
     raw_ssty_generators = (
         ()
-        if ssty_generators_value is None
+        if "ssty_generators" not in data
         else _array(
-            ssty_generators_value,
+            data["ssty_generators"],
             location=f"{location}.ssty_generators",
         )
     )
@@ -292,12 +302,11 @@ def parse_font_meta(
 
     family = _string(data["family"], location=f"{location}.family")
     style = _string(data["style"], location=f"{location}.style")
-    output_value = data.get("output_stem")
     raw_output_stem = (
         f"{family}-{style}"
-        if output_value is None
+        if "output_stem" not in data
         else _string(
-            output_value,
+            data["output_stem"],
             location=f"{location}.output_stem",
         )
     )
@@ -310,6 +319,23 @@ def parse_font_meta(
         location=f"{location}.thickness",
         positive=True,
     )
+    monospace_width = (
+        None
+        if "monospace_width" not in data
+        else _number(
+            data["monospace_width"],
+            location=f"{location}.monospace_width",
+            positive=True,
+        )
+    )
+    math_table = (
+        None
+        if "math_table" not in data
+        else _parse_math_table_config(
+            data["math_table"],
+            location=f"{location}.math_table",
+        )
+    )
 
     return FontMeta(
         build_name=build_name,
@@ -317,6 +343,15 @@ def parse_font_meta(
         info=FontInfo(
             family=family,
             style=style,
+            weight_class=_bounded_integer(
+                data["weight_class"],
+                location=f"{location}.weight_class",
+                minimum=1,
+                maximum=1000,
+            ),
+            is_fixed_pitch=(
+                monospace_width is not None and math_table is None
+            ),
             units_per_em=_bounded_integer(
                 data["units_per_em"],
                 location=f"{location}.units_per_em",
@@ -359,15 +394,7 @@ def parse_font_meta(
                 data.get("y_shift", 0),
                 location=f"{location}.y_shift",
             ),
-            monospace_width=(
-                None
-                if "monospace_width" not in data
-                else _number(
-                    data["monospace_width"],
-                    location=f"{location}.monospace_width",
-                    positive=True,
-                )
-            ),
+            monospace_width=monospace_width,
             left_spacing=_number(
                 data.get("left_spacing", 0),
                 location=f"{location}.left_spacing",
@@ -390,27 +417,32 @@ def parse_font_meta(
         glyph_alias_generators=glyph_alias_generators,
         ssty_generators=ssty_generators,
         glyph_config_file=_optional_json_filename(
-            data.get("glyph_config_file"),
+            data,
+            "glyph_config_file",
             location=f"{location}.glyph_config_file",
         ),
         accent_file=_optional_json_filename(
-            data.get("accent_file"),
+            data,
+            "accent_file",
             location=f"{location}.accent_file",
         ),
         kerning_file=_optional_json_filename(
-            data.get("kerning_file"),
+            data,
+            "kerning_file",
             location=f"{location}.kerning_file",
         ),
         ssty_file=_optional_json_filename(
-            data.get("ssty_file"),
+            data,
+            "ssty_file",
             location=f"{location}.ssty_file",
         ),
-        output_stem=output_stem,
-        math_table=_parse_math_table_config(
-            data.get("math_table"),
-            build_name=build_name,
-            location=f"{location}.math_table",
+        release_info_file=_optional_json_filename(
+            data,
+            "release_info_file",
+            location=f"{location}.release_info_file",
         ),
+        output_stem=output_stem,
+        math_table=math_table,
     )
 
 

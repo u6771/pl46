@@ -274,11 +274,10 @@ def _parse_optional_math_scale(
     *,
     location: str,
 ) -> float | None:
-    value = raw.get(field_name)
-    if value is None:
+    if field_name not in raw:
         return None
     return _number(
-        value,
+        raw[field_name],
         location=f"{location}.{field_name}",
         minimum=0,
     )

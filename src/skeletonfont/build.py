@@ -13,11 +13,12 @@ from .loader import (
     load_glyph_config,
     load_kerning_data,
     load_math_table_data,
+    load_release_info,
     load_ssty_data,
     normalize_meta_name,
 )
 from .math_tables import apply_math_table
-from .model import FontMeta
+from .model import FontMeta, ReleaseInfo
 from .planner import plan_font
 from .renderer import render_font
 
@@ -52,9 +53,15 @@ def _build_font(
     """Run one font build before adding its meta-name error context."""
 
     meta = load_font_meta(project_directory, meta_name)
+    release_info = (
+        None
+        if meta.release_info_file is None
+        else load_release_info(project_directory, meta.release_info_file)
+    )
     return _build_loaded_font(
         project_directory,
         meta,
+        release_info=release_info,
         output_directory=output_directory,
         catalog=catalog,
     )
@@ -64,6 +71,7 @@ def _build_loaded_font(
     project_directory: Path,
     meta: FontMeta,
     *,
+    release_info: ReleaseInfo | None,
     output_directory: Path | None,
     catalog: GlyphCatalog | None,
 ) -> Path:
@@ -104,7 +112,7 @@ def _build_loaded_font(
         ssty_data=ssty_data,
         math_table_data=math_table_data,
     )
-    ufo = render_font(plan)
+    ufo = render_font(plan, release_info=release_info)
     otf = compile_font(ufo)
     if plan.math_table is not None:
         apply_math_table(otf, plan.math_table)
@@ -143,6 +151,20 @@ def build_fonts(
         except ProjectDataError as error:
             raise BuildError(name, error) from error
 
+    release_infos: dict[str, ReleaseInfo | None] = {}
+    for meta in metas:
+        try:
+            release_infos[meta.build_name] = (
+                None
+                if meta.release_info_file is None
+                else load_release_info(
+                    project_directory,
+                    meta.release_info_file,
+                )
+            )
+        except ProjectDataError as error:
+            raise BuildError(meta.build_name, error) from error
+
     metas_by_output: dict[str, list[str]] = {}
     for meta in metas:
         metas_by_output.setdefault(meta.output_stem.casefold(), []).append(
@@ -171,6 +193,7 @@ def build_fonts(
                 _build_loaded_font(
                     project_directory,
                     meta,
+                    release_info=release_infos[meta.build_name],
                     output_directory=output_directory,
                     catalog=catalog,
                 )

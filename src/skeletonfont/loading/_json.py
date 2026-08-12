@@ -271,13 +271,10 @@ def _named_unicode_domain(
 
 
 def _parse_unicode_domain(
-    raw: object | None,
+    raw: object,
     *,
     location: str,
-) -> UnicodeDomain | None:
-    if raw is None:
-        return None
-
+) -> UnicodeDomain:
     if isinstance(raw, str):
         return _named_unicode_domain(raw, location=location)
 

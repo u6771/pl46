@@ -38,6 +38,7 @@ from .loading.meta import (
     load_font_meta,
     parse_font_meta,
 )
+from .loading.release import load_release_info, parse_release_info
 
 
 __all__ = [
@@ -50,6 +51,7 @@ __all__ = [
     "load_glyph_source_directory",
     "load_kerning_data",
     "load_math_table_data",
+    "load_release_info",
     "load_ssty_data",
     "normalize_json_filename",
     "normalize_meta_name",
@@ -63,6 +65,7 @@ __all__ = [
     "parse_math_constants",
     "parse_math_italics_correction",
     "parse_math_kerns",
+    "parse_release_info",
     "parse_ssty",
     "parse_stroke_record",
     "read_json",

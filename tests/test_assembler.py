@@ -250,6 +250,21 @@ class FontAssemblerTests(unittest.TestCase):
         self.assertEqual(dict(assembled.ssty_substitutions), {})
         self.assertEqual(dict(assembled.ssty_alternate_sources), {})
 
+    def test_empty_ssty_domain_is_an_explicit_noop(self) -> None:
+        meta = load_font_meta(PROJECT_DIRECTORY, "ascii")
+        assembled = assemble_font(
+            replace(
+                meta,
+                ssty_generators=(
+                    SstyGenerator(UnicodeDomain(()), "st", 1.4),
+                ),
+            ),
+            self.catalog,
+        )
+
+        self.assertEqual(dict(assembled.ssty_substitutions), {})
+        self.assertEqual(dict(assembled.ssty_alternate_sources), {})
+
     def test_ssty_generators_do_not_mutate_input_glyph_mapping(self) -> None:
         meta = load_font_meta(PROJECT_DIRECTORY, "ascii")
         assembled = assemble_font(
@@ -360,6 +375,28 @@ class FontAssemblerTests(unittest.TestCase):
                 if glyph.codepoint is not None
             },
             set(range(0x41, 0x5B)),
+        )
+
+    def test_empty_unicode_domain_can_select_only_unencoded_glyphs(self) -> None:
+        meta = load_font_meta(PROJECT_DIRECTORY, "math")
+        unencoded_math_rule = replace(
+            meta.source_rules[4],
+            unicode_domain=UnicodeDomain(()),
+            include_unencoded=True,
+            replace_existing=False,
+        )
+        unencoded_meta = replace(
+            meta,
+            source_rules=(meta.source_rules[0], unencoded_math_rule),
+            glyph_alias_generators=(),
+            ssty_generators=(),
+        )
+
+        assembled = assemble_font(unencoded_meta, self.catalog)
+
+        self.assertGreater(len(assembled.glyphs), 1)
+        self.assertTrue(
+            all(glyph.codepoint is None for glyph in assembled.glyphs.values())
         )
 
     def test_unencoded_glyphs_require_explicit_opt_in(self) -> None:

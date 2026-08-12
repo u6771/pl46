@@ -138,6 +138,10 @@ def parse_kerning_data(
                 )
             )
         )
+        if not members:
+            raise ProjectDataError(
+                f"{location}.groups.{name} cannot be empty."
+            )
         if len(members) != len(set(members)):
             raise ProjectDataError(
                 f"{location}.groups.{name} contains duplicate glyphs."
