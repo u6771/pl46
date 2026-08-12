@@ -133,6 +133,10 @@ def _upright_latin_to_bold_latin() -> Iterable[UnicodePair]:
     yield from _paired_ranges(0x0061, 0x007B, 0x1D41A)
 
 
+def _ascii_digits_to_bold_digits() -> Iterable[UnicodePair]:
+    yield from _paired_ranges(0x0030, 0x003A, 0x1D7CE)
+
+
 def _upright_greek_to_bold_greek() -> Iterable[UnicodePair]:
     yield from _paired_ranges(0x0391, 0x03A2, 0x1D6A8)
     yield 0x03F4, 0x1D6B9
@@ -193,6 +197,12 @@ _MAPPING_DEFINITIONS = {
         _styled_name("bold"),
         "upright_latin",
         "bold_latin",
+    ),
+    "ascii_digits_to_bold_digits": (
+        _ascii_digits_to_bold_digits,
+        _styled_name("bold"),
+        "ascii_digits",
+        "bold_digits",
     ),
     "upright_greek_to_bold_greek": (
         _upright_greek_to_bold_greek,

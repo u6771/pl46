@@ -574,6 +574,19 @@ class FontAssemblerTests(unittest.TestCase):
         self.assertEqual(mapping.source_domain, "upright_latin")
         self.assertEqual(mapping.target_domain, "script_latin")
 
+    def test_ascii_digits_map_to_mathematical_bold_digits(self) -> None:
+        mapping = get_mapping("ascii_digits_to_bold_digits")
+
+        self.assertEqual(len(mapping.codepoints), 10)
+        self.assertEqual(mapping.codepoints[ord("0")], 0x1D7CE)
+        self.assertEqual(mapping.codepoints[ord("9")], 0x1D7D7)
+        self.assertEqual(
+            mapping.apply(GlyphIdentity("zero", 0x0030)),
+            GlyphIdentity("zero.bold", 0x1D7CE),
+        )
+        self.assertEqual(mapping.source_domain, "ascii_digits")
+        self.assertEqual(mapping.target_domain, "bold_digits")
+
     def test_mapping_domain_validation_allows_unrestricted_sides(self) -> None:
         mapping = GlyphMapping(
             MappingProxyType({0xE000: 0xE001}),

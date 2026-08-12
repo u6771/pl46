@@ -103,6 +103,9 @@ _DOMAIN_RANGES: Mapping[str, tuple[UnicodeRange, ...]] = MappingProxyType({
     "bold_latin": (
         (0x1D400, 0x1D433),
     ),
+    "bold_digits": (
+        (0x1D7CE, 0x1D7D7),
+    ),
     "bold_greek": (
         (0x1D6A8, 0x1D6E1),
         (0x1D7CA, 0x1D7CB),

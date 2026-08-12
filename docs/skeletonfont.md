@@ -409,7 +409,8 @@ registered name. The loader unions overlapping and adjacent ranges into a
 minimal sorted `UnicodeDomain`; it never expands a range into a set of all its
 codepoints. The registered names are `ascii_digits`, `upright_latin`,
 `upright_greek`, `italic_latin`, `italic_greek`, `script_latin`,
-`fraktur_latin`, `blackboard_latin`, `bold_latin`, and `bold_greek`. Their
+`fraktur_latin`, `blackboard_latin`, `bold_latin`, `bold_digits`, and
+`bold_greek`. Their
 explicit definitions in `unicode_domains.py` are authoritative.
 
 If `mapping_name` is present, the selected source's `(name, codepoint)` identity
@@ -431,6 +432,7 @@ The registered mappings are:
 | `upright_latin_to_fraktur_latin` | `upright_latin` | `fraktur_latin` | `.fraktur` |
 | `upright_latin_to_blackboard_latin` | `upright_latin` | `blackboard_latin` | `.blackboard` |
 | `upright_latin_to_bold_latin` | `upright_latin` | `bold_latin` | `.bold` |
+| `ascii_digits_to_bold_digits` | `ascii_digits` | `bold_digits` | `.bold` |
 | `upright_greek_to_bold_greek` | `upright_greek` | `bold_greek` | `.bold` |
 
 `thickness_scale` defaults to `1` and must be positive. A non-unit value is
