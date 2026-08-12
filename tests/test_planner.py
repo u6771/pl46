@@ -83,7 +83,7 @@ class GlyphConfigLoaderTests(unittest.TestCase):
     def test_math_adjustments_are_typed_and_read_only(self) -> None:
         config = load_glyph_config(PROJECT_DIRECTORY, "math.json")
 
-        self.assertEqual(len(config), 34)
+        self.assertEqual(len(config), 35)
         self.assertEqual(
             config[selector("parenleft@variants")],
             adjustment(left=50.0),
@@ -91,6 +91,10 @@ class GlyphConfigLoaderTests(unittest.TestCase):
         self.assertEqual(
             config[selector("bar@variants")],
             adjustment(left=50.0, right=50.0),
+        )
+        self.assertEqual(
+            config[selector("uni2A2F")],
+            adjustment(left=100.0, right=100.0),
         )
         with self.assertRaises(TypeError):
             config[selector("A")] = GlyphAdjustment()  # type: ignore[index]
