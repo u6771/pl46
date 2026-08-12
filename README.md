@@ -27,9 +27,9 @@ PL46 currently provides the following font files:
 | `PL46-Bold.otf` | Latin alphabet | 97 |
 | `PL46-Fraktur.otf` | Latin alphabet | 97 |
 | `PL46-Script.otf` | Latin alphabet | 97 |
-| `PL46-Math.otf` | Latin and Greek alphabets and mathematical symbols | 1754 |
+| `PL46-Math.otf` | Latin and Greek alphabets and mathematical symbols | 1761 |
 
-You can download them from [here]().
+You can download them from [here](https://github.com/u6771/pl46/releases).
 
 If needed, you can browse the complete glyph set by dragging the downloaded font files into [FontDrop!](https://fontdrop.info).
 
@@ -74,7 +74,27 @@ Users of `tikz` and `tikz-cd` can use the following settings to make arrows in `
 ## Repository layout
 
 - [`glyph_sources/`](glyph_sources/): normalized glyph skeleton sources
+- [`glyph_sources/miscellaneous/`](glyph_sources/miscellaneous/): a design
+  archive of alternative glyph sources that are not used by the current builds
 - [`meta/`](meta/): font build definitions
 - [`data/`](data/): glyph configuration, accent, kerning, ssty, and MATH table inputs
-- [`tests/`](tests/): build system tests
-- [`tex/`](tex/): TeX font specimens and regression documents
+- [`src/skeletonfont/`](src/skeletonfont/): the `skeletonfont` Python package
+- [`tools/skeletonfont_editor/`](tools/skeletonfont_editor/): the graphical
+  editor for glyph skeleton sources
+- [`tests/`](tests/): tests for `skeletonfont` and the editor
+- [`docs/`](docs/): the `skeletonfont` handbook and build guide, together with
+  TeX font specimens and their rendered images
+- [`build_list.json`](build_list.json): the meta names built when none are given
+  on the command line
+- [`pyproject.toml`](pyproject.toml): Python package metadata, dependencies, and
+  the `skeletonfont-build` command definition
+
+## License
+
+The generated fonts and the source data in [`glyph_sources/`](glyph_sources/),
+[`meta/`](meta/), and [`data/`](data/) are licensed under the
+[SIL Open Font License, Version 1.1](OFL.txt).
+
+The Python code in [`src/`](src/), the editor in
+[`tools/skeletonfont_editor/`](tools/skeletonfont_editor/), the tests, and the
+documentation and examples are licensed under the [MIT License](MIT.txt).

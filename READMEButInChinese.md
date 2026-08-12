@@ -27,7 +27,7 @@ PL46 是一族以端点坐标为整数的线段作为基本造型元素的 OpenT
 | `PL46-Bold.otf` | 拉丁字母 | 97 |
 | `PL46-Fraktur.otf` | 拉丁字母 | 97 |
 | `PL46-Script.otf` | 拉丁字母 | 97 |
-| `PL46-Math.otf` | 拉丁字母、希腊字母、数学符号 | 1754 |
+| `PL46-Math.otf` | 拉丁字母、希腊字母、数学符号 | 1761 |
 
 你可以从[这里](https://github.com/u6771/pl46/releases)下载它们。
 
@@ -75,7 +75,24 @@ PL46 是一族以端点坐标为整数的线段作为基本造型元素的 OpenT
 ## 仓库结构
 
 - [`glyph_sources/`](glyph_sources/)：规范化的字形骨架源数据
+- [`glyph_sources/miscellaneous/`](glyph_sources/miscellaneous/)：不参与当前构建的
+  备用字形源与设计存档
 - [`meta/`](meta/)：字体构建定义
 - [`data/`](data/)：字形配置、重音、字距调整、ssty 和 MATH 表输入
-- [`tests/`](tests/)：构建系统测试
-- [`tex/`](tex/)：TeX 字体示例与回归文档
+- [`src/skeletonfont/`](src/skeletonfont/)：`skeletonfont` Python 包
+- [`tools/skeletonfont_editor/`](tools/skeletonfont_editor/)：用于编辑字形骨架源数据的
+  图形化编辑器
+- [`tests/`](tests/)：`skeletonfont` 与编辑器的测试
+- [`docs/`](docs/)：`skeletonfont` 手册、构建指南、TeX 字体示例及其渲染图像
+- [`build_list.json`](build_list.json)：命令行中未指定 meta 名称时采用的默认构建列表
+- [`pyproject.toml`](pyproject.toml)：Python 包的元数据、依赖项以及
+  `skeletonfont-build` 命令定义
+
+## 许可证
+
+生成的字体以及 [`glyph_sources/`](glyph_sources/)、[`meta/`](meta/) 和
+[`data/`](data/) 中的源数据采用 [SIL Open Font License 1.1](OFL.txt)。
+
+位于 [`src/`](src/) 中的 Python 代码、
+[`tools/skeletonfont_editor/`](tools/skeletonfont_editor/)
+中的编辑器、测试、文档与示例采用 [MIT License](MIT.txt)。
