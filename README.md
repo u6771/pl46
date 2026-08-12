@@ -9,6 +9,7 @@ PL46 is a family of OpenType fonts built from line segments whose endpoint coord
 This font is currently under construction—its glyphs, spacing, and metrics may yet be adjusted or changed.
 
 ## Font specimens
+
 <p align="center">
   <img src="docs/png/lang.png" alt="lang" width=49%>
   <img src="docs/png/jp.png" alt="jp" width=49%>
@@ -18,6 +19,7 @@ This font is currently under construction—its glyphs, spacing, and metrics may
 </p>
 
 ## Font family
+
 PL46 currently provides the following font files:
 
 | Filename | Coverage | Glyph count |
@@ -34,27 +36,33 @@ You can download them from [here](https://github.com/u6771/pl46/releases).
 If needed, you can browse the complete glyph set by dragging the downloaded font files into [FontDrop!](https://fontdrop.info).
 
 ## skeletonfont
+
 To build this font family, we developed a separate Python package called `skeletonfont`, located in the repository's [`src/`](src/) directory. It turns skeleton data describing the paths of glyph strokes into displayable glyph outlines, then writes additional information such as kerning and mathematical typesetting data into the finished fonts. You can learn more in [The skeletonfont Handbook](docs/skeletonfont.md).
 
 ### Building from source
+
 This project requires Python 3.10 or later. See [The skeletonfont Build Guide](docs/building.md) for installation and build commands.
 
 ## Using PL46 in Microsoft Word
+
 If you want to enable PL46's OpenType features in Word, such as kerning in *PL46 Fraktur* and the cursive joins in *PL46 Script*, first make sure that the document is not in **Compatibility Mode**. For an older document, use **File → Info → Convert** to upgrade its format; then save, close, and reopen it. Simply saving the document as `.docx` may not take it out of the older compatibility mode.
 
 ## Using PL46 with XeLaTeX or LuaLaTeX
+
 ### With `unicode-math`
+
 The following example loads the fonts by name, so the corresponding OTF files must first be installed on your system:
 ```tex
 \usepackage[mathrm=sym,mathbf=sym]{unicode-math}
-\setmainfont[BoldFont=PL46-Bold]{PL46-Mono}
-\setmathfont{PL46-Math}
+\setmainfont[BoldFont=PL46 Bold]{PL46 Mono}
+\setmathfont{PL46 Math}
 ```
 This sets PL46 as the document's text and mathematical typeface.
 
 For testing directly within the repository, see the examples in the [`docs/tex/`](docs/tex/) directory.
 
 ### Styling `tikz` arrows
+
 Users of `tikz` and `tikz-cd` can use the following settings to make arrows in `tikz` environments match the style of the font:
 ```tex
 \usetikzlibrary{arrows.meta}
