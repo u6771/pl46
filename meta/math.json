@@ -55,6 +55,10 @@
       "mapping_name": "upright_latin_to_bold_latin"
     },
     {
+      "source_directory": "bold",
+      "mapping_name": "ascii_digits_to_bold_digits"
+    },
+    {
       "source_directory": "uni6771",
       "unicode_domain": [["6771"]]
     }

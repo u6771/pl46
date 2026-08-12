@@ -29,7 +29,7 @@ PL46 currently provides the following font files:
 | `PL46-Bold.otf` | Latin alphabet | 97 |
 | `PL46-Fraktur.otf` | Latin alphabet | 97 |
 | `PL46-Script.otf` | Latin alphabet | 97 |
-| `PL46-Math.otf` | Latin and Greek alphabets and mathematical symbols | 1761 |
+| `PL46-Math.otf` | Latin and Greek alphabets and mathematical symbols | 1771 |
 
 You can download them from [here](https://github.com/u6771/pl46/releases).
 
