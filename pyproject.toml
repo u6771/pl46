@@ -1,13 +1,17 @@
 [build-system]
-requires = ["setuptools>=68"]
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "skeletonfont"
 version = "0.1.0"
 description = "Build OpenType fonts from normalized skeleton sources."
-license = { file = "MIT.txt" }
+license = "MIT"
+license-files = ["MIT.txt"]
 requires-python = ">=3.10"
+authors = [
+    { name = "u6771" },
+]
 dependencies = [
     "cffsubr==0.4.0",
     "fonttools==4.62.1",
@@ -15,6 +19,10 @@ dependencies = [
     "ufo2ft==3.8.2",
     "ufoLib2==0.18.1",
 ]
+
+[project.urls]
+Repository = "https://github.com/u6771/pl46"
+Documentation = "https://github.com/u6771/pl46/blob/main/docs/skeletonfont.md"
 
 [project.scripts]
 skeletonfont-build = "skeletonfont.cli:main"
