@@ -1,4 +1,9 @@
-\documentclass[border=1.5cm,varwidth=10cm]{standalone}
+\documentclass[crop=false,preview=false]{standalone}
+\usepackage[
+  paperwidth=14cm,
+  paperheight=10.5cm,
+  margin=0cm
+]{geometry}
 
 \usepackage{fontspec}
 \newfontfamily\ascii[Path=../../build/otf/]{PL46-Ascii.otf}
@@ -7,6 +12,10 @@
 \usepackage{lipsum}
 
 \begin{document}
+\noindent
+\begin{minipage}[c][\textheight][c]{\textwidth}
+\centering
+\begin{minipage}{10cm}
 \setlength{\parindent}{2em}
 
 \noindent
@@ -26,4 +35,6 @@
 {\ascii \scriptsize MONO CYRILLIC:}
 
 {\mono Это пример русского текста, предназначенного для проверки оформления документа, выбора шрифта, межстрочного расстояния, переносов слов и расположения текста на странице.}
+\end{minipage}
+\end{minipage}
 \end{document}

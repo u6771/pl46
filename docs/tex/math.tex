@@ -1,4 +1,9 @@
-\documentclass[border=1.5cm,varwidth=12cm]{standalone}
+\documentclass[crop=false,preview=false]{standalone}
+\usepackage[
+  paperwidth=16cm,
+  paperheight=12cm,
+  margin=0cm
+]{geometry}
 
 \usepackage[mathrm=sym,mathbf=sym]{unicode-math}
 \setmathfont[Path=../../build/otf/]{PL46-Math.otf}
@@ -11,6 +16,10 @@
 \newtheorem{theorem}{Theorem}
 
 \begin{document}
+\noindent
+\begin{minipage}[c][\textheight][c]{\textwidth}
+\centering
+\begin{minipage}{12cm}
 \begin{theorem}[Residue theorem]
   Let $f$ be analytic in the region $G$ except for the isolated
   singularities $a_1,a_2,\dots,a_m$. If $\gamma$ is a closed
@@ -44,4 +53,6 @@ and also on display
   \frac{\Vert w\oplus z\Vert}{\vert x\oplus y\vert}
   \Biggr\}\Biggr)\,.
 \]
+\end{minipage}
+\end{minipage}
 \end{document}

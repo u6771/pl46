@@ -1,56 +1,80 @@
-# PL46
+<p align="center">
+  <img src="docs/png/pl46.png" width="200"/>
+</p>
 
-PL46 is a work-in-progress geometric typeface family built from normalized
-skeleton sources. The project includes text, display, mathematical, script, and
-Fraktur-oriented styles, with PL46-Math providing OpenType MATH and `ssty`
-support.
+English | [中文](READMEButInChinese.md)
 
-## Fonts
+PL46 is a family of OpenType fonts built from line segments whose endpoint coordinates are integers. It covers the Latin, Greek, and Cyrillic alphabets as well as Japanese kana, with Fraktur and Script alternatives available for the Latin letters. For the「Mado・Scientisto」who enjoys fiddling with equations, the family also provides OpenType MATH support. This means you can use it with XeLaTeX, LuaLaTeX, etc. (¦3【▓▓】
 
-Current builds are written to [`build/otf/`](build/otf/):
+This font is currently under construction—its glyphs, spacing, and metrics may yet be adjusted or changed.
 
-- `PL46-Ascii`
-- `PL46-Bold`
-- `PL46-Fraktur`
-- `PL46-JP`
-- `PL46-Math`
-- `PL46-Mono`
-- `PL46-Script`
+## Font specimens
+<p align="center">
+  <img src="docs/png/lang.png" alt="lang" width=49%>
+  <img src="docs/png/jp.png" alt="jp" width=49%>
+  <br>
+  <img src="docs/png/style.png" alt="style" width=49%>
+  <img src="docs/png/math.png" alt="math" width=49%>
+</p>
 
-The available glyph coverage and individual designs are evolving; the files in
-this repository should be treated as development builds.
+## Font family
+PL46 currently provides the following font files:
 
-## Math typesetting
+| Filename | Coverage | Glyph count |
+| --- | --- | --- |
+| `PL46-Mono.otf` | Latin, Greek, and Cyrillic alphabets | 550 |
+| `PL46-JP.otf` | Latin alphabet and Japanese kana | 297 |
+| `PL46-Bold.otf` | Latin alphabet | 97 |
+| `PL46-Fraktur.otf` | Latin alphabet | 97 |
+| `PL46-Script.otf` | Latin alphabet | 97 |
+| `PL46-Math.otf` | Latin and Greek alphabets and mathematical symbols | 1754 |
 
-PL46-Math can be tested with XeLaTeX or LuaLaTeX and `unicode-math`:
+You can download them from [here]().
 
+If needed, you can browse the complete glyph set by dragging the downloaded font files into [FontDrop!](https://fontdrop.info).
+
+## skeletonfont
+To build this font family, we developed a separate Python package called `skeletonfont`, located in the repository's [`src/`](src/) directory. It turns skeleton data describing the paths of glyph strokes into displayable glyph outlines, then writes additional information such as kerning and mathematical typesetting data into the finished fonts. You can learn more in [The skeletonfont Handbook](docs/skeletonfont.md).
+
+### Building from source
+This project requires Python 3.10 or later. See [The skeletonfont Build Guide](docs/building.md) for installation and build commands.
+
+## Using PL46 in Microsoft Word
+If you want to enable PL46's OpenType features in Word, such as kerning in *PL46 Fraktur* and the cursive joins in *PL46 Script*, first make sure that the document is not in **Compatibility Mode**. For an older document, use **File → Info → Convert** to upgrade its format; then save, close, and reopen it. Simply saving the document as `.docx` may not take it out of the older compatibility mode.
+
+## Using PL46 with XeLaTeX or LuaLaTeX
+### With `unicode-math`
+The following example loads the fonts by name, so the corresponding OTF files must first be installed on your system:
 ```tex
-\usepackage{unicode-math}
-\setmathfont[Path=build/otf/]{PL46-Math.otf}
+\usepackage[mathrm=sym,mathbf=sym]{unicode-math}
+\setmainfont[BoldFont=PL46-Bold]{PL46-Mono}
+\setmathfont{PL46-Math}
 ```
+This sets PL46 as the document's text and mathematical typeface.
 
-The repository's [`tex/`](tex/) directory contains example documents and
-positioning tests.
+For testing directly within the repository, see the examples in the [`docs/tex/`](docs/tex/) directory.
 
-## Build from source
-
-The project requires Python 3.10 or later. See the
-[build guide](docs/building.md) for setup and commands.
-
-## Development documentation
-
-PL46 is built by the in-repository `skeletonfont` toolchain. Its data model,
-assembly pipeline, MATH-table inputs, and project schema are documented in
-[skeletonfont architecture](docs/skeletonfont.md).
-
-```text
-load -> assemble -> plan -> render -> compile
+### Styling `tikz` arrows
+Users of `tikz` and `tikz-cd` can use the following settings to make arrows in `tikz` environments match the style of the font:
+```tex
+\usetikzlibrary{arrows.meta}
+\tikzset{
+  every path/.append style={
+    line width=.05em
+  },
+  >={Straight Barb[
+    length=.2em,
+    width=.4em,
+    round
+  ]}
+}
+\tikzcdset{arrow style=tikz}
 ```
 
 ## Repository layout
 
-- [`glyph_sources/`](glyph_sources/) - normalized glyph skeleton sources
-- [`meta/`](meta/) - font-build definitions
-- [`data/`](data/) - glyph configuration, accent, kerning, ssty, and MATH-table inputs
-- [`tests/`](tests/) - build-system tests
-- [`tex/`](tex/) - TeX specimens and regression documents
+- [`glyph_sources/`](glyph_sources/): normalized glyph skeleton sources
+- [`meta/`](meta/): font build definitions
+- [`data/`](data/): glyph configuration, accent, kerning, ssty, and MATH table inputs
+- [`tests/`](tests/): build system tests
+- [`tex/`](tex/): TeX font specimens and regression documents

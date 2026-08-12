@@ -1,8 +1,8 @@
-# skeletonfont architecture
+# The skeletonfont Handbook
 
-This document describes the in-repository `skeletonfont` package used to build
-PL46. It is developer documentation for the build system; the [root
-README](../README.md) describes the font project itself.
+This document describes the in-repository `skeletonfont` package and its
+project-data contract. It is developer documentation for the build system; the
+[root README](../README.md) describes the font project that uses it.
 
 ## Contents
 
@@ -15,7 +15,7 @@ README](../README.md) describes the font project itself.
 - [MATH planning](#math-planning)
 - [Rendering and geometry](#rendering-and-geometry)
 - [Compilation and output](#compilation-and-output)
-- [CLI and tests](#cli-and-tests)
+- [CLI orchestration and testing](#cli-orchestration-and-testing)
 
 ## Pipeline and module boundaries
 
@@ -35,7 +35,7 @@ JSON files
 | load | project JSON | parse, normalize, and validate individual files | immutable input objects |
 | assemble | `FontMeta` and glyph catalogs | select, map, replace, alias, and generate the glyph set | `AssembledFont` |
 | plan | assembled glyphs and loaded auxiliary data | resolve roles, metrics, transforms, spacing, and MATH records | `FontPlan` |
-| render | `FontPlan` | expand skeletons and create an in-memory UFO | `ufoLib2.Font` |
+| render | `FontPlan` and optional `ReleaseInfo` | expand skeletons and create an in-memory UFO with font metadata | `ufoLib2.Font` |
 | compile | UFO and optional MATH plan | compile CFF OpenType data and attach MATH | `TTFont`, then one OTF file |
 
 No stage reads a file that belongs to a later stage. In particular,
@@ -46,7 +46,7 @@ implementations are split by domain:
 
 ```text
 loading/
-  _json.py   meta.py   glyphs.py   layout.py   math.py
+  _json.py   meta.py   release.py   glyphs.py   layout.py   math.py
 
 planning/
   core.py    glyphs.py   roles.py   spacing.py   ssty.py
@@ -68,6 +68,7 @@ The project directories consumed by the package are:
 | `data/accent/` | combining-accent role lists |
 | `data/glyph_config/` | per-glyph spacing adjustments |
 | `data/kerning/` | kerning groups and pairs |
+| `data/release_info/` | optional shared publication metadata |
 | `data/ssty/` | explicitly authored ssty substitutions |
 | `data/math_table/constants/` | complete MathConstants objects |
 | `data/math_table/variants/` | discrete variants and assemblies |
@@ -89,7 +90,10 @@ full stroke thickness; loading stores `GlyphParameters.radius = thickness / 2`.
 All JSON objects reject duplicate keys. Unknown fields are rejected rather than
 ignored. Glyph-like names use the characters `[A-Za-z0-9_.-]` only; they cannot
 be empty and cannot contain whitespace, `/`, or `@`. A filename field may omit
-the `.json` suffix, which the loader adds during normalization.
+the `.json` suffix, which the loader adds during normalization. An optional
+field uses its default only when the field is omitted; an explicit `null` is an
+error unless the schema documents a data-specific meaning. The project-schema
+exception is glyph-source `unicode`, where `null` means unencoded.
 
 ## Glyph-source schema
 
@@ -156,17 +160,20 @@ Meta fields have one canonical order:
 
 | Group | Fields, in order |
 | --- | --- |
-| identity | `family`, `style`, `output_stem` |
+| identity | `family`, `style`, `weight_class`, `output_stem` |
 | font metrics | `units_per_em`, `ascender`, `descender`, `cap_height`, `x_height` |
 | geometry | `grid`, `thickness`, `point_radius_scale`, `y_shift`, `use_scaled_edge_thickness` |
 | horizontal metrics | `monospace_width`, `left_spacing`, `right_spacing` |
 | glyph set | `source_rules`, `glyph_alias_generators`, `ssty_generators` |
-| auxiliary data | `glyph_config_file`, `accent_file`, `kerning_file`, `ssty_file`, `math_table` |
+| auxiliary data | `glyph_config_file`, `accent_file`, `kerning_file`, `ssty_file`, `release_info_file`, `math_table` |
 
-The required fields are `family`, `style`, `units_per_em`, `ascender`,
-`descender`, `cap_height`, `x_height`, `grid`, `thickness`, and a non-empty
-`source_rules` array. `units_per_em` must be 16 through 16384. Serialized font
-metrics must fit the signed OpenType FWORD range.
+The required fields are `family`, `style`, `weight_class`, `units_per_em`,
+`ascender`, `descender`, `cap_height`, `x_height`, `grid`, `thickness`, and a
+non-empty `source_rules` array. `weight_class` is written explicitly in every
+meta and must be 1 through 1000; there is no default or inherited family value.
+The conventional values include 400 for Regular and 700 for Bold.
+`units_per_em` must be 16 through 16384. Serialized font metrics must fit the
+signed OpenType FWORD range.
 
 For example, the repository's [minimal project
 fixture](../tests/fixtures/minimal_project/) uses this complete build meta. The
@@ -177,6 +184,7 @@ the encoded glyphs used by the test build:
 {
   "family": "Test",
   "style": "Regular",
+  "weight_class": 400,
   "units_per_em": 1000,
   "ascender": 850,
   "descender": -200,
@@ -209,12 +217,19 @@ Optional defaults are:
 | `left_spacing`, `right_spacing` | `0` |
 | `glyph_alias_generators` | no aliases |
 | `ssty_generators` | no generated script-style alternates |
-| `glyph_config_file`, `accent_file`, `kerning_file`, `ssty_file` | no file |
+| `glyph_config_file`, `accent_file`, `kerning_file`, `ssty_file`, `release_info_file` | no file |
 | `math_table` | MATH disabled |
 
-`output_stem`, the two generator arrays, the four auxiliary filenames, and
-`math_table` may also be `null`. Omitting them is preferred when the default is
-intended. `monospace_width` is enabled by presence and is not nullable.
+These defaults apply only when the field is omitted. Explicit `null` does not
+select a default. `monospace_width` is enabled by presence.
+
+`monospace_width` controls ordinary-glyph layout, while the font-wide
+`post.isFixedPitch` classification is derived rather than authored. It is
+non-zero only when `monospace_width` is present and MATH is disabled. A
+non-empty `math_table` always makes the font non-fixed because variant bases,
+discrete variants, and assembly parts may use proportional advances. Zero-width
+combining accents do not prevent a non-MATH monospace build from being fixed
+pitch.
 
 ### File-field path resolution
 
@@ -230,6 +245,7 @@ added automatically.
 | `accent_file` | `data/accent/<accent_file>` |
 | `kerning_file` | `data/kerning/<kerning_file>` |
 | `ssty_file` | `data/ssty/<ssty_file>` |
+| `release_info_file` | `data/release_info/<release_info_file>` |
 | `math_table.constants_file` | `data/math_table/constants/<constants_file>` |
 | `math_table.variants_file` | `data/math_table/variants/<variants_file>` |
 | `math_table.italics_correction_file` | `data/math_table/italics_correction/<italics_correction_file>` |
@@ -241,12 +257,102 @@ For example, `"kerning_file": "mono"` loads
 `source_directory` is different: it is not a filename and may identify a safe
 nested path such as `"math/delimiters"`.
 
-`math_table` is either absent/`null`, an empty object, or an object containing
-one or more filenames. The first three forms disable MATH. A non-empty object
-enables MATH and always loads a constants file; `constants_file` defaults to the
-meta build name. The recognized fields are `constants_file`, `variants_file`,
-`italics_correction_file`, `accent_attachment_file`, and `kern_file`. For
-example, [`meta/math.json`](../meta/math.json) uses:
+### Release-info schema
+
+`release_info_file` is optional because publication metadata is not needed to
+design or test a font. A referenced file is a non-empty collection of
+independent optional fields: `skeletonfont` validates and writes only the
+fields that appear. Unknown fields, duplicate JSON keys, and explicit `null`
+values are errors. There is no separate release-mode CLI switch.
+
+This fixture supplies every supported field:
+[`data/release_info/ofl.json`](../tests/fixtures/minimal_project/data/release_info/ofl.json):
+
+```json
+{
+  "version": "1.000",
+  "copyright": "Copyright 2026 Test Author",
+  "designer": "Test Author",
+  "designer_url": "https://example.com/designer",
+  "manufacturer": "Test Foundry",
+  "manufacturer_url": "https://example.com/foundry",
+  "description": "A release-info integration test font.",
+  "trademark": "Test is a trademark of Test Author.",
+  "vendor_id": "TEST",
+  "license": {
+    "identifier": "OFL-1.1",
+    "url": "https://openfontlicense.org"
+  },
+  "embedding_permissions": "installable"
+}
+```
+
+The fields map independently to font metadata:
+
+| Release-info field | Output |
+| --- | --- |
+| `version` | name ID 5, CFF version, and `head.fontRevision` |
+| `copyright` | name ID 0 and CFF Copyright |
+| `designer`, `designer_url` | name IDs 9 and 12 |
+| `manufacturer`, `manufacturer_url` | name IDs 8 and 11 |
+| `description` | name ID 10 |
+| `trademark` | name ID 7 |
+| `vendor_id` | `OS/2.achVendID` |
+| `license` | name ID 13 and optional name ID 14 |
+| `embedding_permissions` | `OS/2.fsType` |
+
+All text values must be non-empty strings. URLs must be absolute HTTP or HTTPS
+URLs. `vendor_id` must contain exactly four ASCII letters or digits. A field
+that is not needed is omitted rather than set to `null`.
+
+The release `version` is the single authored version source. For example,
+`"1.023"` becomes name ID 5 `Version 1.023`, the corresponding CFF version,
+and the nearest representable 16.16 fixed-point `head.fontRevision`. Name ID 5
+preserves the authored three decimal digits exactly; `head.fontRevision` may
+show binary fixed-point rounding when read back—for example, `0.100` becomes
+approximately `0.1000061`. The major component must be at most 32767. The minor
+component is always exactly three decimal digits in JSON, including trailing
+zeros.
+
+The `license` object requires `identifier`; its optional `url` produces name ID
+14. Identifiers are resolved to known name-table text, and the current
+implementation supports `OFL-1.1`. The old field name `id` is not accepted.
+When `OFL-1.1` is selected, `embedding_permissions` must also be present and
+equal `installable`; this requirement prevents the compiler's default `fsType`
+from contradicting the selected license. Without a license,
+`embedding_permissions` remains independently optional.
+
+The authored `copyright` string is written unchanged. When a project declares
+Reserved Font Names, it must include the complete RFN statement directly in
+`copyright`; `skeletonfont` does not parse or generate that statement. The full
+standalone license remains a project packaging responsibility: release-info
+loading neither reads nor generates `OFL.txt`.
+
+`embedding_permissions` accepts the following readable values:
+
+| Value | OS/2 `fsType` |
+| --- | ---: |
+| `installable` | 0 |
+| `restricted` | 2 |
+| `preview_and_print` | 4 |
+| `editable` | 8 |
+
+Release information is shared by reference, so several build metas can name
+the same file without duplicating version or licensing text. Once a meta names
+a release-info file, a missing file, empty object, unsupported identifier, or
+invalid value is a build error.
+
+Omitting `release_info_file`, or omitting an individual field from a referenced
+file, leaves that field unset. The current `ufo2ft` defaults include name ID 5
+`Version 0.000`, `head.fontRevision` 0.0, vendor ID `NONE`, and `fsType` 4 when
+their corresponding release fields are absent. These are compiler defaults,
+not values inferred by `skeletonfont`.
+
+`math_table` is either absent or an object containing filenames. Absence
+disables MATH. An object enables MATH and must explicitly contain
+`constants_file`; an empty object is invalid. The optional fields are
+`variants_file`, `italics_correction_file`, `accent_attachment_file`, and
+`kern_file`. For example, [`meta/math.json`](../meta/math.json) uses:
 
 ```json
 {
@@ -282,7 +388,9 @@ meta order. This source rule is taken from [`meta/math.json`](../meta/math.json)
 Only `source_directory` is required. An encoded source matches when its
 codepoint is in `unicode_domain`; omitting the domain accepts every encoded
 source. An unencoded source is controlled independently by `include_unencoded`,
-whose default is `false`.
+whose default is `false`. Explicit `null` is invalid. An empty domain array
+selects no encoded glyphs, so `[]` together with `include_unencoded: true`
+selects only unencoded glyphs.
 
 `unicode_domain` accepts either one registered name or an array containing
 registered names and literal ranges. The source rule above uses this literal
@@ -390,9 +498,11 @@ uses this generator:
 }
 ```
 
-All three fields are required. Current alternate namers are `st` and `sts`,
-which append `.st` and `.sts` to the base name. Eligible bases include both
-assembled encoded glyphs and encoded aliases; an alias uses its assembled
+All three fields are required and cannot be `null`. `unicode_domain` accepts the
+same names, ranges, and unions as a source-rule domain. An empty array is an
+explicit no-op and generates no alternates. Current alternate namers are `st`
+and `sts`, which append `.st` and `.sts` to the base name. Eligible bases include
+both assembled encoded glyphs and encoded aliases; an alias uses its assembled
 source's geometry but its own target name as the GSUB base. Each generator
 selects bases by Unicode, scales the original assembled skeleton, and creates an
 unencoded alternate. Generated alternates are not fed into later generators.
@@ -573,9 +683,11 @@ because its target is unambiguous.
 
 Kerning JSON has optional `groups` and `pairs` fields. Left groups must be named
 `public.kern1.*`; right groups must be named `public.kern2.*`. A glyph may belong
-to at most one group on each side. A pair is `[left, right, value]`; it cannot
-put a right group on the left or a left group on the right, and duplicate pairs
-are rejected. This self-contained subset comes from
+to at most one group on each side, and every named group must contain at least
+one glyph. The `groups` object and `pairs` array may themselves be empty. A pair
+is `[left, right, value]`; it cannot put a right group on the left or a left
+group on the right, and duplicate pairs are rejected. This self-contained
+subset comes from
 [`data/kerning/fraktur.json`](../data/kerning/fraktur.json):
 
 ```json
@@ -803,10 +915,13 @@ entry. An empty height array therefore describes a constant kern.
 
 ## Rendering and geometry
 
-`render_font()` creates an in-memory `ufoLib2.Font`, copies font information and
-planned widths, expands every `StrokePlan`, then creates glyph aliases. It does
-not load configuration, recalculate metrics, save a UFO, or compile an OTF.
-Kerning and the planned ssty feature text are copied into the UFO.
+`render_font()` creates an in-memory `ufoLib2.Font`, writes the explicit
+`weight_class`, writes the derived fixed-pitch classification, copies font
+metrics and planned widths, expands every `StrokePlan`, then creates glyph
+aliases. When supplied, `ReleaseInfo` is mapped to UFO version, name, vendor,
+and embedding-permission fields before compilation. Rendering does not load
+configuration, recalculate metrics, save a UFO, or compile an OTF. Kerning and
+the planned ssty feature text are copied into the UFO.
 
 `.notdef` is a normal unencoded source glyph through assembly, planning, and
 rendering. Assembly fails if it is absent.
@@ -831,9 +946,11 @@ union, and final simplification; it is not a second stroke-expansion backend.
 ## Compilation and output
 
 `compile_font()` passes the in-memory UFO directly to `ufo2ft.compileOTF()` and
-returns an in-memory CFF `TTFont`. It keeps overlaps because rendering has
-already unioned each glyph, preserves planned glyph names, and does not mutate
-the input UFO.
+returns an in-memory CFF `TTFont`. UFO publication metadata becomes OpenType
+name records, `head.fontRevision`, OS/2 `usWeightClass`, `achVendID`, and
+`fsType`, plus `post.isFixedPitch`. Compilation keeps overlaps because
+rendering has already unioned each glyph, preserves planned glyph names, and
+does not mutate the input UFO.
 
 `.notdef` is explicitly ordered at GID 0. Other encoded glyphs are ordered by
 ascending Unicode, followed by unencoded glyphs in glyph-name order. GID
@@ -851,40 +968,17 @@ planning and compiled with the UFO's other GSUB data.
 atomically replaces the requested output. A failure removes the temporary file
 and leaves an existing output untouched.
 
-## CLI and tests
+## CLI orchestration and testing
 
-PL46 requires Python 3.10 or later. From the repository root:
+For installation, command-line usage, and the test command, see
+[The skeletonfont Build Guide](building.md).
 
-```text
-python -m venv .venv
-python -m pip install -e .
-skeletonfont-build math
-```
-
-The CLI uses the current working directory as the project directory. It does not
-infer project data from the installed package or search parent directories.
-Use `--project-directory` to override it and `--output-directory` to replace the
-default `build/otf` destination:
-
-```text
-skeletonfont-build --project-directory <project> math mono
-```
-
-Here, `<project>` is the directory containing `meta/`, `glyph_sources/`, and
-`data/`.
-
-With no meta names, the CLI reads the non-empty `build_list.json`. Before a
-multi-build batch reads glyph sources or writes fonts, it normalizes all meta
-names, rejects duplicate names, loads every meta, and rejects case-insensitive
-`output_stem` collisions. Failures during a particular build include that meta
-name in the error. Successful output is `build/otf/<output_stem>.otf` unless an
-output directory was supplied.
-
-Run the test suite with:
-
-```text
-python -m unittest discover -s tests
-```
+The CLI passes explicitly supplied meta names to the batch builder, or reads
+them from the non-empty `build_list.json` when no names are supplied. Before a
+batch reads glyph sources or writes fonts, it normalizes all meta names,
+rejects duplicate names, loads every meta and referenced release-info file, and
+rejects case-insensitive `output_stem` collisions. A failure during an
+individual build includes that meta name in the error.
 
 Unit tests use the fixed `tests/fixtures/minimal_project` catalog where possible;
-integration tests assemble the current PL46 project data.
+integration tests assemble the repository's production project data.
