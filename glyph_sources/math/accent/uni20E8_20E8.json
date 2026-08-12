@@ -1,0 +1,17 @@
+{
+  "name": "uni20E8",
+  "unicode": "20E8",
+  "monospace_x_offset": -2,
+  "y_offset": -2,
+  "skeleton": [
+    {
+      "centerline": [[2, 0]]
+    },
+    {
+      "centerline": [[0, 0]]
+    },
+    {
+      "centerline": [[4, 0]]
+    }
+  ]
+}
