@@ -1,4 +1,10 @@
 [
+  "ascii",
+  "bold",
+  "fakebold",
+  "fraktur",
+  "jp",
   "math",
-  "mono"
+  "mono",
+  "script"
 ]

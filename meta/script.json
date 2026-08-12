@@ -1,6 +1,7 @@
 {
   "family": "PL46",
   "style": "Script",
+  "weight_class": 400,
   "units_per_em": 1000,
   "ascender": 850,
   "descender": -200,
@@ -27,5 +28,6 @@
       "unicode_domain": [["6771"]]
     }
   ],
-  "kerning_file": "script.json"
+  "kerning_file": "script.json",
+  "release_info_file": "pl46.json"
 }

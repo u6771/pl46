@@ -1,6 +1,7 @@
 {
   "family": "PL46",
   "style": "FakeBold",
+  "weight_class": 700,
   "units_per_em": 1000,
   "ascender": 850,
   "descender": -200,
@@ -31,5 +32,6 @@
       "unicode_domain": [["6771"]]
     }
   ],
-  "accent_file": "mono.json"
+  "accent_file": "mono.json",
+  "release_info_file": "pl46.json"
 }
