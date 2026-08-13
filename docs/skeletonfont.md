@@ -252,8 +252,8 @@ added automatically.
 | `math_table.accent_attachment_file` | `data/math_table/accent_attachment/<accent_attachment_file>` |
 | `math_table.kern_file` | `data/math_table/kern/<kern_file>` |
 
-For example, `"kerning_file": "mono"` loads
-`<project>/data/kerning/mono.json`. Directory-valued
+For example, `"kerning_file": "script"` loads
+`<project>/data/kerning/script.json`. Directory-valued
 `source_directory` is different: it is not a filename and may identify a safe
 nested path such as `"math/delimiters"`.
 

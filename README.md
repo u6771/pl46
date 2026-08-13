@@ -24,7 +24,7 @@ PL46 currently provides the following font files:
 
 | Filename | Coverage | Glyph count |
 | --- | --- | --- |
-| `PL46-Mono.otf` | Latin, Greek, and Cyrillic alphabets | 550 |
+| `PL46-Regular.otf` | Latin, Greek, and Cyrillic alphabets | 550 |
 | `PL46-JP.otf` | Latin alphabet and Japanese kana | 297 |
 | `PL46-Bold.otf` | Latin alphabet | 97 |
 | `PL46-Fraktur.otf` | Latin alphabet | 97 |
@@ -54,7 +54,7 @@ If you want to enable PL46's OpenType features in Word, such as kerning in *PL46
 The following example loads the fonts by name, so the corresponding OTF files must first be installed on your system:
 ```tex
 \usepackage[mathrm=sym,mathbf=sym]{unicode-math}
-\setmainfont[BoldFont=PL46 Bold]{PL46 Mono}
+\setmainfont[BoldFont=PL46 Bold]{PL46 Regular}
 \setmathfont{PL46 Math}
 ```
 This sets PL46 as the document's text and mathematical typeface.

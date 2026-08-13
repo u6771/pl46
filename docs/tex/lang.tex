@@ -6,8 +6,7 @@
 ]{geometry}
 
 \usepackage{fontspec}
-\newfontfamily\ascii[Path=../../build/otf/]{PL46-Ascii.otf}
-\newfontfamily\mono[Path=../../build/otf/]{PL46-Mono.otf}
+\newfontfamily\regular[Path=../../build/otf/]{PL46-Regular.otf}
 
 \usepackage{lipsum}
 
@@ -19,22 +18,22 @@
 \setlength{\parindent}{2em}
 
 \noindent
-{\ascii \scriptsize MONO LATIN:}
+{\regular \scriptsize LATIN:}
 
-{\mono \lipsum[1][1-4]}
+{\regular \lipsum[1][1-4]}
 
 \vspace{.5cm}
 
 \noindent
-{\ascii \scriptsize MONO GREEK:}
+{\regular \scriptsize GREEK:}
 
-{\mono Αυτό είναι ένα δείγμα ελληνικού κειμένου για τον έλεγχο της γραμματοσειράς, του διαστήματος μεταξύ των γραμμών, του συλλαβισμού και της γενικής διάταξης της σελίδας.}
+{\regular Αυτό είναι ένα δείγμα ελληνικού κειμένου για τον έλεγχο της γραμματοσειράς, του διαστήματος μεταξύ των γραμμών, του συλλαβισμού και της γενικής διάταξης της σελίδας.}
 \vspace{.5cm}
 
 \noindent
-{\ascii \scriptsize MONO CYRILLIC:}
+{\regular \scriptsize CYRILLIC:}
 
-{\mono Это пример русского текста, предназначенного для проверки оформления документа, выбора шрифта, межстрочного расстояния, переносов слов и расположения текста на странице.}
+{\regular Это пример русского текста, предназначенного для проверки оформления документа, выбора шрифта, межстрочного расстояния, переносов слов и расположения текста на странице.}
 \end{minipage}
 \end{minipage}
 \end{document}
