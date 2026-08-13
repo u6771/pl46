@@ -448,7 +448,7 @@ class BuildPipelineTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary_directory:
             output_path = build_font(
                 PROJECT_DIRECTORY,
-                "mono",
+                "regular",
                 output_directory=Path(temporary_directory),
             )
 

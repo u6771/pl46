@@ -95,7 +95,7 @@ class FontMetaLoaderTests(unittest.TestCase):
             )
 
     def test_omitted_unicode_domain_is_unrestricted(self) -> None:
-        meta = load_font_meta(PROJECT_DIRECTORY, "mono")
+        meta = load_font_meta(PROJECT_DIRECTORY, "regular")
 
         self.assertIsNone(meta.source_rules[1].unicode_domain)
 
@@ -574,12 +574,12 @@ class FontMetaLoaderTests(unittest.TestCase):
         self.assertIsNone(proportional.glyph_parameters.monospace_width)
 
     def test_fixed_pitch_requires_monospace_without_math(self) -> None:
-        mono_path = PROJECT_DIRECTORY / "meta" / "mono.json"
+        mono_path = PROJECT_DIRECTORY / "meta" / "regular.json"
         mono_data = json.loads(mono_path.read_text(encoding="utf-8"))
 
         mono = parse_font_meta(
             mono_data,
-            build_name="mono",
+            build_name="regular",
             meta_path=mono_path,
         )
         self.assertTrue(mono.info.is_fixed_pitch)

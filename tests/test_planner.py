@@ -1707,7 +1707,7 @@ class FontPlannerTests(unittest.TestCase):
     def test_monospace_rejects_only_current_width_adjustment_fields(self) -> None:
         with self.assertRaisesRegex(PlanError, "Monospace ordinary"):
             plan_font(
-                assembled_font("mono"),
+                assembled_font("regular"),
                 adjustment_config({"A": adjustment(left=10)}),
             )
 
@@ -1761,7 +1761,7 @@ class FontPlannerTests(unittest.TestCase):
         self.assertFalse(hasattr(alias, "strokes"))
 
     def test_monospace_uses_fixed_width_and_source_x_offset(self) -> None:
-        mono_plan = plan_font(assembled_font("mono"))
+        mono_plan = plan_font(assembled_font("regular"))
         a = mono_plan.glyphs["A"]
         space = mono_plan.glyphs["space"]
 
@@ -1771,7 +1771,7 @@ class FontPlannerTests(unittest.TestCase):
         self.assertEqual(a.strokes[0].centerline[-1], (500.0, 25.0))
 
     def test_monospace_design_origin_tracks_core_width_center(self) -> None:
-        assembled = assembled_font("mono")
+        assembled = assembled_font("regular")
         narrow_assembled = replace(
             assembled,
             glyph_parameters=replace(
@@ -1787,7 +1787,7 @@ class FontPlannerTests(unittest.TestCase):
         self.assertEqual(a.strokes[0].centerline[-1], (450.0, 25.0))
 
     def test_monospace_center_does_not_depend_on_radius(self) -> None:
-        assembled = assembled_font("mono")
+        assembled = assembled_font("regular")
         thick_assembled = replace(
             assembled,
             glyph_parameters=replace(
@@ -1823,7 +1823,7 @@ class FontPlannerTests(unittest.TestCase):
         )
 
     def test_monospace_meta_spacing_preserves_equal_width(self) -> None:
-        assembled = assembled_font("mono")
+        assembled = assembled_font("regular")
         spaced_parameters = replace(
             assembled.glyph_parameters,
             left_spacing=20,
