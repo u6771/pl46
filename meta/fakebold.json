@@ -32,6 +32,6 @@
       "unicode_domain": [["6771"]]
     }
   ],
-  "accent_file": "mono.json",
+  "accent_file": "regular.json",
   "release_info_file": "pl46.json"
 }
