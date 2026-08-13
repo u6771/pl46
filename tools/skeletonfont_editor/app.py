@@ -265,7 +265,11 @@ class SkeletonFontEditor:
             textvariable=self.unicode_var,
             anchor="e",
         ).grid(row=2, column=1, sticky="ew", pady=2)
-        ttk.Label(inspector, text="Mono x offset").grid(row=3, column=0, sticky="w")
+        ttk.Label(inspector, text="Monospace x offset").grid(
+            row=3,
+            column=0,
+            sticky="w",
+        )
         ttk.Label(
             inspector,
             textvariable=self.monospace_x_offset_var,
