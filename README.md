@@ -31,6 +31,9 @@ PL46 currently provides the following font files:
 | `PL46-Script.otf` | Latin alphabet | 97 |
 | `PL46-Math.otf` | Latin and Greek alphabets and mathematical symbols | 1771 |
 
+Among them, *PL46 Regular*, *PL46 JP*, and *PL46 Bold* are monospaced, while
+*PL46 Fraktur*, *PL46 Script*, and *PL46 Math* are proportionally spaced.
+
 You can download them from [here](https://github.com/u6771/pl46/releases).
 
 If needed, you can browse the complete glyph set by dragging the downloaded font files into [FontDrop!](https://fontdrop.info).

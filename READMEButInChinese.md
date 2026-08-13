@@ -31,6 +31,9 @@ PL46 是一族以端点坐标为整数的线段作为基本造型元素的 OpenT
 | `PL46-Script.otf` | 拉丁字母 | 97 |
 | `PL46-Math.otf` | 拉丁字母、希腊字母、数学符号 | 1771 |
 
+其中 *PL46 Regular*、*PL46 JP* 和 *PL46 Bold* 是等宽字体，而
+*PL46 Fraktur*、*PL46 Script* 和 *PL46 Math* 是比例字体。
+
 你可以从[这里](https://github.com/u6771/pl46/releases)下载它们。
 
 如有需要，你可以通过将下载后的字体文件拖入 [FontDrop!](https://fontdrop.info) 浏览全体字符集。
@@ -83,13 +86,11 @@ PL46 是一族以端点坐标为整数的线段作为基本造型元素的 OpenT
 ## 仓库结构
 
 - [`glyph_sources/`](glyph_sources/)：规范化的字形骨架源数据
-- [`glyph_sources/miscellaneous/`](glyph_sources/miscellaneous/)：不参与当前构建的
-  备用字形源与设计存档
+- [`glyph_sources/miscellaneous/`](glyph_sources/miscellaneous/)：不参与当前构建的备用字形源与设计存档
 - [`meta/`](meta/)：字体构建定义
 - [`data/`](data/)：字形配置、重音、字距调整、ssty 和 MATH 表输入
 - [`src/skeletonfont/`](src/skeletonfont/)：`skeletonfont` Python 包
-- [`tools/skeletonfont_editor/`](tools/skeletonfont_editor/)：用于编辑字形骨架源数据的
-  图形化编辑器
+- [`tools/skeletonfont_editor/`](tools/skeletonfont_editor/)：用于编辑字形骨架源数据的图形化编辑器
 - [`tests/`](tests/)：`skeletonfont` 与编辑器的测试
 - [`docs/`](docs/)：`skeletonfont` 手册、构建指南、TeX 字体示例及其渲染图像
 - [`build_list.json`](build_list.json)：命令行中未指定 meta 名称时采用的默认构建列表
