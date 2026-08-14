@@ -40,11 +40,11 @@ PL46 是一族以端点坐标为整数的线段作为基本造型元素的 OpenT
 
 ## skeletonfont
 
-为了制作这族字体，我们开发了一个与其独立的 Python 包 `skeletonfont`，它位于仓库中的 [`src/`](src/) 目录。该包负责将描述字形笔画走向的骨架数据转换为可显示的字形轮廓，并把字距调整、数学排版等额外信息写入最终字体。你可以在[「skeletonfont 手册」](docs/skeletonfont.md)中找到关于它的详细介绍。
+为了制作这族字体，我们开发了一个与其独立的 Python 包 `skeletonfont`，它位于仓库中的 [`src/`](src/) 目录。该包负责将描述字形笔画走向的骨架数据转换为可显示的字形轮廓，并把字距调整、数学排版等额外信息写入最终字体。你可以在 [The skeletonfont Handbook](docs/skeletonfont.md) 中找到关于它的详细介绍。
 
 ### 从源代码构建
 
-本项目需要 Python 3.10 或更高版本。安装与构建命令请参阅[「skeletonfont 构建指南」](docs/building.md)。
+本项目需要 Python 3.10 或更高版本。安装与构建命令请参阅 [The skeletonfont Build Guide](docs/building.md)。
 
 ## 在 Microsoft Word 中使用 PL46
 
