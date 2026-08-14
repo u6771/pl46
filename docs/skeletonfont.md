@@ -1,23 +1,81 @@
 # The skeletonfont Handbook
 
-This document describes the in-repository `skeletonfont` package and its
-project-data contract. It is developer documentation for the build system; the
-[root README](../README.md) describes the font project that uses it.
+`skeletonfont` is a command-line font builder for projects that describe glyph
+strokes as normalized skeleton data. It selects and transforms those sources,
+expands their centerlines into outlines, adds optional layout and publication
+data, and compiles the result as a CFF OpenType font.
+
+This handbook documents the package's project-data formats and internal build
+stages for font-project authors and developers. The [root README](../README.md)
+describes the PL46 font family that uses the package.
+
+## How skeletonfont is used
+
+In this handbook, `<project>` means the project root containing `meta/`,
+`glyph_sources/`, and `data/`. Each `meta/<meta-name>.json` describes one output
+font: it supplies font-wide settings, selects reusable glyph sources, and may
+reference auxiliary data files.
+
+```text
+meta/<meta-name>.json
+    |-- font-wide settings
+    |-- source_rules ------------> glyph_sources/
+    `-- optional file references -> data/
+                    |
+        skeletonfont-build <meta-name>
+                    |
+        build/otf/<output_stem>.otf
+```
+
+From `<project>`, a single font is built by passing its meta name to the CLI:
+
+```text
+skeletonfont-build <meta-name>
+```
+
+For example, `skeletonfont-build math` reads `meta/math.json`, loads the glyph
+sources and auxiliary files selected by that meta, and writes
+`build/otf/PL46-Math.otf`. For environment setup, batch builds, output-directory
+selection, and complete CLI syntax, see [The skeletonfont Build
+Guide](building.md). The remaining sections describe the data formats and each
+stage of this process.
 
 ## Contents
 
-- [Pipeline and module boundaries](#pipeline-and-module-boundaries)
-- [Project data and units](#project-data-and-units)
+- [How skeletonfont is used](#how-skeletonfont-is-used)
+- [Build pipeline](#build-pipeline)
+  - [Module boundaries](#module-boundaries)
+- [Project data](#project-data)
+  - [Directory layout](#directory-layout)
+  - [Units](#units)
+  - [JSON conventions](#json-conventions)
 - [Glyph-source schema](#glyph-source-schema)
 - [Meta schema](#meta-schema)
+  - [File-field path resolution](#file-field-path-resolution)
+  - [MATH table references](#math-table-references)
+  - [Release-info schema](#release-info-schema)
 - [Assembly](#assembly)
+  - [Source rules, domains, and mappings](#source-rules-domains-and-mappings)
+  - [Glyph aliases](#glyph-aliases)
+  - [ssty generators](#ssty-generators)
 - [Planning](#planning)
+  - [Planning roles](#planning-roles)
+  - [Coordinates, widths, and edge scales](#coordinates-widths-and-edge-scales)
+  - [Glyph spacing configuration](#glyph-spacing-configuration)
+  - [Kerning](#kerning)
 - [MATH planning](#math-planning)
+  - [Math constants](#math-constants)
+  - [Discrete variants and assemblies](#discrete-variants-and-assemblies)
+  - [Italic corrections](#italic-corrections)
+  - [Top accent attachments](#top-accent-attachments)
+  - [MathKern](#mathkern)
 - [Rendering and geometry](#rendering-and-geometry)
+  - [UFO rendering](#ufo-rendering)
+  - [Stroke expansion](#stroke-expansion)
 - [Compilation and output](#compilation-and-output)
-- [CLI orchestration and testing](#cli-orchestration-and-testing)
+- [Batch orchestration and testing](#batch-orchestration-and-testing)
 
-## Pipeline and module boundaries
+## Build pipeline
 
 One build passes through five stages:
 
@@ -41,6 +99,8 @@ JSON files
 No stage reads a file that belongs to a later stage. In particular,
 `plan_font()` performs no file I/O, and rendering does not recalculate metrics.
 
+### Module boundaries
+
 `loader.py` and `planner.py` are the package's facade modules. Their
 implementations are split by domain:
 
@@ -57,7 +117,9 @@ Callers should import loading and planning entry points from
 `skeletonfont.loader` and `skeletonfont.planner`. The internal module layout is
 not a compatibility promise.
 
-## Project data and units
+## Project data
+
+### Directory layout
 
 The project directories consumed by the package are:
 
@@ -76,6 +138,8 @@ The project directories consumed by the package are:
 | `data/math_table/accent_attachment/` | per-glyph top-accent attachment points |
 | `data/math_table/kern/` | per-glyph MathKern records |
 
+### Units
+
 The schemas use three kinds of values:
 
 | Unit | Examples |
@@ -86,6 +150,8 @@ The schemas use three kinds of values:
 
 `grid` converts design coordinates to font units. Authored `thickness` is the
 full stroke thickness; loading stores `GlyphParameters.radius = thickness / 2`.
+
+### JSON conventions
 
 All JSON objects reject duplicate keys. Unknown fields are rejected rather than
 ignored. Glyph-like names use the characters `[A-Za-z0-9_.-]` only; they cannot
@@ -156,7 +222,10 @@ codepoints are errors.
 
 ## Meta schema
 
-Meta fields have one canonical order:
+Each meta file describes one output font and provides the build's font-wide
+settings, glyph-selection rules, and auxiliary-data references. Project meta
+files use the following canonical field order for consistency. JSON parsing
+does not otherwise depend on object-key order.
 
 | Group | Fields, in order |
 | --- | --- |
@@ -257,6 +326,29 @@ For example, `"kerning_file": "script"` loads
 `source_directory` is different: it is not a filename and may identify a safe
 nested path such as `"math/delimiters"`.
 
+### MATH table references
+
+`math_table` is either absent or an object containing filenames. Absence
+disables MATH. An object enables MATH and must explicitly contain
+`constants_file`; an empty object is invalid. The optional fields are
+`variants_file`, `italics_correction_file`, `accent_attachment_file`, and
+`kern_file`. For example, [`meta/math.json`](../meta/math.json) uses:
+
+```json
+{
+  "math_table": {
+    "constants_file": "math.json",
+    "variants_file": "math.json",
+    "italics_correction_file": "math.json",
+    "accent_attachment_file": "math.json"
+  }
+}
+```
+
+There is no separate MATH `enabled` switch. The referenced file schemas and
+their compilation into the OpenType MATH table are described under [MATH
+planning](#math-planning).
+
 ### Release-info schema
 
 `release_info_file` is optional because publication metadata is not needed to
@@ -348,25 +440,6 @@ file, leaves that field unset. The current `ufo2ft` defaults include name ID 5
 their corresponding release fields are absent. These are compiler defaults,
 not values inferred by `skeletonfont`.
 
-`math_table` is either absent or an object containing filenames. Absence
-disables MATH. An object enables MATH and must explicitly contain
-`constants_file`; an empty object is invalid. The optional fields are
-`variants_file`, `italics_correction_file`, `accent_attachment_file`, and
-`kern_file`. For example, [`meta/math.json`](../meta/math.json) uses:
-
-```json
-{
-  "math_table": {
-    "constants_file": "math.json",
-    "variants_file": "math.json",
-    "italics_correction_file": "math.json",
-    "accent_attachment_file": "math.json"
-  }
-}
-```
-
-There is no separate MATH `enabled` switch.
-
 ## Assembly
 
 ### Source rules, domains, and mappings
@@ -419,8 +492,9 @@ unencoded source cannot pass through a codepoint mapping. Mathematical alphabet
 mapping names state both sides, such as `upright_latin_to_italic_latin`, and
 produce semantic glyph names such as `A.italic`, `A.script`, and `A.fraktur`.
 Mappings declare optional source and target domains, which are validated once
-when the registry is created. A `None` side deliberately skips that registry
-check. Encoded mapping targets must be one-to-one.
+when the registry is created. An internal mapping may omit either domain
+constraint, which skips that registry check. Encoded mapping targets must be
+one-to-one.
 
 The registered mappings are:
 
@@ -717,13 +791,20 @@ renderer then copies the validated groups and pairs into the UFO.
 
 ## MATH planning
 
-Enabling `math_table` always loads a complete MathConstants object. Field names
-and value semantics follow the OpenType [MathConstants
-table](https://learn.microsoft.com/en-us/typography/opentype/spec/math#mathconstants-table).
-See the project's complete [`math.json`](../data/math_table/constants/math.json)
-for an authored example. The file must contain exactly the names in
-`math_schema.MATH_CONSTANT_NAMES`; device-table adjustments are not authored in
-this JSON schema. `DelimitedSubFormulaMinHeight` and
+The data described in this section is compiled into the OpenType MATH table.
+The OpenType [MATH table
+specification](https://learn.microsoft.com/en-us/typography/opentype/spec/math)
+defines the typographic meaning of its constants, per-glyph information,
+variants, and assemblies. This handbook describes how `skeletonfont`
+represents, validates, and processes that information in project JSON.
+
+### Math constants
+
+Enabling `math_table` always loads a complete MathConstants object. The file
+must contain exactly the names in `math_schema.MATH_CONSTANT_NAMES`; see the
+project's complete [`math.json`](../data/math_table/constants/math.json) for an
+authored example. Device-table adjustments are not authored in this JSON
+schema. `DelimitedSubFormulaMinHeight` and
 `DisplayOperatorMinHeight` use unsigned UFWORD; the other constants use signed
 FWORD.
 
@@ -917,6 +998,8 @@ entry. An empty height array therefore describes a constant kern.
 
 ## Rendering and geometry
 
+### UFO rendering
+
 `render_font()` creates an in-memory `ufoLib2.Font`, writes the explicit
 `weight_class`, writes the derived fixed-pitch classification, copies font
 metrics and planned widths, expands every `StrokePlan`, then creates glyph
@@ -927,6 +1010,8 @@ the planned ssty feature text are copied into the UFO.
 
 `.notdef` is a normal unencoded source glyph through assembly, planning, and
 rendering. Assembly fails if it is absent.
+
+### Stroke expansion
 
 The cubic geometry layer expands each stroke independently. Open centerlines use
 cubic round joins and independently selected round or flat caps. An isolated
@@ -970,7 +1055,7 @@ planning and compiled with the UFO's other GSUB data.
 atomically replaces the requested output. A failure removes the temporary file
 and leaves an existing output untouched.
 
-## CLI orchestration and testing
+## Batch orchestration and testing
 
 For installation, command-line usage, and the test command, see
 [The skeletonfont Build Guide](building.md).
