@@ -4,7 +4,7 @@
 
 English | [中文](READMEButInChinese.md)
 
-PL46 is a family of OpenType fonts built from line segments whose endpoint coordinates are integers. It covers the Latin, Greek, and Cyrillic alphabets as well as Japanese kana, with Fraktur and Script alternatives available for the Latin letters. For the「Mado・Scientisto」who enjoys fiddling with equations, the family also provides OpenType MATH support. This means you can use it with XeLaTeX, LuaLaTeX, etc. (¦3【▓▓】
+PL46 is a family of OpenType fonts whose glyph designs are based on line-segment skeletons with endpoints on an integer coordinate grid. It covers the Latin, Greek, and Cyrillic alphabets as well as Japanese kana, with Fraktur and Script alternatives available for the Latin letters. For the「Mado・Scientisto」who enjoys fiddling with equations, the family also provides OpenType MATH support. This means you can use it with XeLaTeX, LuaLaTeX, etc. (¦3【▓▓】
 
 This font is currently under construction—its glyphs, spacing, and metrics may yet be adjusted or changed.
 
