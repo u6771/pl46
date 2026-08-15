@@ -229,12 +229,16 @@ does not otherwise depend on object-key order.
 
 | Group | Fields, in order |
 | --- | --- |
-| identity | `family`, `style`, `weight_class`, `output_stem` |
+| build output | `output_stem` |
+| font identity | `family`, `style`, `weight_class` |
 | font metrics | `units_per_em`, `ascender`, `descender`, `cap_height`, `x_height` |
 | geometry | `grid`, `thickness`, `point_radius_scale`, `y_shift`, `use_scaled_edge_thickness` |
 | horizontal metrics | `monospace_width`, `left_spacing`, `right_spacing` |
 | glyph set | `source_rules`, `glyph_alias_generators`, `ssty_generators` |
-| auxiliary data | `glyph_config_file`, `accent_file`, `kerning_file`, `ssty_file`, `release_info_file`, `math_table` |
+| glyph-related OpenType data | `accent_file`, `ssty_file`, `math_table` |
+| glyph adjustments | `glyph_config_file` |
+| inter-glyph layout | `kerning_file` |
+| publication | `release_info_file` |
 
 The required fields are `family`, `style`, `weight_class`, `units_per_em`,
 `ascender`, `descender`, `cap_height`, `x_height`, `grid`, `thickness`, and a
@@ -286,8 +290,9 @@ Optional defaults are:
 | `left_spacing`, `right_spacing` | `0` |
 | `glyph_alias_generators` | no aliases |
 | `ssty_generators` | no generated script-style alternates |
-| `glyph_config_file`, `accent_file`, `kerning_file`, `ssty_file`, `release_info_file` | no file |
+| `accent_file`, `ssty_file` | no file |
 | `math_table` | MATH disabled |
+| `glyph_config_file`, `kerning_file`, `release_info_file` | no file |
 
 These defaults apply only when the field is omitted. Explicit `null` does not
 select a default. `monospace_width` is enabled by presence.
@@ -310,16 +315,16 @@ added automatically.
 | --- | --- |
 | meta name `<name>` | `meta/<name>.json` |
 | `source_rules[].source_directory` | `glyph_sources/<source_directory>/` |
-| `glyph_config_file` | `data/glyph_config/<glyph_config_file>` |
 | `accent_file` | `data/accent/<accent_file>` |
-| `kerning_file` | `data/kerning/<kerning_file>` |
 | `ssty_file` | `data/ssty/<ssty_file>` |
-| `release_info_file` | `data/release_info/<release_info_file>` |
 | `math_table.constants_file` | `data/math_table/constants/<constants_file>` |
 | `math_table.variants_file` | `data/math_table/variants/<variants_file>` |
 | `math_table.italics_correction_file` | `data/math_table/italics_correction/<italics_correction_file>` |
 | `math_table.accent_attachment_file` | `data/math_table/accent_attachment/<accent_attachment_file>` |
 | `math_table.kern_file` | `data/math_table/kern/<kern_file>` |
+| `glyph_config_file` | `data/glyph_config/<glyph_config_file>` |
+| `kerning_file` | `data/kerning/<kerning_file>` |
+| `release_info_file` | `data/release_info/<release_info_file>` |
 
 For example, `"kerning_file": "script"` loads
 `<project>/data/kerning/script.json`. Directory-valued
