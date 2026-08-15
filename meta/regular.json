@@ -9,7 +9,9 @@
   "x_height": 450,
   "grid": 100,
   "thickness": 50,
-  "monospace_width": 600,
+  "use_scaled_edge_thickness": true,
+  "left_spacing": 75,
+  "right_spacing": 75,
   "source_rules": [
     {
       "source_directory": "notdef",
@@ -40,5 +42,6 @@
     }
   ],
   "accent_file": "regular.json",
+  "glyph_config_file": "regular.json",
   "release_info_file": "pl46.json"
 }

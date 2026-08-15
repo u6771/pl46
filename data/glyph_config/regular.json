@@ -1,0 +1,24 @@
+{
+  "parenleft": {
+    "left_adjustment": 50
+  },
+  "parenright": {
+    "right_adjustment": 50
+  },
+  "bracketleft": {
+    "left_adjustment": 50
+  },
+  "bracketright": {
+    "right_adjustment": 50
+  },
+  "braceleft": {
+    "left_adjustment": 50
+  },
+  "braceright": {
+    "right_adjustment": 50
+  },
+  "bar": {
+    "left_adjustment": 50,
+    "right_adjustment": 50
+  }
+}
