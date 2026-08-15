@@ -27,6 +27,9 @@
       "source_directory": "greek"
     },
     {
+      "source_directory": "text_symbols"
+    },
+    {
       "source_directory": "math",
       "include_unencoded": true,
       "replace_existing": true

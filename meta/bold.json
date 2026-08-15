@@ -23,6 +23,13 @@
       "replace_existing": true
     },
     {
+      "source_directory": "text_symbols"
+    },
+    {
+      "source_directory": "math",
+      "unicode_domain": [["2217"]]
+    },
+    {
       "source_directory": "uni6771",
       "unicode_domain": [["6771"]]
     }
