@@ -1,0 +1,11 @@
+{
+  "name": "figuredash",
+  "unicode": "2012",
+  "monospace_x_offset": -2,
+  "y_offset": 2,
+  "skeleton": [
+    {
+      "centerline": [[0, 0], [4, 0]]
+    }
+  ]
+}

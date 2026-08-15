@@ -1,0 +1,11 @@
+{
+  "name": "endash",
+  "unicode": "2013",
+  "monospace_x_offset": -2,
+  "y_offset": 2,
+  "skeleton": [
+    {
+      "centerline": [[0, 0], [4, 0]]
+    }
+  ]
+}

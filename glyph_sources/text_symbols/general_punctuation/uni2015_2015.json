@@ -1,11 +1,11 @@
 {
   "name": "uni2015",
   "unicode": "2015",
-  "monospace_x_offset": -5,
+  "monospace_x_offset": -4,
   "y_offset": 2,
   "skeleton": [
     {
-      "centerline": [[0, 0], [10, 0]]
+      "centerline": [[0, 0], [8, 0]]
     }
   ]
 }
