@@ -94,6 +94,20 @@ class FontMetaLoaderTests(unittest.TestCase):
                 msg=str(path),
             )
 
+    def test_fakebold_tracks_regular_except_identity_and_thickness(self) -> None:
+        regular_path = PROJECT_DIRECTORY / "meta" / "regular.json"
+        fakebold_path = PROJECT_DIRECTORY / "meta" / "fakebold.json"
+        regular = json.loads(regular_path.read_text(encoding="utf-8"))
+        fakebold = json.loads(fakebold_path.read_text(encoding="utf-8"))
+
+        expected = {
+            **regular,
+            "style": "FakeBold",
+            "weight_class": 700,
+            "thickness": 100,
+        }
+        self.assertEqual(fakebold, expected)
+
     def test_omitted_unicode_domain_is_unrestricted(self) -> None:
         meta = load_font_meta(PROJECT_DIRECTORY, "regular")
 
@@ -209,7 +223,11 @@ class FontMetaLoaderTests(unittest.TestCase):
 
     def test_model_names_express_source_rule_behavior(self) -> None:
         meta = load_font_meta(PROJECT_DIRECTORY, "math")
-        math_rule = meta.source_rules[4]
+        math_rule = next(
+            rule
+            for rule in meta.source_rules
+            if rule.source_directory == "math"
+        )
 
         self.assertEqual(meta.build_name, "math")
         self.assertEqual(meta.meta_path.name, "math.json")

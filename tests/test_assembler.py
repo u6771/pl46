@@ -379,8 +379,13 @@ class FontAssemblerTests(unittest.TestCase):
 
     def test_empty_unicode_domain_can_select_only_unencoded_glyphs(self) -> None:
         meta = load_font_meta(PROJECT_DIRECTORY, "math")
+        math_rule = next(
+            rule
+            for rule in meta.source_rules
+            if rule.source_directory == "math"
+        )
         unencoded_math_rule = replace(
-            meta.source_rules[4],
+            math_rule,
             unicode_domain=UnicodeDomain(()),
             include_unencoded=True,
             replace_existing=False,
@@ -401,8 +406,13 @@ class FontAssemblerTests(unittest.TestCase):
 
     def test_unencoded_glyphs_require_explicit_opt_in(self) -> None:
         meta = load_font_meta(PROJECT_DIRECTORY, "math")
+        source_rule = next(
+            rule
+            for rule in meta.source_rules
+            if rule.source_directory == "math"
+        )
         math_rule = replace(
-            meta.source_rules[4],
+            source_rule,
             replace_existing=False,
         )
         without_unencoded = replace(
