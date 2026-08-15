@@ -37,10 +37,10 @@ from ._json import (
 
 
 META_FIELD_ORDER = (
+    "output_stem",
     "family",
     "style",
     "weight_class",
-    "output_stem",
     "units_per_em",
     "ascender",
     "descender",
@@ -57,12 +57,12 @@ META_FIELD_ORDER = (
     "source_rules",
     "glyph_alias_generators",
     "ssty_generators",
-    "glyph_config_file",
     "accent_file",
-    "kerning_file",
     "ssty_file",
-    "release_info_file",
     "math_table",
+    "glyph_config_file",
+    "kerning_file",
+    "release_info_file",
 )
 
 _META_FIELDS = set(META_FIELD_ORDER)
