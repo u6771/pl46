@@ -84,6 +84,7 @@ def _assembled_glyph(
     name: str,
     codepoint: int | None,
     thickness_scale: float,
+    ordinary_monospace_width: float | None,
 ) -> AssembledGlyph:
     return AssembledGlyph(
         name=name,
@@ -94,6 +95,7 @@ def _assembled_glyph(
         y_extent=source.y_extent,
         skeleton=_scaled_skeleton(source.skeleton, thickness_scale),
         source_path=source.source_path,
+        ordinary_monospace_width=ordinary_monospace_width,
     )
 
 
@@ -119,6 +121,7 @@ def _selected_glyphs(
                 name=glyph.name,
                 codepoint=glyph.codepoint,
                 thickness_scale=rule.thickness_scale,
+                ordinary_monospace_width=rule.monospace_width,
             )
         else:
             if glyph.codepoint is None:
@@ -140,6 +143,7 @@ def _selected_glyphs(
                 name=target_name,
                 codepoint=target.codepoint,
                 thickness_scale=rule.thickness_scale,
+                ordinary_monospace_width=rule.monospace_width,
             )
         selected.append(entry)
 
@@ -292,6 +296,7 @@ def _ssty_assembled_glyph(
     *,
     name: str,
     thickness_scale: float,
+    ordinary_monospace_width: float | None,
 ) -> AssembledGlyph:
     return AssembledGlyph(
         name=name,
@@ -302,6 +307,7 @@ def _ssty_assembled_glyph(
         y_extent=source.y_extent,
         skeleton=_scaled_skeleton(source.skeleton, thickness_scale),
         source_path=source.source_path,
+        ordinary_monospace_width=ordinary_monospace_width,
     )
 
 
@@ -347,6 +353,7 @@ def _apply_ssty_generators(
                 base.glyph,
                 name=target_name,
                 thickness_scale=generator.thickness_scale,
+                ordinary_monospace_width=generator.monospace_width,
             )
             occupied_names.add(target_name)
             alternates.append(target_name)

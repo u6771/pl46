@@ -148,21 +148,6 @@ def _axis_length(
     )
 
 
-def _math_variant_full_advance(
-    glyph: AssembledGlyph,
-    parameters: GlyphParameters,
-    measurement: _AxisMeasurement,
-) -> int:
-    return _rounded_width(
-        _axis_length(
-            measurement,
-            grid=parameters.grid,
-            radius=parameters.radius,
-        ),
-        glyph_name=glyph.name,
-    )
-
-
 def _points_equal(first: Point, second: Point) -> bool:
     return math.hypot(first[0] - second[0], first[1] - second[1]) < (
         _POINT_TOLERANCE
@@ -325,12 +310,25 @@ def _plan_proportional_glyph(
     )
 
 
-def _plan_monospace_glyph(
+def _plan_ordinary_glyph(
     glyph: AssembledGlyph,
     parameters: GlyphParameters,
+    adjustment: GlyphSpacingAdjustment,
     top_accent_attachment: float | None,
 ) -> tuple[GlyphPlan, int | None]:
-    assert parameters.monospace_width is not None
+    monospace_width = (
+        parameters.monospace_width
+        if parameters.monospace_width is not None
+        else glyph.ordinary_monospace_width
+    )
+    if monospace_width is None:
+        return _plan_proportional_glyph(
+            glyph,
+            parameters,
+            adjustment,
+            top_accent_attachment,
+        )
+
     left_spacing = parameters.left_spacing
     right_spacing = parameters.right_spacing
     glyph_plan = GlyphPlan(
@@ -338,7 +336,7 @@ def _plan_monospace_glyph(
         codepoint=glyph.codepoint,
         source_path=glyph.source_path,
         width=_rounded_width(
-            parameters.monospace_width + left_spacing + right_spacing,
+            monospace_width + left_spacing + right_spacing,
             glyph_name=glyph.name,
         ),
         strokes=_transformed_strokes(
@@ -347,7 +345,7 @@ def _plan_monospace_glyph(
             radius=parameters.radius,
             grid_x_offset=glyph.monospace_x_offset,
             grid_y_offset=glyph.y_offset,
-            font_x_shift=left_spacing + parameters.monospace_width / 2,
+            font_x_shift=left_spacing + monospace_width / 2,
             font_y_shift=parameters.y_shift + parameters.radius,
         ),
     )
@@ -359,7 +357,7 @@ def _plan_monospace_glyph(
             (top_accent_attachment + glyph.monospace_x_offset)
             * parameters.grid
             + left_spacing
-            + parameters.monospace_width / 2,
+            + monospace_width / 2,
             location=f"Math top accent attachment for glyph {glyph.name!r}",
         ),
     )
@@ -424,10 +422,13 @@ def _plan_variant_glyph(
             font_y_shift=parameters.y_shift + parameters.radius,
         ),
     )
-    full_advance = _math_variant_full_advance(
-        glyph,
-        parameters,
-        axis_measurement,
+    full_advance = _rounded_width(
+        _axis_length(
+            axis_measurement,
+            grid=parameters.grid,
+            radius=parameters.radius,
+        ),
+        glyph_name=glyph.name,
     )
     return (
         glyph_plan,
@@ -451,20 +452,12 @@ def _plan_ordinary_glyphs(
     glyph_plans: dict[str, GlyphPlan] = {}
     planned_attachments: dict[str, int] = {}
     for name, glyph in glyphs.items():
-        attachment = top_accent_attachments.get(name)
-        if parameters.monospace_width is None:
-            glyph_plan, planned_attachment = _plan_proportional_glyph(
-                glyph,
-                parameters,
-                adjustment_by_name.get(name, _EMPTY_SPACING_ADJUSTMENT),
-                attachment,
-            )
-        else:
-            glyph_plan, planned_attachment = _plan_monospace_glyph(
-                glyph,
-                parameters,
-                attachment,
-            )
+        glyph_plan, planned_attachment = _plan_ordinary_glyph(
+            glyph,
+            parameters,
+            adjustment_by_name.get(name, _EMPTY_SPACING_ADJUSTMENT),
+            top_accent_attachments.get(name),
+        )
         glyph_plans[name] = glyph_plan
         if planned_attachment is not None:
             planned_attachments[name] = planned_attachment
@@ -552,9 +545,12 @@ def _plan_horizontal_accent_variant_advances(
                 f"Math horizontal accent construction base {name!r} has no "
                 "positive centerline extent."
             )
-        advances[name] = _math_variant_full_advance(
-            glyph,
-            parameters,
-            measurement,
+        advances[name] = _rounded_width(
+            _axis_length(
+                measurement,
+                grid=parameters.grid,
+                radius=parameters.radius,
+            ),
+            glyph_name=glyph.name,
         )
     return MappingProxyType(advances)

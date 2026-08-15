@@ -87,14 +87,20 @@ _SOURCE_RULE_FIELDS = {
     "replace_existing",
     "mapping_name",
     "thickness_scale",
+    "monospace_width",
 }
 
 _SSTY_GENERATOR_FIELDS = {
     "unicode_domain",
     "ssty_alternate_name",
     "thickness_scale",
+    "monospace_width",
 }
-_REQUIRED_SSTY_GENERATOR_FIELDS = set(_SSTY_GENERATOR_FIELDS)
+_REQUIRED_SSTY_GENERATOR_FIELDS = {
+    "unicode_domain",
+    "ssty_alternate_name",
+    "thickness_scale",
+}
 
 _MATH_TABLE_FIELDS = {
     "constants_file",
@@ -153,6 +159,15 @@ def _parse_source_rule(
             location=f"{location}.thickness_scale",
             positive=True,
         ),
+        monospace_width=(
+            None
+            if "monospace_width" not in data
+            else _number(
+                data["monospace_width"],
+                location=f"{location}.monospace_width",
+                positive=True,
+            )
+        ),
     )
 
 
@@ -181,6 +196,15 @@ def _parse_ssty_generator(
             data["thickness_scale"],
             location=f"{location}.thickness_scale",
             positive=True,
+        ),
+        monospace_width=(
+            None
+            if "monospace_width" not in data
+            else _number(
+                data["monospace_width"],
+                location=f"{location}.monospace_width",
+                positive=True,
+            )
         ),
     )
 
@@ -328,6 +352,19 @@ def parse_font_meta(
             positive=True,
         )
     )
+    if monospace_width is not None:
+        for index, rule in enumerate(source_rules):
+            if rule.monospace_width is not None:
+                raise ProjectDataError(
+                    f"{location}.monospace_width cannot be combined with "
+                    f"{location}.source_rules[{index}].monospace_width."
+                )
+        for index, generator in enumerate(ssty_generators):
+            if generator.monospace_width is not None:
+                raise ProjectDataError(
+                    f"{location}.monospace_width cannot be combined with "
+                    f"{location}.ssty_generators[{index}].monospace_width."
+                )
     math_table = (
         None
         if "math_table" not in data

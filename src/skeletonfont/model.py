@@ -66,6 +66,7 @@ class AssembledGlyph:
     y_extent: float | None
     skeleton: tuple[StrokeRecord, ...]
     source_path: Path
+    ordinary_monospace_width: float | None
 
 
 @dataclass(frozen=True, slots=True)
@@ -78,6 +79,7 @@ class SourceRule:
     replace_existing: bool
     mapping_name: str | None
     thickness_scale: float
+    monospace_width: float | None
 
 
 @dataclass(frozen=True, slots=True)
@@ -87,6 +89,7 @@ class SstyGenerator:
     unicode_domain: UnicodeDomain
     ssty_alternate_name: str
     thickness_scale: float
+    monospace_width: float | None
 
 
 @dataclass(frozen=True, slots=True)

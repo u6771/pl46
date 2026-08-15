@@ -291,9 +291,10 @@ def _resolve_glyph_spacing_adjustments(
                 f"Combining accent glyph {glyph_name!r} cannot receive "
                 "left or right spacing adjustments."
             )
-        if (
-            role == "ordinary"
-            and parameters.monospace_width is not None
+        ordinary_glyph = glyphs_by_role["ordinary"].get(glyph_name)
+        if ordinary_glyph is not None and (
+            parameters.monospace_width is not None
+            or ordinary_glyph.ordinary_monospace_width is not None
         ):
             raise PlanError(
                 f"Monospace ordinary glyph {glyph_name!r} cannot receive "
@@ -318,5 +319,3 @@ def _resolve_glyph_spacing_adjustments(
             }
         ),
     )
-
-
