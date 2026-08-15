@@ -297,12 +297,14 @@ Optional defaults are:
 These defaults apply only when the field is omitted. Explicit `null` does not
 select a default. `monospace_width` is enabled by presence.
 
-`monospace_width` controls ordinary-glyph layout, while the font-wide
-`post.isFixedPitch` classification is derived rather than authored. It is
-non-zero only when `monospace_width` is present and MATH is disabled. A
-non-empty `math_table` always makes the font non-fixed because variant bases,
-discrete variants, and assembly parts may use proportional advances. Zero-width
-combining accents do not prevent a non-MATH monospace build from being fixed
+The top-level `monospace_width` controls every ordinary glyph and locks out the
+local fields of the same name in source rules and ssty generators. The
+font-wide `post.isFixedPitch` classification is derived rather than authored.
+It is non-zero only when the top-level width is present and MATH is disabled.
+Local fixed widths never classify the whole font as fixed pitch. A non-empty
+`math_table` always makes the font non-fixed because variant bases, discrete
+variants, and assembly parts may use proportional advances. Zero-width combining
+accents do not prevent a non-MATH globally monospace build from being fixed
 pitch.
 
 ### File-field path resolution
@@ -518,10 +520,17 @@ The registered mappings are:
 multiplied into every selected stroke's own `thickness_scale` while creating the
 immutable `AssembledGlyph`. The unit case reuses the existing skeleton tuple.
 
+An optional positive `monospace_width`, in font units, gives each glyph produced
+directly by the rule a local fixed width if that glyph is later planned as
+ordinary. Mapped results retain the rule's value. Accents and MATH variants or
+parts ignore it in favor of their role-specific metrics. The field cannot be
+combined with a top-level `monospace_width`.
+
 As each result is merged, both its glyph name and non-null Unicode are checked.
 Without `replace_existing`, either conflict is an error. With
 `replace_existing: true`, the later result removes all conflicting earlier
-entries before it is inserted.
+entries before it is inserted. The replacement therefore uses only the later
+rule's local width; it does not inherit a width from the removed glyph.
 
 ### Glyph aliases
 
@@ -579,14 +588,22 @@ uses this generator:
 }
 ```
 
-All three fields are required and cannot be `null`. `unicode_domain` accepts the
-same names, ranges, and unions as a source-rule domain. An empty array is an
-explicit no-op and generates no alternates. Current alternate namers are `st`
-and `sts`, which append `.st` and `.sts` to the base name. Eligible bases include
-both assembled encoded glyphs and encoded aliases; an alias uses its assembled
-source's geometry but its own target name as the GSUB base. Each generator
-selects bases by Unicode, scales the original assembled skeleton, and creates an
-unencoded alternate. Generated alternates are not fed into later generators.
+The three displayed fields are required and cannot be `null`. `unicode_domain`
+accepts the same names, ranges, and unions as a source-rule domain. An empty
+array is an explicit no-op and generates no alternates. Current alternate namers
+are `st` and `sts`, which append `.st` and `.sts` to the base name. Eligible
+bases include both assembled encoded glyphs and encoded aliases; an alias uses
+its assembled source's geometry but its own target name as the GSUB base. Each
+generator selects bases by Unicode, scales the original assembled skeleton, and
+creates an unencoded alternate. Generated alternates are not fed into later
+generators.
+
+An optional positive `monospace_width`, in font units, gives the generator's
+ordinary alternates a local fixed width. It is independent of the base: omitting
+the field always leaves a generated alternate proportional, even when the base
+came from a locally fixed source rule. Different ssty levels may specify
+different widths. Accents and MATH variants or parts ignore the local value, and
+the field cannot be combined with a top-level `monospace_width`.
 
 A base may receive at most two alternates. Generator order defines their ssty
 levels. Any generated-name collision is an error. `AssembledFont` carries the
@@ -675,7 +692,10 @@ contribution. Its `monospace_x_offset` does not move the outline. A no-stroke
 glyph has no edge contributions, so its width is
 `x_extent * grid + left spacing + right spacing`.
 
-Ordinary monospace glyphs instead use:
+An ordinary glyph uses the top-level `monospace_width` when present; otherwise
+it uses the local width attached by the source rule or ssty generator that
+created it. If neither exists, the proportional formula above applies. An
+ordinary glyph with an effective fixed width uses:
 
 ```text
 width = monospace_width + left_spacing + right_spacing
@@ -683,9 +703,10 @@ x = (source_x + monospace_x_offset) * grid
     + left_spacing + monospace_width / 2
 ```
 
-This makes authored x=0 the centered monospace design axis. Per-glyph spacing
-adjustments are not allowed for ordinary monospace glyphs, so every ordinary
-glyph retains the same advance.
+This makes authored x=0 the centered fixed-width design axis. Per-glyph spacing
+adjustments are not allowed for an ordinary glyph using either a global or local
+fixed width. A top-level width gives all ordinary glyphs the same advance;
+separate local fields may intentionally define several fixed-width groups.
 
 For accents:
 
@@ -698,7 +719,8 @@ Discrete MATH variants always use proportional planning, even in a monospace
 font. Their glyph width contains horizontal spacing, but their MATH FullAdvance
 measures only the construction axis and does not include spacing. Horizontal
 assembly parts have no horizontal spacing. Vertical parts receive the common
-width and spacing of their owner layout.
+width and spacing of their owner layout. These special roles ignore any local
+width carried from their source rule or ssty generator.
 
 `y_offset` is applied in design units to ordinary glyphs, accents, discrete
 variants, and both kinds of assembly part. Ordinary glyphs, accents, discrete
@@ -752,9 +774,10 @@ Selectors have these meanings:
 
 A base that names both a vertical and horizontal construction is ambiguous and
 cannot use a group selector. Assembly parts cannot be configured by exact name.
-Horizontal parts, accents, and ordinary monospace glyphs cannot receive spacing
-adjustments. A variant group containing an accent base is rejected as a whole;
-its discrete variants may still be configured individually.
+Horizontal parts, accents, and ordinary glyphs using either a global or local
+fixed width cannot receive spacing adjustments. A variant group containing an
+accent base is rejected as a whole; its discrete variants may still be
+configured individually.
 
 Configuration order never creates precedence. Exact and group assignments may
 not overlap. `variant_glyphs` and `parts` are the only permitted pair of groups
