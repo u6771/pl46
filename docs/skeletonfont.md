@@ -718,6 +718,10 @@ contributions use scale `1`. MATH growth-axis FullAdvances still use measured or
 explicitly authored part-edge scales; the option does not erase construction
 geometry.
 
+`point_radius_scale` affects only the rendered outline of an isolated-point
+stroke; it does not participate in edge-scale measurement or scaled-edge metric
+contributions.
+
 ### Glyph spacing configuration
 
 A `glyph_config_file` under `data/glyph_config/` maps a glyph selector to
