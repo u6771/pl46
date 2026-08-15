@@ -281,6 +281,7 @@ class FontMetaLoaderTests(unittest.TestCase):
         self.assertEqual(len(meta.ssty_generators), 1)
         self.assertEqual(meta.ssty_generators[0].ssty_alternate_name, "st")
         self.assertEqual(meta.ssty_generators[0].thickness_scale, 1.4)
+        self.assertIsNone(meta.ssty_generators[0].monospace_width)
 
         empty_domain_data = dict(original)
         empty_domain_data["ssty_generators"] = [
@@ -372,6 +373,90 @@ class FontMetaLoaderTests(unittest.TestCase):
                         build_name="invalid-scale",
                         meta_path=path,
                     )
+
+    def test_local_monospace_widths_are_optional_positive_numbers(self) -> None:
+        path = PROJECT_DIRECTORY / "meta" / "ascii.json"
+        data = json.loads(path.read_text(encoding="utf-8"))
+        del data["monospace_width"]
+        data["source_rules"][1]["monospace_width"] = 550
+        data["ssty_generators"] = [
+            {
+                "unicode_domain": "upright_latin",
+                "ssty_alternate_name": "st",
+                "thickness_scale": 1.2,
+                "monospace_width": 450,
+            }
+        ]
+
+        meta = parse_font_meta(
+            data,
+            build_name="local-monospace",
+            meta_path=path,
+        )
+
+        self.assertEqual(meta.source_rules[1].monospace_width, 550)
+        self.assertEqual(meta.ssty_generators[0].monospace_width, 450)
+        self.assertFalse(meta.info.is_fixed_pitch)
+
+        for location in ("source_rule", "ssty_generator"):
+            for value in (None, True, "500", 0, -1, float("inf")):
+                with self.subTest(location=location, value=value):
+                    invalid = json.loads(path.read_text(encoding="utf-8"))
+                    del invalid["monospace_width"]
+                    if location == "source_rule":
+                        invalid["source_rules"][1]["monospace_width"] = value
+                    else:
+                        invalid["ssty_generators"] = [
+                            {
+                                "unicode_domain": "upright_latin",
+                                "ssty_alternate_name": "st",
+                                "thickness_scale": 1.2,
+                                "monospace_width": value,
+                            }
+                        ]
+                    with self.assertRaisesRegex(
+                        ProjectDataError,
+                        "monospace_width",
+                    ):
+                        parse_font_meta(
+                            invalid,
+                            build_name="invalid-local-monospace",
+                            meta_path=path,
+                        )
+
+    def test_global_monospace_width_locks_local_widths(self) -> None:
+        path = PROJECT_DIRECTORY / "meta" / "ascii.json"
+
+        source_data = json.loads(path.read_text(encoding="utf-8"))
+        source_data["source_rules"][1]["monospace_width"] = 600
+        with self.assertRaisesRegex(
+            ProjectDataError,
+            r"source_rules\[1\]\.monospace_width",
+        ):
+            parse_font_meta(
+                source_data,
+                build_name="global-and-source-local",
+                meta_path=path,
+            )
+
+        generator_data = json.loads(path.read_text(encoding="utf-8"))
+        generator_data["ssty_generators"] = [
+            {
+                "unicode_domain": [],
+                "ssty_alternate_name": "st",
+                "thickness_scale": 1.2,
+                "monospace_width": 600,
+            }
+        ]
+        with self.assertRaisesRegex(
+            ProjectDataError,
+            r"ssty_generators\[0\]\.monospace_width",
+        ):
+            parse_font_meta(
+                generator_data,
+                build_name="global-and-generator-local",
+                meta_path=path,
+            )
 
     def test_disabled_math_is_none(self) -> None:
         meta = load_font_meta(PROJECT_DIRECTORY, "ascii")
@@ -581,7 +666,7 @@ class FontMetaLoaderTests(unittest.TestCase):
         data = json.loads(path.read_text(encoding="utf-8"))
 
         mono = parse_font_meta(data, build_name="mono", meta_path=path)
-        self.assertEqual(mono.glyph_parameters.monospace_width, 600)
+        self.assertEqual(mono.glyph_parameters.monospace_width, 450)
 
         del data["monospace_width"]
         proportional = parse_font_meta(

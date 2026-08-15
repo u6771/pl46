@@ -156,6 +156,69 @@ class FontAssemblerTests(unittest.TestCase):
             )
             self.assertIsNot(scaled_stroke, source_stroke)
 
+    def test_source_rule_monospace_width_follows_final_selected_glyph(self) -> None:
+        catalog = GlyphCatalog(FIXTURE_PROJECT_DIRECTORY)
+        meta = load_font_meta(FIXTURE_PROJECT_DIRECTORY, "basic")
+        parameters = replace(meta.glyph_parameters, monospace_width=None)
+        local_rule = replace(meta.source_rules[1], monospace_width=550)
+
+        local = assemble_font(
+            replace(
+                meta,
+                glyph_parameters=parameters,
+                source_rules=(meta.source_rules[0], local_rule),
+            ),
+            catalog,
+        )
+
+        self.assertEqual(local.glyphs["A"].ordinary_monospace_width, 550)
+        self.assertIsNone(
+            local.glyphs[".notdef"].ordinary_monospace_width
+        )
+
+        replaced = assemble_font(
+            replace(
+                meta,
+                glyph_parameters=parameters,
+                source_rules=(
+                    meta.source_rules[0],
+                    local_rule,
+                    replace(
+                        local_rule,
+                        replace_existing=True,
+                        monospace_width=None,
+                    ),
+                ),
+            ),
+            catalog,
+        )
+
+        self.assertIsNone(replaced.glyphs["A"].ordinary_monospace_width)
+
+        math_meta = load_font_meta(PROJECT_DIRECTORY, "math")
+        fraktur_rule = next(
+            rule
+            for rule in math_meta.source_rules
+            if rule.mapping_name == "upright_latin_to_fraktur_latin"
+        )
+        mapped = assemble_font(
+            replace(
+                math_meta,
+                source_rules=tuple(
+                    replace(rule, monospace_width=525)
+                    if rule is fraktur_rule
+                    else rule
+                    for rule in math_meta.source_rules
+                ),
+            ),
+            self.catalog,
+        )
+
+        self.assertEqual(
+            mapped.glyphs["A.fraktur"].ordinary_monospace_width,
+            525,
+        )
+
     def test_ssty_generators_derive_glyph_and_alias_bases(self) -> None:
         assembled = assemble_font(
             load_font_meta(PROJECT_DIRECTORY, "math"),
@@ -208,6 +271,7 @@ class FontAssemblerTests(unittest.TestCase):
             UnicodeDomain(((0x0041, 0x0041),)),
             "st",
             1.4,
+            None,
         )
 
         assembled = assemble_font(
@@ -231,6 +295,55 @@ class FontAssemblerTests(unittest.TestCase):
                 authored_stroke.thickness_scale * 1.25 * 1.4,
             )
 
+    def test_ssty_generator_owns_its_alternate_monospace_width(self) -> None:
+        catalog = GlyphCatalog(FIXTURE_PROJECT_DIRECTORY)
+        meta = load_font_meta(FIXTURE_PROJECT_DIRECTORY, "basic")
+        parameters = replace(meta.glyph_parameters, monospace_width=None)
+        local_rule = replace(meta.source_rules[1], monospace_width=600)
+        domain = UnicodeDomain(((0x0041, 0x0041),))
+
+        proportional_alternate = assemble_font(
+            replace(
+                meta,
+                glyph_parameters=parameters,
+                source_rules=(meta.source_rules[0], local_rule),
+                ssty_generators=(
+                    SstyGenerator(domain, "st", 1.2, None),
+                ),
+            ),
+            catalog,
+        )
+
+        self.assertEqual(
+            proportional_alternate.glyphs["A"].ordinary_monospace_width,
+            600,
+        )
+        self.assertIsNone(
+            proportional_alternate.glyphs["A.st"].ordinary_monospace_width
+        )
+
+        fixed_alternate = assemble_font(
+            replace(
+                meta,
+                glyph_parameters=parameters,
+                source_rules=(meta.source_rules[0], local_rule),
+                ssty_generators=(
+                    SstyGenerator(domain, "st", 1.2, 450),
+                    SstyGenerator(domain, "sts", 1.4, 350),
+                ),
+            ),
+            catalog,
+        )
+
+        self.assertEqual(
+            fixed_alternate.glyphs["A.st"].ordinary_monospace_width,
+            450,
+        )
+        self.assertEqual(
+            fixed_alternate.glyphs["A.sts"].ordinary_monospace_width,
+            350,
+        )
+
     def test_ssty_generators_skip_missing_codepoints(self) -> None:
         meta = load_font_meta(PROJECT_DIRECTORY, "ascii")
         assembled = assemble_font(
@@ -241,6 +354,7 @@ class FontAssemblerTests(unittest.TestCase):
                         UnicodeDomain(((0xE000, 0xE000),)),
                         "st",
                         1.4,
+                        None,
                     ),
                 ),
             ),
@@ -256,7 +370,7 @@ class FontAssemblerTests(unittest.TestCase):
             replace(
                 meta,
                 ssty_generators=(
-                    SstyGenerator(UnicodeDomain(()), "st", 1.4),
+                    SstyGenerator(UnicodeDomain(()), "st", 1.4, None),
                 ),
             ),
             self.catalog,
@@ -288,6 +402,7 @@ class FontAssemblerTests(unittest.TestCase):
                     UnicodeDomain(((0x0041, 0x0041),)),
                     "st",
                     1.4,
+                    None,
                 ),
             ),
         )
@@ -305,7 +420,9 @@ class FontAssemblerTests(unittest.TestCase):
             assemble_font(
                 replace(
                     meta,
-                    ssty_generators=(SstyGenerator(domain, "unknown", 1.4),),
+                    ssty_generators=(
+                        SstyGenerator(domain, "unknown", 1.4, None),
+                    ),
                 ),
                 self.catalog,
             )
@@ -315,8 +432,8 @@ class FontAssemblerTests(unittest.TestCase):
                 replace(
                     meta,
                     ssty_generators=(
-                        SstyGenerator(domain, "st", 1.4),
-                        SstyGenerator(domain, "st", 1.6),
+                        SstyGenerator(domain, "st", 1.4, None),
+                        SstyGenerator(domain, "st", 1.6, None),
                     ),
                 ),
                 self.catalog,
@@ -327,9 +444,9 @@ class FontAssemblerTests(unittest.TestCase):
                 replace(
                     meta,
                     ssty_generators=(
-                        SstyGenerator(domain, "st", 1.2),
-                        SstyGenerator(domain, "sts", 1.4),
-                        SstyGenerator(domain, "st", 1.6),
+                        SstyGenerator(domain, "st", 1.2, None),
+                        SstyGenerator(domain, "sts", 1.4, None),
+                        SstyGenerator(domain, "st", 1.6, None),
                     ),
                 ),
                 self.catalog,

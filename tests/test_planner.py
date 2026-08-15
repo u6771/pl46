@@ -28,7 +28,9 @@ from skeletonfont.model import (
     MathGlyphKernData,
     MathKernTableData,
     SstyData,
+    SstyGenerator,
     StrokeRecord,
+    UnicodeDomain,
 )
 from skeletonfont.planner import (
     _inherited_top_accent_attachments,
@@ -1770,6 +1772,114 @@ class FontPlannerTests(unittest.TestCase):
         self.assertEqual(a.strokes[0].centerline[0], (100.0, 25.0))
         self.assertEqual(a.strokes[0].centerline[-1], (500.0, 25.0))
 
+    def test_local_monospace_width_plans_only_its_ordinary_glyph(self) -> None:
+        assembled = assembled_font("ascii")
+        glyphs = dict(assembled.glyphs)
+        glyphs["A"] = replace(
+            glyphs["A"],
+            ordinary_monospace_width=500,
+        )
+        local = replace(
+            assembled,
+            glyph_parameters=replace(
+                assembled.glyph_parameters,
+                monospace_width=None,
+            ),
+            glyphs=MappingProxyType(glyphs),
+        )
+
+        plan = plan_font(local)
+
+        self.assertEqual(plan.glyphs["A"].width, 650)
+        self.assertEqual(
+            plan.glyphs["A"].strokes[0].centerline[0],
+            (125.0, 25.0),
+        )
+        self.assertEqual(
+            plan.glyphs["A"].strokes[0].centerline[-1],
+            (525.0, 25.0),
+        )
+
+        with self.assertRaisesRegex(PlanError, "Monospace ordinary"):
+            plan_font(
+                local,
+                adjustment_config({"A": adjustment(left=0)}),
+            )
+
+    def test_ssty_generator_width_controls_only_its_alternate(self) -> None:
+        meta = load_font_meta(PROJECT_DIRECTORY, "ascii")
+        parameters = replace(meta.glyph_parameters, monospace_width=None)
+        domain = UnicodeDomain(((0x0041, 0x0041),))
+
+        fixed = assemble_font(
+            replace(
+                meta,
+                glyph_parameters=parameters,
+                ssty_generators=(
+                    SstyGenerator(domain, "st", 1.2, 450),
+                ),
+            ),
+            GlyphCatalog(PROJECT_DIRECTORY),
+        )
+
+        self.assertEqual(plan_font(fixed).glyphs["A.st"].width, 600)
+        with self.assertRaisesRegex(PlanError, "Monospace ordinary"):
+            plan_font(
+                fixed,
+                adjustment_config({"A.st": adjustment(right=10)}),
+            )
+
+        proportional = assemble_font(
+            replace(
+                meta,
+                glyph_parameters=parameters,
+                ssty_generators=(
+                    SstyGenerator(domain, "st", 1.2, None),
+                ),
+            ),
+            GlyphCatalog(PROJECT_DIRECTORY),
+        )
+        baseline_width = plan_font(proportional).glyphs["A.st"].width
+        adjusted_width = plan_font(
+            proportional,
+            adjustment_config({"A.st": adjustment(right=10)}),
+        ).glyphs["A.st"].width
+
+        self.assertEqual(adjusted_width, baseline_width + 10)
+
+    def test_special_roles_ignore_local_monospace_width(self) -> None:
+        glyphs = dict(self.assembled_math.glyphs)
+        glyphs["circumflexcmb"] = replace(
+            glyphs["circumflexcmb"],
+            ordinary_monospace_width=500,
+        )
+        glyphs["parenleft"] = replace(
+            glyphs["parenleft"],
+            ordinary_monospace_width=500,
+        )
+        assembled = replace(
+            self.assembled_math,
+            glyphs=MappingProxyType(glyphs),
+        )
+
+        baseline = plan_font(
+            assembled,
+            math_table_data=self.math_data,
+            accent_glyphs=self.accent_glyphs,
+        )
+        adjusted = plan_font(
+            assembled,
+            adjustment_config({"parenleft": adjustment(left=10)}),
+            math_table_data=self.math_data,
+            accent_glyphs=self.accent_glyphs,
+        )
+
+        self.assertEqual(baseline.glyphs["circumflexcmb"].width, 0)
+        self.assertEqual(
+            adjusted.glyphs["parenleft"].width,
+            baseline.glyphs["parenleft"].width + 10,
+        )
+
     def test_monospace_design_origin_tracks_core_width_center(self) -> None:
         assembled = assembled_font("ascii")
         narrow_assembled = replace(
@@ -1782,9 +1892,9 @@ class FontPlannerTests(unittest.TestCase):
 
         a = plan_font(narrow_assembled).glyphs["A"]
 
-        self.assertEqual(a.width, 500)
-        self.assertEqual(a.strokes[0].centerline[0], (50.0, 25.0))
-        self.assertEqual(a.strokes[0].centerline[-1], (450.0, 25.0))
+        self.assertEqual(a.width, 650)
+        self.assertEqual(a.strokes[0].centerline[0], (125.0, 25.0))
+        self.assertEqual(a.strokes[0].centerline[-1], (525.0, 25.0))
 
     def test_monospace_center_does_not_depend_on_radius(self) -> None:
         assembled = assembled_font("ascii")
@@ -1838,10 +1948,10 @@ class FontPlannerTests(unittest.TestCase):
         a = plan.glyphs["A"]
         space = plan.glyphs["space"]
 
-        self.assertEqual(a.width, 650)
-        self.assertEqual(space.width, 650)
-        self.assertEqual(plan.glyphs[".notdef"].width, 650)
-        self.assertEqual(a.strokes[0].centerline[0], (120.0, 25.0))
+        self.assertEqual(a.width, 500)
+        self.assertEqual(space.width, 500)
+        self.assertEqual(plan.glyphs[".notdef"].width, 500)
+        self.assertEqual(a.strokes[0].centerline[0], (45.0, 25.0))
 
     def test_preloaded_kerning_is_retained_by_the_plan(self) -> None:
         assembled = assembled_font("fraktur")
