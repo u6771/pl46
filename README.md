@@ -24,15 +24,12 @@ PL46 currently provides the following font files:
 
 | Filename | Coverage | Glyph count |
 | --- | --- | --- |
-| `PL46-Regular.otf` | Latin, Greek, and Cyrillic alphabets | 550 |
+| `PL46-Regular.otf` | Latin, Greek, and Cyrillic alphabets | 598 |
 | `PL46-JP.otf` | Latin alphabet and Japanese kana | 297 |
-| `PL46-Bold.otf` | Latin alphabet | 97 |
+| `PL46-Bold.otf` | Latin alphabet | 145 |
 | `PL46-Fraktur.otf` | Latin alphabet | 97 |
 | `PL46-Script.otf` | Latin alphabet | 97 |
-| `PL46-Math.otf` | Latin and Greek alphabets and mathematical symbols | 1771 |
-
-Among them, *PL46 Regular*, *PL46 JP*, and *PL46 Bold* are monospaced, while
-*PL46 Fraktur*, *PL46 Script*, and *PL46 Math* are proportionally spaced.
+| `PL46-Math.otf` | Latin and Greek alphabets and mathematical symbols | 1777 |
 
 You can download them from [here](https://github.com/u6771/pl46/releases).
 

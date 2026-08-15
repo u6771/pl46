@@ -24,15 +24,12 @@ PL46 是一族以端点坐标为整数的线段作为基本造型元素的 OpenT
 
 | 文件名 | 支持 | 字符总数 |
 | --- | --- | --- |
-| `PL46-Regular.otf` | 拉丁字母、希腊字母、西里尔字母 | 550 |
+| `PL46-Regular.otf` | 拉丁字母、希腊字母、西里尔字母 | 598 |
 | `PL46-JP.otf` | 拉丁字母、日文假名 | 297 |
-| `PL46-Bold.otf` | 拉丁字母 | 97 |
+| `PL46-Bold.otf` | 拉丁字母 | 145 |
 | `PL46-Fraktur.otf` | 拉丁字母 | 97 |
 | `PL46-Script.otf` | 拉丁字母 | 97 |
-| `PL46-Math.otf` | 拉丁字母、希腊字母、数学符号 | 1771 |
-
-其中 *PL46 Regular*、*PL46 JP* 和 *PL46 Bold* 是等宽字体，而
-*PL46 Fraktur*、*PL46 Script* 和 *PL46 Math* 是比例字体。
+| `PL46-Math.otf` | 拉丁字母、希腊字母、数学符号 | 1777 |
 
 你可以从[这里](https://github.com/u6771/pl46/releases)下载它们。
 
