@@ -1,0 +1,29 @@
+{
+  "family": "PL46",
+  "style": "Mono",
+  "weight_class": 400,
+  "units_per_em": 1000,
+  "ascender": 850,
+  "descender": -200,
+  "cap_height": 650,
+  "x_height": 450,
+  "grid": 100,
+  "thickness": 80,
+  "monospace_width": 450,
+  "left_spacing": 75,
+  "right_spacing": 75,
+  "source_rules": [
+    {
+      "source_directory": "notdef",
+      "include_unencoded": true
+    },
+    {
+      "source_directory": "latin"
+    },
+    {
+      "source_directory": "uni6771",
+      "unicode_domain": [["6771"]]
+    }
+  ],
+  "release_info_file": "pl46.json"
+}
