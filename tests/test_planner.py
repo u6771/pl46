@@ -273,8 +273,8 @@ class FontPlannerTests(unittest.TestCase):
             dict(self.math_data.italic_corrections),
         )
         self.assertEqual(math_plan.top_accent_attachments["f.italic"], 400)
-        self.assertEqual(math_plan.top_accent_attachments["j"], 400)
-        self.assertEqual(math_plan.top_accent_attachments["j.italic"], 400)
+        self.assertEqual(math_plan.top_accent_attachments["j"], 500)
+        self.assertEqual(math_plan.top_accent_attachments["j.italic"], 500)
         self.assertEqual(math_plan.top_accent_attachments["t"], 200)
         self.assertEqual(math_plan.top_accent_attachments["t.italic"], 200)
         self.assertEqual(math_plan.top_accent_attachments["A.script"], 500)

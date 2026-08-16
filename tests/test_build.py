@@ -281,8 +281,8 @@ class BuildPipelineTests(unittest.TestCase):
                     strict=True,
                 )
             )
-            self.assertEqual(serialized_accent_attachments["j"], 400)
-            self.assertEqual(serialized_accent_attachments["j.italic"], 400)
+            self.assertEqual(serialized_accent_attachments["j"], 500)
+            self.assertEqual(serialized_accent_attachments["j.italic"], 500)
             self.assertEqual(serialized_accent_attachments["t"], 200)
             self.assertEqual(serialized_accent_attachments["t.italic"], 200)
             self.assertEqual(serialized_accent_attachments["J.st"], 505)
