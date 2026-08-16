@@ -24,12 +24,13 @@ PL46 是一族以端点坐标为整数的线段作为基本造型元素的 OpenT
 
 | 文件名 | 支持 | 字符总数 |
 | --- | --- | --- |
-| `PL46-Regular.otf` | 拉丁字母、希腊字母、西里尔字母 | 598 |
+| `PL46-Regular.otf` | 拉丁字母、希腊字母、西里尔字母 | 641 |
 | `PL46-JP.otf` | 拉丁字母、日文假名 | 297 |
-| `PL46-Bold.otf` | 拉丁字母 | 145 |
-| `PL46-Fraktur.otf` | 拉丁字母 | 97 |
+| `PL46-Bold.otf` | 拉丁字母 | 188 |
 | `PL46-Script.otf` | 拉丁字母 | 97 |
-| `PL46-Math.otf` | 拉丁字母、希腊字母、数学符号 | 1777 |
+| `PL46-Fraktur.otf` | 拉丁字母 | 97 |
+| `PL46-Mono.otf` | 拉丁字母 | 97 |
+| `PL46-Math.otf` | 拉丁字母、希腊字母、数学符号 | 1791 |
 
 你可以从[这里](https://github.com/u6771/pl46/releases)下载它们。
 
@@ -53,11 +54,12 @@ PL46 是一族以端点坐标为整数的线段作为基本造型元素的 OpenT
 
 下例按字体名称加载，前提是相应的 OTF 已安装到系统中。你可以通过
 ```tex
-\usepackage[mathrm=sym,mathbf=sym]{unicode-math}
+\usepackage{unicode-math}
 \setmainfont[BoldFont=PL46 Bold]{PL46 Regular}
+\setmonofont{PL46-Mono.otf}
 \setmathfont{PL46 Math}
 ```
-将 PL46 设为文件的正文和数学字体。
+将 PL46 设为文件的正文、等距和数学字体。
 
 若只是在仓库内本地测试，请参阅 [`docs/tex/`](docs/tex/) 目录下的示例。
 
