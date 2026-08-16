@@ -136,8 +136,17 @@ def _upright_latin_to_bold_latin() -> Iterable[UnicodePair]:
     yield from _paired_ranges(0x0061, 0x007B, 0x1D41A)
 
 
+def _upright_latin_to_typewriter_latin() -> Iterable[UnicodePair]:
+    yield from _paired_ranges(0x0041, 0x005B, 0x1D670)
+    yield from _paired_ranges(0x0061, 0x007B, 0x1D68A)
+
+
 def _ascii_digits_to_bold_digits() -> Iterable[UnicodePair]:
     yield from _paired_ranges(0x0030, 0x003A, 0x1D7CE)
+
+
+def _ascii_digits_to_typewriter_digits() -> Iterable[UnicodePair]:
+    yield from _paired_ranges(0x0030, 0x003A, 0x1D7F6)
 
 
 def _upright_greek_to_bold_greek() -> Iterable[UnicodePair]:
@@ -201,11 +210,23 @@ _MAPPING_DEFINITIONS = {
         "upright_latin",
         "bold_latin",
     ),
+    "upright_latin_to_typewriter_latin": (
+        _upright_latin_to_typewriter_latin,
+        _styled_name("typewriter"),
+        "upright_latin",
+        "typewriter_latin",
+    ),
     "ascii_digits_to_bold_digits": (
         _ascii_digits_to_bold_digits,
         _styled_name("bold"),
         "ascii_digits",
         "bold_digits",
+    ),
+    "ascii_digits_to_typewriter_digits": (
+        _ascii_digits_to_typewriter_digits,
+        _styled_name("typewriter"),
+        "ascii_digits",
+        "typewriter_digits",
     ),
     "upright_greek_to_bold_greek": (
         _upright_greek_to_bold_greek,
