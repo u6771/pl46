@@ -36,30 +36,30 @@
     },
     {
       "source_directory": "italic",
-      "mapping_name": "upright_latin_to_italic_latin"
+      "mapping": "upright_latin_to_italic_latin"
     },
     {
       "source_directory": "script",
       "unicode_domain": [
         ["0041", "005A"]
       ],
-      "mapping_name": "upright_latin_to_script_latin"
+      "mapping": "upright_latin_to_script_latin"
     },
     {
       "source_directory": "fraktur",
-      "mapping_name": "upright_latin_to_fraktur_latin"
+      "mapping": "upright_latin_to_fraktur_latin"
     },
     {
       "source_directory": "blackboard",
-      "mapping_name": "upright_latin_to_blackboard_latin"
+      "mapping": "upright_latin_to_blackboard_latin"
     },
     {
       "source_directory": "bold",
-      "mapping_name": "upright_latin_to_bold_latin"
+      "mapping": "upright_latin_to_bold_latin"
     },
     {
       "source_directory": "bold",
-      "mapping_name": "ascii_digits_to_bold_digits"
+      "mapping": "ascii_digits_to_bold_digits"
     },
     {
       "source_directory": "uni6771",
@@ -81,7 +81,7 @@
         "script_latin",
         "fraktur_latin"
       ],
-      "ssty_alternate_name": "st",
+      "ssty_namer": "st",
       "thickness_scale": 1.2
     }
   ],
