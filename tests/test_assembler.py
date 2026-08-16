@@ -738,6 +738,56 @@ class FontAssemblerTests(unittest.TestCase):
         self.assertEqual(mapping.source_domain, "ascii_digits")
         self.assertEqual(mapping.target_domain, "bold_digits")
 
+    def test_upright_latin_maps_to_mathematical_typewriter_latin(
+        self,
+    ) -> None:
+        mapping = get_mapping("upright_latin_to_typewriter_latin")
+
+        self.assertEqual(len(mapping.target_codepoint_by_source), 52)
+        self.assertEqual(
+            mapping.target_codepoint_by_source[ord("A")],
+            0x1D670,
+        )
+        self.assertEqual(
+            mapping.target_codepoint_by_source[ord("Z")],
+            0x1D689,
+        )
+        self.assertEqual(
+            mapping.target_codepoint_by_source[ord("a")],
+            0x1D68A,
+        )
+        self.assertEqual(
+            mapping.target_codepoint_by_source[ord("z")],
+            0x1D6A3,
+        )
+        self.assertEqual(
+            mapping.apply(GlyphIdentity("A", 0x0041)),
+            GlyphIdentity("A.typewriter", 0x1D670),
+        )
+        self.assertEqual(mapping.source_domain, "upright_latin")
+        self.assertEqual(mapping.target_domain, "typewriter_latin")
+
+    def test_ascii_digits_map_to_mathematical_typewriter_digits(
+        self,
+    ) -> None:
+        mapping = get_mapping("ascii_digits_to_typewriter_digits")
+
+        self.assertEqual(len(mapping.target_codepoint_by_source), 10)
+        self.assertEqual(
+            mapping.target_codepoint_by_source[ord("0")],
+            0x1D7F6,
+        )
+        self.assertEqual(
+            mapping.target_codepoint_by_source[ord("9")],
+            0x1D7FF,
+        )
+        self.assertEqual(
+            mapping.apply(GlyphIdentity("zero", 0x0030)),
+            GlyphIdentity("zero.typewriter", 0x1D7F6),
+        )
+        self.assertEqual(mapping.source_domain, "ascii_digits")
+        self.assertEqual(mapping.target_domain, "typewriter_digits")
+
     def test_mapping_domain_validation_allows_unrestricted_sides(self) -> None:
         mapping = GlyphMapping(
             MappingProxyType({0xE000: 0xE001}),

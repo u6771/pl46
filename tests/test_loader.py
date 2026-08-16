@@ -74,7 +74,7 @@ class FontMetaLoaderTests(unittest.TestCase):
             for path in paths
         ]
 
-        self.assertEqual(len(loaded), 8)
+        self.assertEqual(len(loaded), 9)
         self.assertEqual(
             {meta.meta_name for meta in loaded},
             {path.stem for path in paths},
