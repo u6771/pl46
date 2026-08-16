@@ -1,9 +1,9 @@
 [
-  "mono",
-  "bold",
-  "fraktur",
-  "jp",
-  "math",
   "regular",
-  "script"
+  "jp",
+  "bold",
+  "script",
+  "fraktur",
+  "mono",
+  "math"
 ]
