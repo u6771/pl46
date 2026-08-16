@@ -265,7 +265,7 @@ class FontPlannerTests(unittest.TestCase):
             "sub A.italic by A.italic.st;",
             self.math_plan.ssty_feature,
         )
-        self.assertEqual(len(math_plan.vertical_variant_records), 46)
+        self.assertEqual(len(math_plan.vertical_variant_records), 48)
         self.assertEqual(len(math_plan.horizontal_variant_records), 14)
         self.assertIn("parenleft", math_plan.extended_shapes)
         self.assertEqual(

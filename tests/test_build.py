@@ -261,11 +261,15 @@ class BuildPipelineTests(unittest.TestCase):
             )
             self.assertEqual(
                 serialized_italic_corrections["contourintegral.v1"],
-                200,
+                300,
+            )
+            self.assertEqual(
+                serialized_italic_corrections["uni2231.v1"],
+                400,
             )
             self.assertEqual(
                 set(serialized_italic_corrections.values()),
-                {200},
+                {200, 300, 400},
             )
             accent_attachment = (
                 font["MATH"]

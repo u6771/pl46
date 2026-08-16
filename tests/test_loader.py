@@ -1373,9 +1373,13 @@ class MathTableDataLoaderTests(unittest.TestCase):
         self.assertEqual(ssty.substitutions["minute"], ("minute.st",))
         self.assertEqual(
             data.italic_corrections["contourintegral.v1"],
-            200,
+            300,
         )
-        self.assertEqual(set(data.italic_corrections.values()), {200})
+        self.assertEqual(data.italic_corrections["uni2231.v1"], 400)
+        self.assertEqual(
+            set(data.italic_corrections.values()),
+            {200, 300, 400},
+        )
         self.assertEqual(data.accent_attachments["f.italic"], 1.0)
         self.assertEqual(data.accent_attachments["uni210F"], -2.0)
         self.assertEqual(data.accent_attachments["dotlessj"], 2.0)
@@ -1390,7 +1394,7 @@ class MathTableDataLoaderTests(unittest.TestCase):
             data.vertical_variant_glyphs["parenleft"][:2],
             ("parenleft.v1", "parenleft.v2"),
         )
-        self.assertEqual(len(data.vertical_variant_glyphs), 46)
+        self.assertEqual(len(data.vertical_variant_glyphs), 48)
         self.assertEqual(len(data.horizontal_variant_glyphs), 14)
         self.assertEqual(data.min_connector_overlap, 25)
         self.assertEqual(len(data.vertical_assemblies), 17)
