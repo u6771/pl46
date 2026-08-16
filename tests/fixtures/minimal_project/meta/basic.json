@@ -9,7 +9,9 @@
   "x_height": 450,
   "grid": 100,
   "thickness": 50,
-  "monospace_width": 600,
+  "monospace_width": 450,
+  "left_spacing": 75,
+  "right_spacing": 75,
   "source_rules": [
     {
       "source_directory": "notdef",

@@ -8,7 +8,7 @@ from unittest.mock import patch
 
 from skeletonfont.assembler import (
     GlyphCatalog,
-    _apply_ssty_generators,
+    _generate_ssty_alternates,
     assemble_font,
 )
 from skeletonfont.errors import AssemblyError
@@ -67,10 +67,10 @@ class FontAssemblerTests(unittest.TestCase):
 
     def test_all_project_fonts_assemble_with_notdef(self) -> None:
         for meta_path in sorted((PROJECT_DIRECTORY / "meta").glob("*.json")):
-            build_name = meta_path.stem
-            with self.subTest(build_name=build_name):
+            meta_name = meta_path.stem
+            with self.subTest(meta_name=meta_name):
                 assembled = assemble_font(
-                    load_font_meta(PROJECT_DIRECTORY, build_name),
+                    load_font_meta(PROJECT_DIRECTORY, meta_name),
                     self.catalog,
                 )
                 self.assertIn(".notdef", assembled.glyphs)
@@ -199,7 +199,7 @@ class FontAssemblerTests(unittest.TestCase):
         fraktur_rule = next(
             rule
             for rule in math_meta.source_rules
-            if rule.mapping_name == "upright_latin_to_fraktur_latin"
+            if rule.mapping == "upright_latin_to_fraktur_latin"
         )
         mapped = assemble_font(
             replace(
@@ -393,7 +393,7 @@ class FontAssemblerTests(unittest.TestCase):
         }
         original_glyphs = dict(glyphs_by_name)
 
-        result = _apply_ssty_generators(
+        result = _generate_ssty_alternates(
             glyphs_by_name,
             glyphs_by_codepoint,
             assembled.glyph_aliases,
@@ -680,20 +680,38 @@ class FontAssemblerTests(unittest.TestCase):
 
         self.assertIs(first, second)
         with self.assertRaises(TypeError):
-            first.codepoints[0x0041] = 0x0041  # type: ignore[index]
+            first.target_codepoint_by_source[0x0041] = (  # type: ignore[index]
+                0x0041
+            )
 
     def test_script_latin_mapping_includes_unicode_exceptions(self) -> None:
         mapping = get_mapping("upright_latin_to_script_latin")
 
-        self.assertEqual(len(mapping.codepoints), 52)
-        self.assertEqual(mapping.codepoints[ord("A")], 0x1D49C)
-        self.assertEqual(mapping.codepoints[ord("B")], 0x212C)
-        self.assertEqual(mapping.codepoints[ord("R")], 0x211B)
-        self.assertEqual(mapping.codepoints[ord("a")], 0x1D4B6)
-        self.assertEqual(mapping.codepoints[ord("e")], 0x212F)
-        self.assertEqual(mapping.codepoints[ord("g")], 0x210A)
-        self.assertEqual(mapping.codepoints[ord("o")], 0x2134)
-        self.assertEqual(mapping.codepoints[ord("z")], 0x1D4CF)
+        self.assertEqual(len(mapping.target_codepoint_by_source), 52)
+        self.assertEqual(
+            mapping.target_codepoint_by_source[ord("A")], 0x1D49C
+        )
+        self.assertEqual(
+            mapping.target_codepoint_by_source[ord("B")], 0x212C
+        )
+        self.assertEqual(
+            mapping.target_codepoint_by_source[ord("R")], 0x211B
+        )
+        self.assertEqual(
+            mapping.target_codepoint_by_source[ord("a")], 0x1D4B6
+        )
+        self.assertEqual(
+            mapping.target_codepoint_by_source[ord("e")], 0x212F
+        )
+        self.assertEqual(
+            mapping.target_codepoint_by_source[ord("g")], 0x210A
+        )
+        self.assertEqual(
+            mapping.target_codepoint_by_source[ord("o")], 0x2134
+        )
+        self.assertEqual(
+            mapping.target_codepoint_by_source[ord("z")], 0x1D4CF
+        )
         self.assertEqual(
             mapping.apply(GlyphIdentity("B", 0x0042)),
             GlyphIdentity("B.script", 0x212C),
@@ -704,9 +722,15 @@ class FontAssemblerTests(unittest.TestCase):
     def test_ascii_digits_map_to_mathematical_bold_digits(self) -> None:
         mapping = get_mapping("ascii_digits_to_bold_digits")
 
-        self.assertEqual(len(mapping.codepoints), 10)
-        self.assertEqual(mapping.codepoints[ord("0")], 0x1D7CE)
-        self.assertEqual(mapping.codepoints[ord("9")], 0x1D7D7)
+        self.assertEqual(len(mapping.target_codepoint_by_source), 10)
+        self.assertEqual(
+            mapping.target_codepoint_by_source[ord("0")],
+            0x1D7CE,
+        )
+        self.assertEqual(
+            mapping.target_codepoint_by_source[ord("9")],
+            0x1D7D7,
+        )
         self.assertEqual(
             mapping.apply(GlyphIdentity("zero", 0x0030)),
             GlyphIdentity("zero.bold", 0x1D7CE),

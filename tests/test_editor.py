@@ -15,7 +15,11 @@ from tools.skeletonfont_editor.document import (
 )
 from tools.skeletonfont_editor.app import SkeletonFontEditor
 from tools.skeletonfont_editor.identity import GlyphIdentity, GlyphIdentityMap
-from tools.skeletonfont_editor.session import Drawing, Editing, EditorSession
+from tools.skeletonfont_editor.session import (
+    DrawingState,
+    EditorSession,
+    SelectionState,
+)
 from tools.skeletonfont_editor.workspace import SourceWorkspace
 
 
@@ -33,7 +37,7 @@ class EditorDocumentTests(unittest.TestCase):
         )
         document = EditorDocument.from_source(source)
 
-        restored = document.validated_source(source.source_path)
+        restored = document.to_validated_source(source.source_path)
 
         self.assertEqual(restored, source)
 
@@ -99,10 +103,10 @@ class EditorDocumentTests(unittest.TestCase):
         )
 
         with self.assertRaisesRegex(ProjectDataError, "exactly one"):
-            document.validated_source(Path("A_0041.json"))
+            document.to_validated_source(Path("A_0041.json"))
 
         with self.assertRaisesRegex(ProjectDataError, "exactly one"):
-            EditorDocument(name="space", codepoint=0x20).validated_source(
+            EditorDocument(name="space", codepoint=0x20).to_validated_source(
                 Path("space_0020.json")
             )
 
@@ -119,11 +123,11 @@ class EditorDocumentTests(unittest.TestCase):
         document.codepoint = 0x42
 
         with self.assertRaisesRegex(ProjectDataError, "Save As"):
-            document.validated_source(source.source_path)
+            document.to_validated_source(source.source_path)
 
 
 class EditorSessionTests(unittest.TestCase):
-    def test_interaction_has_explicit_editing_and_drawing_states(self) -> None:
+    def test_interaction_has_selection_and_drawing_states(self) -> None:
         session = EditorSession(
             EditorDocument(strokes=[EditableStroke([(0.0, 0.0)])])
         )
@@ -131,7 +135,7 @@ class EditorSessionTests(unittest.TestCase):
 
         session.begin_draft((1.0, 2.0), "flat")
 
-        self.assertIsInstance(session.interaction, Drawing)
+        self.assertIsInstance(session.interaction, DrawingState)
         self.assertEqual(session.selection, ())
         self.assertEqual(session.draft.centerline, [(1.0, 2.0)])
         self.assertEqual(session.draft.start_cap, "flat")
@@ -144,14 +148,16 @@ class EditorSessionTests(unittest.TestCase):
 
         session.cancel_draft()
 
-        self.assertIsInstance(session.interaction, Editing)
+        self.assertIsInstance(session.interaction, SelectionState)
         self.assertFalse(session.dirty)
         self.assertFalse(session.document.dirty)
 
     def test_undo_to_saved_content_clears_dirty(self) -> None:
         session = EditorSession(EditorDocument(name="A", codepoint=0x41))
 
-        session.apply(lambda current: setattr(current.document, "name", "B"))
+        session.apply_mutation(
+            lambda current: setattr(current.document, "name", "B")
+        )
         self.assertTrue(session.dirty)
 
         self.assertTrue(session.undo())
@@ -165,7 +171,9 @@ class EditorSessionTests(unittest.TestCase):
     def test_tool_state_is_not_part_of_session_history(self) -> None:
         session = EditorSession(EditorDocument(name="A"))
         drawing_cap = "round"
-        session.apply(lambda current: setattr(current.document, "name", "B"))
+        session.apply_mutation(
+            lambda current: setattr(current.document, "name", "B")
+        )
         drawing_cap = "flat"
 
         session.undo()

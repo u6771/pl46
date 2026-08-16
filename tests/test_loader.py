@@ -76,7 +76,7 @@ class FontMetaLoaderTests(unittest.TestCase):
 
         self.assertEqual(len(loaded), 8)
         self.assertEqual(
-            {meta.build_name for meta in loaded},
+            {meta.meta_name for meta in loaded},
             {path.stem for path in paths},
         )
 
@@ -124,7 +124,7 @@ class FontMetaLoaderTests(unittest.TestCase):
 
         meta = parse_font_meta(
             data,
-            build_name="domain-union",
+            meta_name="domain-union",
             meta_path=path,
         )
 
@@ -143,7 +143,7 @@ class FontMetaLoaderTests(unittest.TestCase):
 
         meta = parse_font_meta(
             data,
-            build_name="ascii-digits",
+            meta_name="ascii-digits",
             meta_path=path,
         )
 
@@ -161,7 +161,7 @@ class FontMetaLoaderTests(unittest.TestCase):
 
         meta = parse_font_meta(
             data,
-            build_name="full-domain",
+            meta_name="full-domain",
             meta_path=path,
         )
 
@@ -181,7 +181,7 @@ class FontMetaLoaderTests(unittest.TestCase):
         ):
             parse_font_meta(
                 data,
-                build_name="unknown-domain",
+                meta_name="unknown-domain",
                 meta_path=path,
             )
 
@@ -192,7 +192,7 @@ class FontMetaLoaderTests(unittest.TestCase):
 
         meta = parse_font_meta(
             data,
-            build_name="empty-domain",
+            meta_name="empty-domain",
             meta_path=path,
         )
 
@@ -229,7 +229,7 @@ class FontMetaLoaderTests(unittest.TestCase):
             if rule.source_directory == "math"
         )
 
-        self.assertEqual(meta.build_name, "math")
+        self.assertEqual(meta.meta_name, "math")
         self.assertEqual(meta.meta_path.name, "math.json")
         self.assertIsNone(meta.glyph_parameters.monospace_width)
         self.assertEqual(meta.glyph_parameters.radius, 25)
@@ -248,11 +248,11 @@ class FontMetaLoaderTests(unittest.TestCase):
         self.assertTrue(meta.glyph_parameters.use_scaled_edge_thickness)
         self.assertEqual(math_rule.source_directory, "math")
         self.assertTrue(math_rule.replace_existing)
-        self.assertIsNone(math_rule.mapping_name)
+        self.assertIsNone(math_rule.mapping)
         self.assertEqual(math_rule.thickness_scale, 1)
         self.assertEqual(
             [
-                (generator.ssty_alternate_name, generator.thickness_scale)
+                (generator.ssty_namer, generator.thickness_scale)
                 for generator in meta.ssty_generators
             ],
             [("st", 1.2)],
@@ -261,12 +261,26 @@ class FontMetaLoaderTests(unittest.TestCase):
         self.assertIn(0x0041, meta.ssty_generators[0].unicode_domain)
         self.assertIn(0x1D434, meta.ssty_generators[0].unicode_domain)
 
+    def test_legacy_mapping_name_field_is_rejected(self) -> None:
+        path = PROJECT_DIRECTORY / "meta" / "ascii.json"
+        data = json.loads(path.read_text(encoding="utf-8"))
+        data["source_rules"][1]["mapping_name"] = (
+            "upright_latin_to_italic_latin"
+        )
+
+        with self.assertRaisesRegex(ProjectDataError, "mapping_name"):
+            parse_font_meta(
+                data,
+                meta_name="legacy-mapping-field",
+                meta_path=path,
+            )
+
     def test_ssty_generators_require_valid_complete_fields(self) -> None:
         path = PROJECT_DIRECTORY / "meta" / "ascii.json"
         original = json.loads(path.read_text(encoding="utf-8"))
         valid_generator = {
             "unicode_domain": "upright_latin",
-            "ssty_alternate_name": "st",
+            "ssty_namer": "st",
             "thickness_scale": 1.4,
         }
         data = dict(original)
@@ -274,12 +288,12 @@ class FontMetaLoaderTests(unittest.TestCase):
 
         meta = parse_font_meta(
             data,
-            build_name="ssty-generator",
+            meta_name="ssty-generator",
             meta_path=path,
         )
 
         self.assertEqual(len(meta.ssty_generators), 1)
-        self.assertEqual(meta.ssty_generators[0].ssty_alternate_name, "st")
+        self.assertEqual(meta.ssty_generators[0].ssty_namer, "st")
         self.assertEqual(meta.ssty_generators[0].thickness_scale, 1.4)
         self.assertIsNone(meta.ssty_generators[0].monospace_width)
 
@@ -289,7 +303,7 @@ class FontMetaLoaderTests(unittest.TestCase):
         ]
         empty_domain_meta = parse_font_meta(
             empty_domain_data,
-            build_name="empty-ssty-domain",
+            meta_name="empty-ssty-domain",
             meta_path=path,
         )
         self.assertEqual(
@@ -313,7 +327,7 @@ class FontMetaLoaderTests(unittest.TestCase):
                 ):
                     parse_font_meta(
                         invalid,
-                        build_name="invalid-ssty-generator",
+                        meta_name="invalid-ssty-generator",
                         meta_path=path,
                     )
 
@@ -329,7 +343,7 @@ class FontMetaLoaderTests(unittest.TestCase):
                 ):
                     parse_font_meta(
                         invalid,
-                        build_name="invalid-ssty-scale",
+                        meta_name="invalid-ssty-scale",
                         meta_path=path,
                     )
 
@@ -340,7 +354,24 @@ class FontMetaLoaderTests(unittest.TestCase):
         with self.assertRaisesRegex(ProjectDataError, "unexpected"):
             parse_font_meta(
                 unknown,
-                build_name="unknown-ssty-field",
+                meta_name="unknown-ssty-field",
+                meta_path=path,
+            )
+
+        legacy = dict(original)
+        legacy["ssty_generators"] = [
+            {
+                **valid_generator,
+                "ssty_alternate_name": "st",
+            }
+        ]
+        with self.assertRaisesRegex(
+            ProjectDataError,
+            "ssty_alternate_name",
+        ):
+            parse_font_meta(
+                legacy,
+                meta_name="legacy-ssty-namer-field",
                 meta_path=path,
             )
 
@@ -352,7 +383,7 @@ class FontMetaLoaderTests(unittest.TestCase):
         scaled["source_rules"][1]["thickness_scale"] = 0.75
         meta = parse_font_meta(
             scaled,
-            build_name="scaled",
+            meta_name="scaled",
             meta_path=path,
         )
         self.assertEqual(meta.source_rules[1].thickness_scale, 0.75)
@@ -370,7 +401,7 @@ class FontMetaLoaderTests(unittest.TestCase):
                 ):
                     parse_font_meta(
                         invalid,
-                        build_name="invalid-scale",
+                        meta_name="invalid-scale",
                         meta_path=path,
                     )
 
@@ -382,7 +413,7 @@ class FontMetaLoaderTests(unittest.TestCase):
         data["ssty_generators"] = [
             {
                 "unicode_domain": "upright_latin",
-                "ssty_alternate_name": "st",
+                "ssty_namer": "st",
                 "thickness_scale": 1.2,
                 "monospace_width": 450,
             }
@@ -390,7 +421,7 @@ class FontMetaLoaderTests(unittest.TestCase):
 
         meta = parse_font_meta(
             data,
-            build_name="local-monospace",
+            meta_name="local-monospace",
             meta_path=path,
         )
 
@@ -409,7 +440,7 @@ class FontMetaLoaderTests(unittest.TestCase):
                         invalid["ssty_generators"] = [
                             {
                                 "unicode_domain": "upright_latin",
-                                "ssty_alternate_name": "st",
+                                "ssty_namer": "st",
                                 "thickness_scale": 1.2,
                                 "monospace_width": value,
                             }
@@ -420,7 +451,7 @@ class FontMetaLoaderTests(unittest.TestCase):
                     ):
                         parse_font_meta(
                             invalid,
-                            build_name="invalid-local-monospace",
+                            meta_name="invalid-local-monospace",
                             meta_path=path,
                         )
 
@@ -435,7 +466,7 @@ class FontMetaLoaderTests(unittest.TestCase):
         ):
             parse_font_meta(
                 source_data,
-                build_name="global-and-source-local",
+                meta_name="global-and-source-local",
                 meta_path=path,
             )
 
@@ -443,7 +474,7 @@ class FontMetaLoaderTests(unittest.TestCase):
         generator_data["ssty_generators"] = [
             {
                 "unicode_domain": [],
-                "ssty_alternate_name": "st",
+                "ssty_namer": "st",
                 "thickness_scale": 1.2,
                 "monospace_width": 600,
             }
@@ -454,7 +485,7 @@ class FontMetaLoaderTests(unittest.TestCase):
         ):
             parse_font_meta(
                 generator_data,
-                build_name="global-and-generator-local",
+                meta_name="global-and-generator-local",
                 meta_path=path,
             )
 
@@ -477,7 +508,7 @@ class FontMetaLoaderTests(unittest.TestCase):
                 ):
                     parse_font_meta(
                         data,
-                        build_name="missing-math-constants",
+                        meta_name="missing-math-constants",
                         meta_path=path,
                     )
 
@@ -489,7 +520,7 @@ class FontMetaLoaderTests(unittest.TestCase):
         with self.assertRaisesRegex(ProjectDataError, "enabled"):
             parse_font_meta(
                 data,
-                build_name="broken",
+                meta_name="broken",
                 meta_path=path,
             )
 
@@ -517,7 +548,7 @@ class FontMetaLoaderTests(unittest.TestCase):
 
         meta = parse_font_meta(
             data,
-            build_name="defaults",
+            meta_name="defaults",
             meta_path=path,
         )
 
@@ -561,18 +592,18 @@ class FontMetaLoaderTests(unittest.TestCase):
                 with self.assertRaisesRegex(ProjectDataError, field):
                     parse_font_meta(
                         data,
-                        build_name="null-meta-field",
+                        meta_name="null-meta-field",
                         meta_path=path,
                     )
 
-        for field in ("unicode_domain", "mapping_name"):
+        for field in ("unicode_domain", "mapping"):
             with self.subTest(source_rule_field=field):
                 data = json.loads(path.read_text(encoding="utf-8"))
                 data["source_rules"][1][field] = None
                 with self.assertRaisesRegex(ProjectDataError, field):
                     parse_font_meta(
                         data,
-                        build_name="null-source-rule-field",
+                        meta_name="null-source-rule-field",
                         meta_path=path,
                     )
 
@@ -592,7 +623,7 @@ class FontMetaLoaderTests(unittest.TestCase):
                 with self.assertRaisesRegex(ProjectDataError, field):
                     parse_font_meta(
                         data,
-                        build_name="null-math-file-field",
+                        meta_name="null-math-file-field",
                         meta_path=path,
                     )
 
@@ -600,14 +631,14 @@ class FontMetaLoaderTests(unittest.TestCase):
         data["ssty_generators"] = [
             {
                 "unicode_domain": None,
-                "ssty_alternate_name": "st",
+                "ssty_namer": "st",
                 "thickness_scale": 1.2,
             }
         ]
         with self.assertRaisesRegex(ProjectDataError, "unicode_domain"):
             parse_font_meta(
                 data,
-                build_name="null-ssty-domain",
+                meta_name="null-ssty-domain",
                 meta_path=path,
             )
 
@@ -619,7 +650,7 @@ class FontMetaLoaderTests(unittest.TestCase):
         with self.assertRaisesRegex(ProjectDataError, "grid"):
             parse_font_meta(
                 data,
-                build_name="broken",
+                meta_name="broken",
                 meta_path=path,
             )
 
@@ -630,7 +661,7 @@ class FontMetaLoaderTests(unittest.TestCase):
         self.assertEqual(
             parse_font_meta(
                 original,
-                build_name="bold",
+                meta_name="bold",
                 meta_path=path,
             ).info.weight_class,
             700,
@@ -649,7 +680,7 @@ class FontMetaLoaderTests(unittest.TestCase):
                 ):
                     parse_font_meta(
                         data,
-                        build_name="broken-weight",
+                        meta_name="broken-weight",
                         meta_path=path,
                     )
 
@@ -659,19 +690,19 @@ class FontMetaLoaderTests(unittest.TestCase):
         data["math_table"] = {"variant_glyphs_file": "math.json"}
 
         with self.assertRaisesRegex(ProjectDataError, "variant_glyphs_file"):
-            parse_font_meta(data, build_name="ascii", meta_path=path)
+            parse_font_meta(data, meta_name="ascii", meta_path=path)
 
     def test_monospace_width_presence_selects_metric_mode(self) -> None:
         path = PROJECT_DIRECTORY / "meta" / "ascii.json"
         data = json.loads(path.read_text(encoding="utf-8"))
 
-        mono = parse_font_meta(data, build_name="mono", meta_path=path)
+        mono = parse_font_meta(data, meta_name="mono", meta_path=path)
         self.assertEqual(mono.glyph_parameters.monospace_width, 450)
 
         del data["monospace_width"]
         proportional = parse_font_meta(
             data,
-            build_name="proportional",
+            meta_name="proportional",
             meta_path=path,
         )
         self.assertIsNone(proportional.glyph_parameters.monospace_width)
@@ -682,7 +713,7 @@ class FontMetaLoaderTests(unittest.TestCase):
 
         mono = parse_font_meta(
             mono_data,
-            build_name="ascii",
+            meta_name="ascii",
             meta_path=mono_path,
         )
         self.assertTrue(mono.info.is_fixed_pitch)
@@ -693,7 +724,7 @@ class FontMetaLoaderTests(unittest.TestCase):
         }
         mono_with_math = parse_font_meta(
             mono_with_math_data,
-            build_name="mono-with-math",
+            meta_name="mono-with-math",
             meta_path=mono_path,
         )
         self.assertFalse(mono_with_math.info.is_fixed_pitch)
@@ -702,7 +733,7 @@ class FontMetaLoaderTests(unittest.TestCase):
         del proportional_data["monospace_width"]
         proportional = parse_font_meta(
             proportional_data,
-            build_name="proportional",
+            meta_name="proportional",
             meta_path=mono_path,
         )
         self.assertFalse(proportional.info.is_fixed_pitch)
@@ -717,7 +748,7 @@ class FontMetaLoaderTests(unittest.TestCase):
                 with self.assertRaisesRegex(ProjectDataError, "monospace_width"):
                     parse_font_meta(
                         data,
-                        build_name="broken",
+                        meta_name="broken",
                         meta_path=path,
                     )
 
@@ -738,7 +769,7 @@ class FontMetaLoaderTests(unittest.TestCase):
                 with self.assertRaisesRegex(ProjectDataError, field):
                     parse_font_meta(
                         data,
-                        build_name="invalid-range",
+                        meta_name="invalid-range",
                         meta_path=path,
                     )
 
@@ -747,7 +778,7 @@ class FontMetaLoaderTests(unittest.TestCase):
         with self.assertRaisesRegex(ProjectDataError, "finite"):
             parse_font_meta(
                 data,
-                build_name="overflowing-number",
+                meta_name="overflowing-number",
                 meta_path=path,
             )
 
@@ -762,7 +793,7 @@ class FontMetaLoaderTests(unittest.TestCase):
                 with self.assertRaisesRegex(ProjectDataError, field):
                     parse_font_meta(
                         legacy,
-                        build_name="broken",
+                        meta_name="broken",
                         meta_path=path,
                     )
 

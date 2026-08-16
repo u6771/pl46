@@ -40,12 +40,14 @@ class BuildPipelineTests(unittest.TestCase):
                 "skeletonfont.build.load_font_meta",
                 side_effect=(first, second),
             ),
-            patch("skeletonfont.build._build_loaded_font") as build_loaded,
+            patch(
+                "skeletonfont.build._build_font_from_meta"
+            ) as build_from_meta,
             self.assertRaisesRegex(ProjectDataError, "duplicate OTF"),
         ):
             build_fonts(PROJECT_DIRECTORY, ["ascii", "bold"])
 
-        build_loaded.assert_not_called()
+        build_from_meta.assert_not_called()
 
     def test_batch_validates_release_info_before_building(self) -> None:
         released = load_font_meta(FIXTURE_PROJECT_DIRECTORY, "released")
@@ -58,12 +60,14 @@ class BuildPipelineTests(unittest.TestCase):
                 "skeletonfont.build.load_release_info",
                 side_effect=ProjectDataError("invalid release info"),
             ),
-            patch("skeletonfont.build._build_loaded_font") as build_loaded,
+            patch(
+                "skeletonfont.build._build_font_from_meta"
+            ) as build_from_meta,
             self.assertRaisesRegex(BuildError, "invalid release info"),
         ):
             build_fonts(FIXTURE_PROJECT_DIRECTORY, ["released"])
 
-        build_loaded.assert_not_called()
+        build_from_meta.assert_not_called()
 
     def test_build_error_identifies_meta_and_preserves_cause(self) -> None:
         cause = PlanError("invalid glyph roles")

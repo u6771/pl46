@@ -46,8 +46,8 @@ from skeletonfont.planner import (
 PROJECT_DIRECTORY = Path(__file__).resolve().parents[1]
 
 
-def assembled_font(build_name: str):
-    meta = load_font_meta(PROJECT_DIRECTORY, build_name)
+def assembled_font(meta_name: str):
+    meta = load_font_meta(PROJECT_DIRECTORY, meta_name)
     return assemble_font(meta, GlyphCatalog(PROJECT_DIRECTORY))
 
 
