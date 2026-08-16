@@ -109,7 +109,7 @@ class EditorDocument:
             dirty=False,
         )
 
-    def validated_source(self, path: Path) -> GlyphSource:
+    def to_validated_source(self, path: Path) -> GlyphSource:
         name = self.name.strip()
         if not name:
             raise ProjectDataError("Glyph name cannot be empty.")

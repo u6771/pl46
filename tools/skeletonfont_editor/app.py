@@ -20,7 +20,12 @@ from .document import (
     parse_number,
 )
 from .identity import GlyphIdentity
-from .session import Drawing, Editing, EditorSession, SessionSnapshot
+from .session import (
+    DrawingState,
+    EditorSession,
+    SelectionState,
+    SessionSnapshot,
+)
 from .workspace import GlyphFileEntry, SourceWorkspace
 from .settings import (
     SHORTCUT_ACTIONS,
@@ -73,11 +78,11 @@ class SkeletonFontEditor:
         if centerline:
             draft = session.draft
             if draft is None:
-                session.interaction = Drawing(list(centerline), "round")
+                session.interaction = DrawingState(list(centerline), "round")
             else:
                 draft.centerline[:] = centerline
         else:
-            session.interaction = Editing()
+            session.interaction = SelectionState()
         session.sync_dirty()
 
     @property
@@ -2106,7 +2111,7 @@ class SkeletonFontEditor:
         )
         session = getattr(self, "_session", None)
         if session is not None:
-            session.interaction = Editing(
+            session.interaction = SelectionState(
                 (len(self.document.strokes) - 1,)
             )
         else:
@@ -2385,7 +2390,7 @@ class SkeletonFontEditor:
         output_document.locked_identity = None
 
         try:
-            source = output_document.validated_source(target)
+            source = output_document.to_validated_source(target)
             written = write_glyph_source(source, target)
         except (OSError, ValueError) as error:
             messagebox.showerror("Save failed", str(error), parent=self.root)

@@ -10,21 +10,21 @@ from .document import EditorDocument
 
 
 @dataclass(slots=True)
-class Editing:
+class SelectionState:
     """The editor is inspecting one or more completed strokes."""
 
     selection: tuple[int, ...] = ()
 
 
 @dataclass(slots=True)
-class Drawing:
+class DrawingState:
     """The editor is collecting points for one unfinished stroke."""
 
     centerline: list[Point] = field(default_factory=list)
     start_cap: CapStyle = "round"
 
 
-InteractionState: TypeAlias = Editing | Drawing
+InteractionState: TypeAlias = SelectionState | DrawingState
 
 
 @dataclass(slots=True)
@@ -62,7 +62,7 @@ class EditorSession:
 
     def __init__(self, document: EditorDocument | None = None) -> None:
         self.document = document if document is not None else EditorDocument()
-        self.interaction: InteractionState = Editing()
+        self.interaction: InteractionState = SelectionState()
         self._undo_stack: list[SessionSnapshot] = []
         self._redo_stack: list[SessionSnapshot] = []
         self._saved_content = _document_content(self.document)
@@ -70,17 +70,17 @@ class EditorSession:
 
     @property
     def is_drawing(self) -> bool:
-        return isinstance(self.interaction, Drawing)
+        return isinstance(self.interaction, DrawingState)
 
     @property
     def selection(self) -> tuple[int, ...]:
-        if isinstance(self.interaction, Editing):
+        if isinstance(self.interaction, SelectionState):
             return self.interaction.selection
         return ()
 
     @selection.setter
     def selection(self, indices: tuple[int, ...]) -> None:
-        if isinstance(self.interaction, Drawing):
+        if isinstance(self.interaction, DrawingState):
             if indices:
                 raise RuntimeError("Cannot select completed strokes while drawing.")
             return
@@ -90,12 +90,19 @@ class EditorSession:
         )
 
     @property
-    def draft(self) -> Drawing | None:
-        return self.interaction if isinstance(self.interaction, Drawing) else None
+    def draft(self) -> DrawingState | None:
+        return (
+            self.interaction
+            if isinstance(self.interaction, DrawingState)
+            else None
+        )
 
     @property
     def dirty(self) -> bool:
-        return self.is_drawing or _document_content(self.document) != self._saved_content
+        return (
+            self.is_drawing
+            or _document_content(self.document) != self._saved_content
+        )
 
     @property
     def can_undo(self) -> bool:
@@ -107,7 +114,7 @@ class EditorSession:
 
     def load(self, document: EditorDocument) -> None:
         self.document = document
-        self.interaction = Editing()
+        self.interaction = SelectionState()
         self._undo_stack.clear()
         self._redo_stack.clear()
         self._saved_content = _document_content(document)
@@ -149,7 +156,10 @@ class EditorSession:
     def restore_snapshot(self, snapshot: SessionSnapshot) -> None:
         self._restore(snapshot)
 
-    def apply(self, mutation: Callable[[EditorSession], None]) -> bool:
+    def apply_mutation(
+        self,
+        mutation: Callable[[EditorSession], None],
+    ) -> bool:
         """Apply one mutation as one undo command, if it changes session state."""
 
         before = self.snapshot()
@@ -166,7 +176,7 @@ class EditorSession:
     def begin_draft(self, point: Point, start_cap: CapStyle) -> None:
         if self.is_drawing:
             raise RuntimeError("A draft is already active.")
-        self.interaction = Drawing([point], start_cap)
+        self.interaction = DrawingState([point], start_cap)
         self._sync_dirty_flag()
 
     def append_draft_point(self, point: Point) -> bool:
@@ -182,7 +192,7 @@ class EditorSession:
     def cancel_draft(self) -> bool:
         if not self.is_drawing:
             return False
-        self.interaction = Editing()
+        self.interaction = SelectionState()
         self._sync_dirty_flag()
         return True
 
@@ -218,7 +228,7 @@ class EditorSession:
         )
 
     def _sanitize_selection(self) -> None:
-        if isinstance(self.interaction, Editing):
+        if isinstance(self.interaction, SelectionState):
             self.selection = self.interaction.selection
 
     def _sync_dirty_flag(self) -> None:
