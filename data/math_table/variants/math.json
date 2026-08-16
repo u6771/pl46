@@ -532,6 +532,28 @@
         }
       ]
     },
+    "slash": {
+      "variant_glyphs": [
+        "slash.v1",
+        "slash.v2",
+        "slash.v3",
+        "slash.v4",
+        "slash.v5",
+        "slash.v6",
+        "slash.v7"
+      ]
+    },
+    "backslash": {
+      "variant_glyphs": [
+        "backslash.v1",
+        "backslash.v2",
+        "backslash.v3",
+        "backslash.v4",
+        "backslash.v5",
+        "backslash.v6",
+        "backslash.v7"
+      ]
+    },
     "bar": {
       "variant_glyphs": [
         "divides.v1",
