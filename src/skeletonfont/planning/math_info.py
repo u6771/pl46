@@ -3,7 +3,6 @@ from __future__ import annotations
 from collections.abc import Mapping
 from dataclasses import dataclass
 from types import MappingProxyType
-from typing import Literal
 
 from ..errors import PlanError
 from ..model import (
@@ -13,16 +12,7 @@ from ..model import (
     MathGlyphKernData,
 )
 from .glyphs import _transformed_strokes
-
-
-_GlyphRole = Literal[
-    "ordinary",
-    "accent",
-    "vertical_variant_glyph",
-    "horizontal_variant_glyph",
-    "vertical_part",
-    "horizontal_part",
-]
+from .roles import _GlyphRoleGroups
 
 
 @dataclass(frozen=True, slots=True)
@@ -104,22 +94,17 @@ def _validate_italic_corrections(
 
 def _group_top_accent_attachments_by_role(
     accent_attachments: Mapping[str, float],
-    glyphs_by_role: Mapping[_GlyphRole, Mapping[str, AssembledGlyph]],
+    roles: _GlyphRoleGroups,
 ) -> _TopAccentAttachmentInputs:
     """Validate exact glyph names and divide authored points by role."""
 
-    role_by_name = {
-        name: role
-        for role, glyphs in glyphs_by_role.items()
-        for name in glyphs
-    }
     grouped: dict[str, dict[str, float]] = {
         "ordinary": {},
         "vertical_variant_glyph": {},
         "horizontal_variant_glyph": {},
     }
     for name, attachment in accent_attachments.items():
-        role = role_by_name.get(name)
+        role = roles.role_by_name.get(name)
         if role is None:
             raise PlanError(
                 "Math top accent attachment references a name not planned "
@@ -145,22 +130,17 @@ def _group_top_accent_attachments_by_role(
 
 def _validate_math_kerns_by_role(
     kerns: Mapping[str, MathGlyphKernData],
-    glyphs_by_role: Mapping[_GlyphRole, Mapping[str, AssembledGlyph]],
+    roles: _GlyphRoleGroups,
 ) -> None:
     """Validate exact math-kern names against supported glyph roles."""
 
-    role_by_name = {
-        name: role
-        for role, glyphs in glyphs_by_role.items()
-        for name in glyphs
-    }
     supported_roles = {
         "ordinary",
         "vertical_variant_glyph",
         "horizontal_variant_glyph",
     }
     for name in kerns:
-        role = role_by_name.get(name)
+        role = roles.role_by_name.get(name)
         if role is None:
             raise PlanError(
                 "Math kern references a name not planned as an assembled "

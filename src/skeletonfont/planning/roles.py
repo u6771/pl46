@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
+from dataclasses import dataclass
 from types import MappingProxyType
 from typing import Literal
 
@@ -16,6 +17,19 @@ _GlyphRole = Literal[
     "vertical_part",
     "horizontal_part",
 ]
+
+
+@dataclass(frozen=True, slots=True)
+class _GlyphRoleGroups:
+    """A validated partition of assembled glyphs by planning role."""
+
+    ordinary: Mapping[str, AssembledGlyph]
+    accents: Mapping[str, AssembledGlyph]
+    vertical_variant_glyphs: Mapping[str, AssembledGlyph]
+    horizontal_variant_glyphs: Mapping[str, AssembledGlyph]
+    vertical_parts: Mapping[str, AssembledGlyph]
+    horizontal_parts: Mapping[str, AssembledGlyph]
+    role_by_name: Mapping[str, _GlyphRole]
 
 
 def _construction_members(
@@ -44,7 +58,7 @@ def _group_glyphs_by_role(
     horizontal_variant_glyphs: Mapping[str, tuple[str, ...]],
     vertical_assemblies: Mapping[str, MathGlyphAssemblyData],
     horizontal_assemblies: Mapping[str, MathGlyphAssemblyData],
-) -> Mapping[_GlyphRole, Mapping[str, AssembledGlyph]]:
+) -> _GlyphRoleGroups:
     glyph_names = set(glyphs)
     role_members: tuple[tuple[_GlyphRole, set[str]], ...] = (
         ("accent", set(accent_glyphs)),
@@ -97,11 +111,25 @@ def _group_glyphs_by_role(
             else "ordinary"
         )
         grouped[role][name] = glyph
-    return MappingProxyType(
-        {
-            role: MappingProxyType(entries)
-            for role, entries in grouped.items()
-        }
+    frozen_groups = {
+        role: MappingProxyType(entries)
+        for role, entries in grouped.items()
+    }
+    return _GlyphRoleGroups(
+        ordinary=frozen_groups["ordinary"],
+        accents=frozen_groups["accent"],
+        vertical_variant_glyphs=frozen_groups["vertical_variant_glyph"],
+        horizontal_variant_glyphs=frozen_groups[
+            "horizontal_variant_glyph"
+        ],
+        vertical_parts=frozen_groups["vertical_part"],
+        horizontal_parts=frozen_groups["horizontal_part"],
+        role_by_name=MappingProxyType(
+            {
+                name: role
+                for role, entries in frozen_groups.items()
+                for name in entries
+            }
+        ),
     )
-
 

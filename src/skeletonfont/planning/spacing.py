@@ -7,22 +7,14 @@ from typing import Literal
 
 from ..errors import PlanError
 from ..model import (
-    AssembledGlyph,
     GlyphAdjustmentSelector,
     GlyphParameters,
     GlyphSpacingAdjustment,
     MathGlyphAssemblyData,
 )
+from .roles import _GlyphRoleGroups
 
 
-_GlyphRole = Literal[
-    "ordinary",
-    "accent",
-    "vertical_variant_glyph",
-    "horizontal_variant_glyph",
-    "vertical_part",
-    "horizontal_part",
-]
 _Axis = Literal[0, 1]
 
 
@@ -62,22 +54,18 @@ def _adjusted_spacing(
         parameters.right_spacing + right_adjustment,
     )
 
+
 def _resolve_glyph_spacing_adjustments(
     spacing_config: Mapping[GlyphAdjustmentSelector, GlyphSpacingAdjustment],
-    glyphs_by_role: Mapping[_GlyphRole, Mapping[str, AssembledGlyph]],
-    parameters: GlyphParameters,
+    roles: _GlyphRoleGroups,
     vertical_variant_glyphs: Mapping[str, tuple[str, ...]],
     horizontal_variant_glyphs: Mapping[str, tuple[str, ...]],
     vertical_assemblies: Mapping[str, MathGlyphAssemblyData],
-    horizontal_assemblies: Mapping[str, MathGlyphAssemblyData],
+    *,
+    global_monospace: bool,
 ) -> _ResolvedGlyphSpacingAdjustments:
     """Resolve order-independent spacing adjustments by glyph and layout."""
 
-    role_by_name = {
-        name: role
-        for role, glyphs in glyphs_by_role.items()
-        for name in glyphs
-    }
     exact_entries: dict[str, _SpacingAdjustmentSource] = {}
     variant_group_spacing_by_construction: dict[
         tuple[_Axis, str],
@@ -163,7 +151,7 @@ def _resolve_glyph_spacing_adjustments(
             accent_members = sorted(
                 glyph_name
                 for glyph_name in (base, *constructions[base])
-                if role_by_name[glyph_name] == "accent"
+                if roles.role_by_name[glyph_name] == "accent"
             )
             if accent_members:
                 raise PlanError(
@@ -267,7 +255,7 @@ def _resolve_glyph_spacing_adjustments(
             source_by_name[glyph_name] = source.selector.text
 
     for glyph_name, source in exact_entries.items():
-        role = role_by_name.get(glyph_name)
+        role = roles.role_by_name.get(glyph_name)
         if role is None:
             raise PlanError(
                 f"Glyph config references a name not planned as an "
@@ -291,9 +279,9 @@ def _resolve_glyph_spacing_adjustments(
                 f"Combining accent glyph {glyph_name!r} cannot receive "
                 "left or right spacing adjustments."
             )
-        ordinary_glyph = glyphs_by_role["ordinary"].get(glyph_name)
+        ordinary_glyph = roles.ordinary.get(glyph_name)
         if ordinary_glyph is not None and (
-            parameters.monospace_width is not None
+            global_monospace
             or ordinary_glyph.ordinary_monospace_width is not None
         ):
             raise PlanError(

@@ -89,7 +89,7 @@ def plan_font(
         if math_table_data is None
         else math_table_data.horizontal_assemblies
     )
-    glyphs_by_role = _group_glyphs_by_role(
+    roles = _group_glyphs_by_role(
         assembled_font.glyphs,
         frozenset() if accent_glyphs is None else accent_glyphs,
         vertical_variant_glyphs,
@@ -104,12 +104,11 @@ def plan_font(
     }
     resolved_spacing_adjustments = _resolve_glyph_spacing_adjustments(
         spacing_config,
-        glyphs_by_role,
-        parameters,
+        roles,
         vertical_variant_glyphs,
         horizontal_variant_glyphs,
         vertical_assemblies,
-        horizontal_assemblies,
+        global_monospace=parameters.monospace_width is not None,
     )
     authored_top_accent_attachments = (
         {}
@@ -121,30 +120,30 @@ def plan_font(
             authored_top_accent_attachments,
             assembled_font.ssty_alternate_sources,
         ),
-        glyphs_by_role,
+        roles,
     )
     authored_math_kerns = (
         {} if math_table_data is None else math_table_data.kerns
     )
-    _validate_math_kerns_by_role(authored_math_kerns, glyphs_by_role)
+    _validate_math_kerns_by_role(authored_math_kerns, roles)
     ordinary_glyph_plans = _plan_ordinary_glyphs(
-        glyphs_by_role["ordinary"],
+        roles.ordinary,
         parameters,
         resolved_spacing_adjustments.glyph_spacing_by_name,
         top_accent_attachment_inputs.ordinary,
     )
     accent_glyph_plans = _plan_accent_glyphs(
-        glyphs_by_role["accent"],
+        roles.accents,
         parameters,
     )
     vertical_variant_glyph_plans = _plan_vertical_variant_glyphs(
-        glyphs_by_role["vertical_variant_glyph"],
+        roles.vertical_variant_glyphs,
         parameters,
         resolved_spacing_adjustments.glyph_spacing_by_name,
         top_accent_attachment_inputs.vertical_variant_glyph,
     )
     horizontal_variant_glyph_plans = _plan_horizontal_variant_glyphs(
-        glyphs_by_role["horizontal_variant_glyph"],
+        roles.horizontal_variant_glyphs,
         parameters,
         resolved_spacing_adjustments.glyph_spacing_by_name,
         top_accent_attachment_inputs.horizontal_variant_glyph,
@@ -153,7 +152,7 @@ def plan_font(
         _plan_horizontal_accent_variant_advances(
             {
                 name: glyph
-                for name, glyph in glyphs_by_role["accent"].items()
+                for name, glyph in roles.accents.items()
                 if name in horizontal_variant_glyphs
             },
             parameters,
@@ -166,14 +165,14 @@ def plan_font(
     )
     vertical_assembly_plans = _plan_vertical_assemblies(
         vertical_assemblies,
-        glyphs_by_role["vertical_part"],
+        roles.vertical_parts,
         parameters,
         minimum_overlap,
         resolved_spacing_adjustments.vertical_part_spacing_by_base,
     )
     horizontal_assembly_plans = _plan_horizontal_assemblies(
         horizontal_assemblies,
-        glyphs_by_role["horizontal_part"],
+        roles.horizontal_parts,
         parameters,
         minimum_overlap,
     )
