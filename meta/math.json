@@ -54,6 +54,18 @@
       "mapping": "upright_latin_to_blackboard_latin"
     },
     {
+      "source_directory": "latin",
+      "mapping": "upright_latin_to_typewriter_latin",
+      "thickness_scale": 1.6,
+      "monospace_width": 450
+    },
+    {
+      "source_directory": "latin",
+      "mapping": "ascii_digits_to_typewriter_digits",
+      "thickness_scale": 1.6,
+      "monospace_width": 450
+    },
+    {
       "source_directory": "bold",
       "mapping": "upright_latin_to_bold_latin"
     },
@@ -74,12 +86,14 @@
     {
       "unicode_domain": [
         "ascii_digits",
+        "bold_digits",
         "upright_latin",
         "upright_greek",
         "italic_latin",
         "italic_greek",
         "script_latin",
-        "fraktur_latin"
+        "fraktur_latin",
+        "bold_latin"
       ],
       "ssty_namer": "st",
       "thickness_scale": 1.2
