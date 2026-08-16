@@ -1,0 +1,12 @@
+{
+  "name": "backslash.v7",
+  "unicode": null,
+  "monospace_x_offset": -4,
+  "y_offset": -9,
+  "skeleton": [
+    {
+      "centerline": [[0, 22], [8, 0]],
+      "thickness_scale": 1.4
+    }
+  ]
+}
