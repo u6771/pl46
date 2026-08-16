@@ -265,7 +265,9 @@ the encoded glyphs used by the test build:
   "x_height": 450,
   "grid": 100,
   "thickness": 50,
-  "monospace_width": 600,
+  "monospace_width": 450,
+  "left_spacing": 75,
+  "right_spacing": 75,
   "source_rules": [
     {
       "source_directory": "notdef",
@@ -461,7 +463,7 @@ meta order. This source rule is taken from [`meta/math.json`](../meta/math.json)
   "unicode_domain": [
     ["0041", "005A"]
   ],
-  "mapping_name": "upright_latin_to_script_latin"
+  "mapping": "upright_latin_to_script_latin"
 }
 ```
 
@@ -493,10 +495,11 @@ codepoints. The registered names are `ascii_digits`, `upright_latin`,
 `bold_greek`. Their
 explicit definitions in `unicode_domains.py` are authoritative.
 
-If `mapping_name` is present, the selected source's `(name, codepoint)` identity
+If `mapping` is present, the selected source's `(name, codepoint)` identity
 is passed through a `GlyphMapping`. A source outside that mapping is skipped; an
-unencoded source cannot pass through a codepoint mapping. Mathematical alphabet
-mapping names state both sides, such as `upright_latin_to_italic_latin`, and
+unencoded source cannot pass through a codepoint mapping. Mathematical-alphabet
+values of `mapping` state both sides, such as
+`upright_latin_to_italic_latin`, and
 produce semantic glyph names such as `A.italic`, `A.script`, and `A.fraktur`.
 Mappings declare optional source and target domains, which are validated once
 when the registry is created. An internal mapping may omit either domain
@@ -505,7 +508,7 @@ one-to-one.
 
 The registered mappings are:
 
-| Mapping name | Source domain | Target domain | Target-name suffix |
+| `mapping` value | Source domain | Target domain | Target-name suffix |
 | --- | --- | --- | --- |
 | `upright_latin_to_italic_latin` | `upright_latin` | `italic_latin` | `.italic` |
 | `upright_greek_to_italic_greek` | `upright_greek` | `italic_greek` | `.italic` |
@@ -526,6 +529,20 @@ ordinary. Mapped results retain the rule's value. Accents and MATH variants or
 parts ignore it in favor of their role-specific metrics. The field cannot be
 combined with a top-level `monospace_width`.
 
+For example, [`meta/jp.json`](../meta/jp.json) gives only its `jp` source rule
+a local fixed width:
+
+```json
+{
+  "source_directory": "jp",
+  "monospace_width": 450
+}
+```
+
+The meta's top-level `left_spacing` and `right_spacing` are both `75`, so an
+ordinary glyph selected by this rule has a total advance of `600`. Ordinary
+glyphs selected by its other source rules remain proportional.
+
 As each result is merged, both its glyph name and non-null Unicode are checked.
 Without `replace_existing`, either conflict is an error. With
 `replace_existing: true`, the later result removes all conflicting earlier
@@ -538,8 +555,9 @@ After source rules, ordered `glyph_alias_generators` run registered mappings ove
 the assembled encoded glyphs. Missing source codepoints are ignored. A target
 codepoint that is already occupied is also skipped; a target name collision is
 an error. The resulting `GlyphAlias` contains only a source name and target
-identity. It has no skeleton and is not assigned a planning role. Generator
-names use the same registered-mapping table listed above.
+identity. It has no skeleton and is not assigned a planning role. Each
+`glyph_alias_generators` entry uses one of the registered mapping identifiers
+listed above.
 
 For example, [`meta/math.json`](../meta/math.json) configures these two alias
 generators:
@@ -581,17 +599,18 @@ uses this generator:
         "script_latin",
         "fraktur_latin"
       ],
-      "ssty_alternate_name": "st",
+      "ssty_namer": "st",
       "thickness_scale": 1.2
     }
   ]
 }
 ```
 
-The three displayed fields are required and cannot be `null`. `unicode_domain`
-accepts the same names, ranges, and unions as a source-rule domain. An empty
-array is an explicit no-op and generates no alternates. Current alternate namers
-are `st` and `sts`, which append `.st` and `.sts` to the base name. Eligible
+`unicode_domain`, `ssty_namer`, and `thickness_scale` are required and cannot be
+`null`. `unicode_domain` accepts the same names, ranges, and unions as a
+source-rule domain. An empty array is an explicit no-op and generates no
+alternates. `ssty_namer` currently accepts `st` and `sts`; these namers append
+`.st` and `.sts` to the base name. Eligible
 bases include both assembled encoded glyphs and encoded aliases; an alias uses
 its assembled source's geometry but its own target name as the GSUB base. Each
 generator selects bases by Unicode, scales the original assembled skeleton, and
