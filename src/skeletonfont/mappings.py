@@ -26,18 +26,21 @@ class GlyphIdentity:
 class GlyphMapping:
     """Map source glyph identities to renamed, optionally encoded targets."""
 
-    codepoints: Mapping[int, int | None]
+    target_codepoint_by_source: Mapping[int, int | None]
     rename: NameMapper
     source_domain: str | None = None
     target_domain: str | None = None
 
     def apply(self, source: GlyphIdentity) -> GlyphIdentity | None:
         codepoint = source.codepoint
-        if codepoint is None or codepoint not in self.codepoints:
+        if (
+            codepoint is None
+            or codepoint not in self.target_codepoint_by_source
+        ):
             return None
         return GlyphIdentity(
             name=self.rename(source),
-            codepoint=self.codepoints[codepoint],
+            codepoint=self.target_codepoint_by_source[codepoint],
         )
 
 
@@ -214,7 +217,7 @@ _MAPPING_DEFINITIONS = {
 
 
 def _domain_for_mapping(
-    mapping_name: str,
+    mapping: str,
     domain_name: str,
     *,
     side: str,
@@ -222,7 +225,7 @@ def _domain_for_mapping(
     domain = UNICODE_DOMAINS.get(domain_name)
     if domain is None:
         raise ValueError(
-            f"Mapping {mapping_name!r} references unknown {side} "
+            f"Mapping {mapping!r} references unknown {side} "
             f"domain {domain_name!r}."
         )
     return domain
@@ -238,7 +241,7 @@ def _validate_mapping_domains(
 ) -> None:
     sources_by_target: dict[int, int] = {}
     duplicate_targets: set[int] = set()
-    for source, target in mapping.codepoints.items():
+    for source, target in mapping.target_codepoint_by_source.items():
         if target is None:
             continue
         if target in sources_by_target:
@@ -259,7 +262,7 @@ def _validate_mapping_domains(
         )
         invalid_sources = [
             codepoint
-            for codepoint in mapping.codepoints
+            for codepoint in mapping.target_codepoint_by_source
             if codepoint not in source_domain
         ]
         if invalid_sources:
@@ -277,7 +280,7 @@ def _validate_mapping_domains(
         )
         invalid_targets = [
             codepoint
-            for codepoint in mapping.codepoints.values()
+            for codepoint in mapping.target_codepoint_by_source.values()
             if codepoint is not None and codepoint not in target_domain
         ]
         if invalid_targets:
@@ -297,7 +300,7 @@ def _build_mappings() -> Mapping[str, GlyphMapping]:
         target_domain,
     ) in _MAPPING_DEFINITIONS.items():
         mapping = GlyphMapping(
-            codepoints=MappingProxyType(dict(builder())),
+            target_codepoint_by_source=MappingProxyType(dict(builder())),
             rename=rename,
             source_domain=source_domain,
             target_domain=target_domain,

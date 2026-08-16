@@ -18,7 +18,7 @@ from .model import (
     SstyGenerator,
     StrokeRecord,
 )
-from .ssty_alternates import get_ssty_alternate_namer
+from .ssty_namer import get_ssty_namer
 
 
 class GlyphCatalog:
@@ -105,8 +105,8 @@ def _selected_glyphs(
 ) -> tuple[AssembledGlyph, ...]:
     mapping = (
         None
-        if rule.mapping_name is None
-        else get_mapping(rule.mapping_name)
+        if rule.mapping is None
+        else get_mapping(rule.mapping)
     )
     selected: list[AssembledGlyph] = []
     produced_names: set[str] = set()
@@ -134,7 +134,7 @@ def _selected_glyphs(
             target_name = target.name
             if target_name in produced_names:
                 raise AssemblyError(
-                    f"Mapping {rule.mapping_name!r} produced duplicate "
+                    f"Mapping {rule.mapping!r} produced duplicate "
                     f"glyph name {target_name!r}."
                 )
             produced_names.add(target_name)
@@ -203,7 +203,7 @@ def _merge_entry(
         by_codepoint[entry.codepoint] = entry
 
 
-def _apply_glyph_alias_generators(
+def _generate_glyph_aliases(
     glyphs_by_name: Mapping[str, AssembledGlyph],
     glyphs_by_codepoint: Mapping[int, AssembledGlyph],
     generator_names: tuple[str, ...],
@@ -214,7 +214,7 @@ def _apply_glyph_alias_generators(
 
     for generator_name in generator_names:
         mapping = get_mapping(generator_name)
-        for source_codepoint in mapping.codepoints:
+        for source_codepoint in mapping.target_codepoint_by_source:
             source = glyphs_by_codepoint.get(source_codepoint)
             if source is None:
                 continue
@@ -311,7 +311,7 @@ def _ssty_assembled_glyph(
     )
 
 
-def _apply_ssty_generators(
+def _generate_ssty_alternates(
     glyphs_by_name: Mapping[str, AssembledGlyph],
     glyphs_by_codepoint: Mapping[int, AssembledGlyph],
     glyph_aliases: tuple[GlyphAlias, ...],
@@ -329,9 +329,7 @@ def _apply_ssty_generators(
     alternate_glyphs: dict[str, AssembledGlyph] = {}
 
     for generator in generators:
-        namer = get_ssty_alternate_namer(
-            generator.ssty_alternate_name
-        )
+        namer = get_ssty_namer(generator.ssty_namer)
         for codepoint, base in sorted(bases.items()):
             if codepoint not in generator.unicode_domain:
                 continue
@@ -390,14 +388,14 @@ def assemble_font(meta: FontMeta, catalog: GlyphCatalog) -> AssembledFont:
 
     if ".notdef" not in by_name:
         raise AssemblyError(
-            f"Font build {meta.build_name!r} is missing required glyph '.notdef'."
+            f"Font build {meta.meta_name!r} is missing required glyph '.notdef'."
         )
-    glyph_aliases = _apply_glyph_alias_generators(
+    glyph_aliases = _generate_glyph_aliases(
         by_name,
         by_codepoint,
         meta.glyph_alias_generators,
     )
-    ssty = _apply_ssty_generators(
+    ssty = _generate_ssty_alternates(
         by_name,
         by_codepoint,
         glyph_aliases,

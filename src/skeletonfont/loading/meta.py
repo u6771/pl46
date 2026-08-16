@@ -85,20 +85,20 @@ _SOURCE_RULE_FIELDS = {
     "unicode_domain",
     "include_unencoded",
     "replace_existing",
-    "mapping_name",
+    "mapping",
     "thickness_scale",
     "monospace_width",
 }
 
 _SSTY_GENERATOR_FIELDS = {
     "unicode_domain",
-    "ssty_alternate_name",
+    "ssty_namer",
     "thickness_scale",
     "monospace_width",
 }
 _REQUIRED_SSTY_GENERATOR_FIELDS = {
     "unicode_domain",
-    "ssty_alternate_name",
+    "ssty_namer",
     "thickness_scale",
 }
 
@@ -124,12 +124,12 @@ def _parse_source_rule(
         location=location,
     )
 
-    mapping_name = (
+    mapping = (
         None
-        if "mapping_name" not in data
+        if "mapping" not in data
         else _safe_name(
-            data["mapping_name"],
-            location=f"{location}.mapping_name",
+            data["mapping"],
+            location=f"{location}.mapping",
         )
     )
     return SourceRule(
@@ -153,7 +153,7 @@ def _parse_source_rule(
             data.get("replace_existing", False),
             location=f"{location}.replace_existing",
         ),
-        mapping_name=mapping_name,
+        mapping=mapping,
         thickness_scale=_number(
             data.get("thickness_scale", 1),
             location=f"{location}.thickness_scale",
@@ -188,9 +188,9 @@ def _parse_ssty_generator(
             data["unicode_domain"],
             location=f"{location}.unicode_domain",
         ),
-        ssty_alternate_name=_safe_name(
-            data["ssty_alternate_name"],
-            location=f"{location}.ssty_alternate_name",
+        ssty_namer=_safe_name(
+            data["ssty_namer"],
+            location=f"{location}.ssty_namer",
         ),
         thickness_scale=_number(
             data["thickness_scale"],
@@ -264,7 +264,7 @@ def _parse_math_table_config(
 def parse_font_meta(
     value: object,
     *,
-    build_name: str,
+    meta_name: str,
     meta_path: Path,
 ) -> FontMeta:
     location = str(meta_path)
@@ -336,7 +336,7 @@ def parse_font_meta(
     )
     output_stem = re.sub(
         r"[^A-Za-z0-9_.-]+", "-", raw_output_stem
-    ).strip("-") or build_name
+    ).strip("-") or meta_name
 
     thickness = _number(
         data["thickness"],
@@ -375,7 +375,7 @@ def parse_font_meta(
     )
 
     return FontMeta(
-        build_name=build_name,
+        meta_name=meta_name,
         meta_path=meta_path,
         info=FontInfo(
             family=family,
@@ -488,7 +488,7 @@ def load_font_meta(project_directory: Path, meta_name: object) -> FontMeta:
     path = project_directory / "meta" / f"{name}.json"
     return parse_font_meta(
         read_json(path),
-        build_name=name,
+        meta_name=name,
         meta_path=path,
     )
 

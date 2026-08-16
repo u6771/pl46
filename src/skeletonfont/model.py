@@ -77,7 +77,7 @@ class SourceRule:
     unicode_domain: UnicodeDomain | None
     include_unencoded: bool
     replace_existing: bool
-    mapping_name: str | None
+    mapping: str | None
     thickness_scale: float
     monospace_width: float | None
 
@@ -87,7 +87,7 @@ class SstyGenerator:
     """Generate script-style alternates from assembled encoded glyphs."""
 
     unicode_domain: UnicodeDomain
-    ssty_alternate_name: str
+    ssty_namer: str
     thickness_scale: float
     monospace_width: float | None
 
@@ -229,7 +229,7 @@ class GlyphParameters:
 class FontMeta:
     """Validated parameters for one font build."""
 
-    build_name: str
+    meta_name: str
     meta_path: Path
     info: FontInfo
     glyph_parameters: GlyphParameters

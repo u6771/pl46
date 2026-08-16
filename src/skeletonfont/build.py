@@ -33,7 +33,7 @@ def build_font(
     """Run the complete in-memory build pipeline for one font."""
 
     try:
-        return _build_font(
+        return _load_and_build_font(
             project_directory,
             meta_name,
             output_directory=output_directory,
@@ -43,7 +43,7 @@ def build_font(
         raise BuildError(meta_name, error) from error
 
 
-def _build_font(
+def _load_and_build_font(
     project_directory: Path,
     meta_name: str,
     *,
@@ -58,7 +58,7 @@ def _build_font(
         if meta.release_info_file is None
         else load_release_info(project_directory, meta.release_info_file)
     )
-    return _build_loaded_font(
+    return _build_font_from_meta(
         project_directory,
         meta,
         release_info=release_info,
@@ -67,7 +67,7 @@ def _build_font(
     )
 
 
-def _build_loaded_font(
+def _build_font_from_meta(
     project_directory: Path,
     meta: FontMeta,
     *,
@@ -154,7 +154,7 @@ def build_fonts(
     release_infos: dict[str, ReleaseInfo | None] = {}
     for meta in metas:
         try:
-            release_infos[meta.build_name] = (
+            release_infos[meta.meta_name] = (
                 None
                 if meta.release_info_file is None
                 else load_release_info(
@@ -163,12 +163,12 @@ def build_fonts(
                 )
             )
         except ProjectDataError as error:
-            raise BuildError(meta.build_name, error) from error
+            raise BuildError(meta.meta_name, error) from error
 
     metas_by_output: dict[str, list[str]] = {}
     for meta in metas:
         metas_by_output.setdefault(meta.output_stem.casefold(), []).append(
-            meta.build_name
+            meta.meta_name
         )
     collisions = {
         output: builds
@@ -190,14 +190,14 @@ def build_fonts(
     for meta in metas:
         try:
             paths.append(
-                _build_loaded_font(
+                _build_font_from_meta(
                     project_directory,
                     meta,
-                    release_info=release_infos[meta.build_name],
+                    release_info=release_infos[meta.meta_name],
                     output_directory=output_directory,
                     catalog=catalog,
                 )
             )
         except ProjectDataError as error:
-            raise BuildError(meta.build_name, error) from error
+            raise BuildError(meta.meta_name, error) from error
     return tuple(paths)

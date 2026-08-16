@@ -108,7 +108,7 @@ def plan_font(
         vertical_variant_glyphs,
         horizontal_variant_glyphs,
         vertical_assemblies,
-        global_monospace=parameters.monospace_width is not None,
+        has_global_monospace_width=parameters.monospace_width is not None,
     )
     authored_top_accent_attachments = (
         {}
@@ -140,13 +140,13 @@ def plan_font(
         roles.vertical_variant_glyphs,
         parameters,
         resolved_spacing_adjustments.glyph_spacing_by_name,
-        top_accent_attachment_inputs.vertical_variant_glyph,
+        top_accent_attachment_inputs.vertical_variant_glyphs,
     )
     horizontal_variant_glyph_plans = _plan_horizontal_variant_glyphs(
         roles.horizontal_variant_glyphs,
         parameters,
         resolved_spacing_adjustments.glyph_spacing_by_name,
-        top_accent_attachment_inputs.horizontal_variant_glyph,
+        top_accent_attachment_inputs.horizontal_variant_glyphs,
     )
     horizontal_accent_variant_advances = (
         _plan_horizontal_accent_variant_advances(

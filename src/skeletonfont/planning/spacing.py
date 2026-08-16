@@ -62,7 +62,7 @@ def _resolve_glyph_spacing_adjustments(
     horizontal_variant_glyphs: Mapping[str, tuple[str, ...]],
     vertical_assemblies: Mapping[str, MathGlyphAssemblyData],
     *,
-    global_monospace: bool,
+    has_global_monospace_width: bool,
 ) -> _ResolvedGlyphSpacingAdjustments:
     """Resolve order-independent spacing adjustments by glyph and layout."""
 
@@ -281,7 +281,7 @@ def _resolve_glyph_spacing_adjustments(
             )
         ordinary_glyph = roles.ordinary.get(glyph_name)
         if ordinary_glyph is not None and (
-            global_monospace
+            has_global_monospace_width
             or ordinary_glyph.ordinary_monospace_width is not None
         ):
             raise PlanError(

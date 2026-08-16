@@ -18,8 +18,8 @@ from .roles import _GlyphRoleGroups
 @dataclass(frozen=True, slots=True)
 class _TopAccentAttachmentInputs:
     ordinary: Mapping[str, float]
-    vertical_variant_glyph: Mapping[str, float]
-    horizontal_variant_glyph: Mapping[str, float]
+    vertical_variant_glyphs: Mapping[str, float]
+    horizontal_variant_glyphs: Mapping[str, float]
 
 def _inherited_top_accent_attachments(
     source_attachments: Mapping[str, int],
@@ -119,10 +119,10 @@ def _group_top_accent_attachments_by_role(
         grouped[role][name] = attachment
     return _TopAccentAttachmentInputs(
         ordinary=MappingProxyType(grouped["ordinary"]),
-        vertical_variant_glyph=MappingProxyType(
+        vertical_variant_glyphs=MappingProxyType(
             grouped["vertical_variant_glyph"]
         ),
-        horizontal_variant_glyph=MappingProxyType(
+        horizontal_variant_glyphs=MappingProxyType(
             grouped["horizontal_variant_glyph"]
         ),
     )
