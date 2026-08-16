@@ -30,7 +30,7 @@ PL46 是一族以端点坐标为整数的线段作为基本造型元素的 OpenT
 | `PL46-Script.otf` | 拉丁字母 | 97 |
 | `PL46-Fraktur.otf` | 拉丁字母 | 97 |
 | `PL46-Mono.otf` | 拉丁字母 | 97 |
-| `PL46-Math.otf` | 拉丁字母、希腊字母、数学符号 | 1791 |
+| `PL46-Math.otf` | 拉丁字母、希腊字母、数学符号 | 1915 |
 
 你可以从[这里](https://github.com/u6771/pl46/releases)下载它们。
 
