@@ -8,7 +8,7 @@
   "cap_height": 650,
   "x_height": 450,
   "grid": 100,
-  "thickness": 80,
+  "thickness": 50,
   "monospace_width": 450,
   "left_spacing": 75,
   "right_spacing": 75,
@@ -18,7 +18,8 @@
       "include_unencoded": true
     },
     {
-      "source_directory": "latin"
+      "source_directory": "latin",
+      "thickness_scale": 1.6
     },
     {
       "source_directory": "uni6771",
