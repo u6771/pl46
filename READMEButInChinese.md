@@ -50,18 +50,27 @@ PL46 是一族以端点坐标为整数的线段作为基本造型元素的 OpenT
 
 ## 在 XeLaTeX 或 LuaLaTeX 中使用 PL46
 
-### 使用 `unicode-math`
+在 XeLaTeX 或 LuaLaTeX 中，你可以按字体名称加载 PL46，也可以使用
+`pl46-fonts` 宏包。
 
-下例按字体名称加载，前提是相应的 OTF 已安装到系统中。你可以通过
+若相应的 OTF 文件已被安装到系统中，你可以通过
 ```tex
 \usepackage{unicode-math}
 \setmainfont[BoldFont=PL46 Bold]{PL46 Regular}
 \setmonofont{PL46 Mono}
 \setmathfont{PL46 Math}
 ```
-将 PL46 设为文件的正文、等距和数学字体。
+将 PL46 设为文档的正文、等距和数学字体。
 
-若只是在仓库内本地测试，请参阅 [`docs/tex/`](docs/tex/) 目录下的示例。
+若不希望单独下载和安装 PL46 字体文件，则可改用 LaTeX 宏包 `pl46-fonts`。
+该宏包已被收录于 CTAN，并包含所需的字体文件，所以只需使用
+```tex
+\usepackage{pl46-fonts}
+```
+即可完成相同的设置。详情请见 [CTAN: Package PL46 fonts](https://ctan.org/pkg/pl46-fonts)。
+
+若想直接在本仓库中测试字体，请参阅
+[`docs/tex/`](docs/tex/) 目录下的示例。
 
 ### `tikz` 箭头风格化
 

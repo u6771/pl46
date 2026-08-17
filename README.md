@@ -50,18 +50,29 @@ If you want to enable PL46's OpenType features in Word, such as kerning in *PL46
 
 ## Using PL46 with XeLaTeX or LuaLaTeX
 
-### With `unicode-math`
+In XeLaTeX or LuaLaTeX, you can load PL46 by font name or use the
+`pl46-fonts` package.
 
-The following example loads the fonts by name, so the corresponding OTF files must first be installed on your system:
+If the corresponding OTF files are installed on your system, you can use
 ```tex
 \usepackage{unicode-math}
 \setmainfont[BoldFont=PL46 Bold]{PL46 Regular}
 \setmonofont{PL46 Mono}
 \setmathfont{PL46 Math}
 ```
-This sets PL46 as the document's text, mono, and mathematical typeface.
+to set PL46 as the document's main text, monospaced, and mathematics fonts.
 
-For testing directly within the repository, see the examples in the [`docs/tex/`](docs/tex/) directory.
+If you prefer not to download and install the PL46 font files separately, you
+can load the `pl46-fonts` LaTeX package instead. The package is available from
+CTAN and includes the required font files, so simply using
+```tex
+\usepackage{pl46-fonts}
+```
+provides the same configuration. For more information, see [CTAN: Package
+PL46 fonts](https://ctan.org/pkg/pl46-fonts).
+
+To test the fonts directly within the repository, see the examples in
+the [`docs/tex/`](docs/tex/) directory.
 
 ### Styling `tikz` arrows
 
