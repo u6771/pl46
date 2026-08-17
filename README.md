@@ -56,7 +56,7 @@ The following example loads the fonts by name, so the corresponding OTF files mu
 ```tex
 \usepackage{unicode-math}
 \setmainfont[BoldFont=PL46 Bold]{PL46 Regular}
-\setmonofont{PL46-Mono.otf}
+\setmonofont{PL46 Mono}
 \setmathfont{PL46 Math}
 ```
 This sets PL46 as the document's text, mono, and mathematical typeface.

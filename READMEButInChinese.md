@@ -56,7 +56,7 @@ PL46 是一族以端点坐标为整数的线段作为基本造型元素的 OpenT
 ```tex
 \usepackage{unicode-math}
 \setmainfont[BoldFont=PL46 Bold]{PL46 Regular}
-\setmonofont{PL46-Mono.otf}
+\setmonofont{PL46 Mono}
 \setmathfont{PL46 Math}
 ```
 将 PL46 设为文件的正文、等距和数学字体。
