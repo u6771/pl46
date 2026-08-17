@@ -397,7 +397,7 @@ The fields map independently to font metadata:
 | `designer`, `designer_url` | name IDs 9 and 12 |
 | `manufacturer`, `manufacturer_url` | name IDs 8 and 11 |
 | `description` | name ID 10 |
-| `trademark` | name ID 7 |
+| `trademark` | name ID 7 and CFF Notice |
 | `vendor_id` | `OS/2.achVendID` |
 | `license` | name ID 13 and optional name ID 14 |
 | `embedding_permissions` | `OS/2.fsType` |
@@ -407,13 +407,13 @@ URLs. `vendor_id` must contain exactly four ASCII letters or digits. A field
 that is not needed is omitted rather than set to `null`.
 
 The release `version` is the single authored version source. For example,
-`"1.023"` becomes name ID 5 `Version 1.023`, the corresponding CFF version,
-and the nearest representable 16.16 fixed-point `head.fontRevision`. Name ID 5
-preserves the authored three decimal digits exactly; `head.fontRevision` may
-show binary fixed-point rounding when read back—for example, `0.100` becomes
-approximately `0.1000061`. The major component must be at most 32767. The minor
-component is always exactly three decimal digits in JSON, including trailing
-zeros.
+`"1.023"` becomes name ID 5 `Version 1.023`, CFF version `1.023`, and the
+nearest representable 16.16 fixed-point `head.fontRevision`. Name ID 5 and the
+CFF version preserve the authored three decimal digits exactly;
+`head.fontRevision` may show binary fixed-point rounding when read back—for
+example, `0.100` becomes approximately `0.1000061`. The major component must be
+at most 32767. The minor component is always exactly three decimal digits in
+JSON, including trailing zeros.
 
 The `license` object requires `identifier`; its optional `url` produces name ID
 14. Identifiers are resolved to known name-table text, and the current
@@ -423,11 +423,16 @@ equal `installable`; this requirement prevents the compiler's default `fsType`
 from contradicting the selected license. Without a license,
 `embedding_permissions` remains independently optional.
 
-The authored `copyright` string is written unchanged. When a project declares
-Reserved Font Names, it must include the complete RFN statement directly in
-`copyright`; `skeletonfont` does not parse or generate that statement. The full
-standalone license remains a project packaging responsibility: release-info
-loading neither reads nor generates `OFL.txt`.
+The authored `copyright` and `trademark` strings are written unchanged to name
+IDs 0 and 7. When they are representable in Latin-1, `skeletonfont` also
+restores the exact text in CFF Copyright and Notice after compilation so
+punctuation removed by `ufo2ft`'s PostScript normalization remains present. For
+other Unicode text, the name records remain exact while the CFF fields retain
+the compiler's Latin-1 fallback. When a project declares Reserved Font Names,
+it must include the complete RFN statement directly in `copyright`;
+`skeletonfont` does not parse or generate that statement. The full standalone
+license remains a project packaging responsibility: release-info loading
+neither reads nor generates `OFL.txt`.
 
 `embedding_permissions` accepts the following readable values:
 
@@ -1088,9 +1093,11 @@ union, and final simplification; it is not a second stroke-expansion backend.
 `compile_font()` passes the in-memory UFO directly to `ufo2ft.compileOTF()` and
 returns an in-memory CFF `TTFont`. UFO publication metadata becomes OpenType
 name records, `head.fontRevision`, OS/2 `usWeightClass`, `achVendID`, and
-`fsType`, plus `post.isFixedPitch`. Compilation keeps overlaps because
-rendering has already unioned each glyph, preserves planned glyph names, and
-does not mutate the input UFO.
+`fsType`, plus `post.isFixedPitch`. Before returning, exact Latin-1 copyright
+and trademark strings and an explicitly authored three-digit release version
+are restored in CFF. Compilation keeps overlaps because rendering has already
+unioned each glyph, preserves planned glyph names, and does not mutate the
+input UFO.
 
 `.notdef` is explicitly ordered at GID 0. Other encoded glyphs are ordered by
 ascending Unicode, followed by unencoded glyphs in glyph-name order. GID
