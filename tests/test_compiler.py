@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from copy import deepcopy
 import tempfile
 import unittest
 from pathlib import Path
@@ -73,6 +74,72 @@ class FontCompilerTests(unittest.TestCase):
         self.assertEqual(len(self.ufo), 97)
         self.assertEqual(self.ufo["A"].width, 600)
         self.assertEqual(self.ufo["A"].unicodes, [0x0041])
+
+    def test_cff_publication_strings_preserve_postscript_delimiters(
+        self,
+    ) -> None:
+        copyright = (
+            "Copyright (c) 2026, Test Author "
+            "(https://example.com/test)."
+        )
+        trademark = "Test (TM) <https://example.com/test>."
+        ufo = deepcopy(self.ufo)
+        ufo.info.copyright = copyright
+        ufo.info.trademark = trademark
+
+        otf = compile_font(ufo)
+        top_dict = otf["CFF "].cff.topDictIndex[0]
+        self.assertEqual(
+            top_dict.Copyright,
+            copyright,
+        )
+        self.assertEqual(top_dict.Notice, trademark)
+
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            path = Path(temporary_directory) / "font.otf"
+            save_otf(otf, path)
+            reopened = TTFont(path)
+            top_dict = reopened["CFF "].cff.topDictIndex[0]
+            self.assertEqual(
+                top_dict.Copyright,
+                copyright,
+            )
+            self.assertEqual(top_dict.Notice, trademark)
+            reopened.close()
+
+    def test_non_latin1_publication_strings_keep_compiler_fallback(
+        self,
+    ) -> None:
+        copyright = "Copyright 2026 Test Author \N{SNOWMAN}"
+        trademark = "Test Trademark \N{SNOWMAN}"
+        ufo = deepcopy(self.ufo)
+        ufo.info.copyright = copyright
+        ufo.info.trademark = trademark
+
+        otf = compile_font(ufo)
+        self.assertEqual(otf["name"].getDebugName(0), copyright)
+        self.assertEqual(otf["name"].getDebugName(7), trademark)
+        top_dict = otf["CFF "].cff.topDictIndex[0]
+        cff_copyright = top_dict.Copyright
+        cff_notice = top_dict.Notice
+        self.assertNotEqual(cff_copyright, copyright)
+        self.assertNotEqual(cff_notice, trademark)
+        cff_copyright.encode("latin-1")
+        cff_notice.encode("latin-1")
+
+    def test_cff_version_preserves_authored_trailing_zeroes(self) -> None:
+        ufo = deepcopy(self.ufo)
+        ufo.info.versionMajor = 1
+        ufo.info.versionMinor = 0
+        ufo.info.openTypeNameVersion = "Version 1.000"
+
+        otf = compile_font(ufo)
+
+        self.assertEqual(otf["name"].getDebugName(5), "Version 1.000")
+        self.assertEqual(
+            otf["CFF "].cff.topDictIndex[0].version,
+            "1.000",
+        )
 
     def test_final_otf_is_saved_once_and_can_be_reopened(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_directory:

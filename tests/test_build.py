@@ -218,11 +218,19 @@ class BuildPipelineTests(unittest.TestCase):
                 font["name"].getDebugName(0),
                 "Copyright 2026 Test Author",
             )
+            self.assertEqual(
+                font["name"].getDebugName(7),
+                "Test is a trademark of Test Author.",
+            )
             cff_metadata = font["CFF "].cff.topDictIndex[0].rawDict
-            self.assertEqual(cff_metadata["version"], "1.0")
+            self.assertEqual(cff_metadata["version"], "1.000")
             self.assertEqual(
                 cff_metadata["Copyright"],
                 "Copyright 2026 Test Author",
+            )
+            self.assertEqual(
+                cff_metadata["Notice"],
+                "Test is a trademark of Test Author.",
             )
             font.close()
 
