@@ -69,7 +69,7 @@ CTAN and includes the required font files, so simply using
 \usepackage{pl46-fonts}
 ```
 provides the same configuration. For more information, see [CTAN: Package
-PL46 fonts](https://ctan.org/pkg/pl46-fonts).
+pl46-fonts](https://ctan.org/pkg/pl46-fonts).
 
 To test the fonts directly within the repository, see the examples in
 the [`docs/tex/`](docs/tex/) directory.

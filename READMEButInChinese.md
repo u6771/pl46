@@ -67,7 +67,7 @@ PL46 是一族以端点坐标为整数的线段作为基本造型元素的 OpenT
 ```tex
 \usepackage{pl46-fonts}
 ```
-即可完成相同的设置。详情请见 [CTAN: Package PL46 fonts](https://ctan.org/pkg/pl46-fonts)。
+即可完成相同的设置。详情请见 [CTAN: Package pl46-fonts](https://ctan.org/pkg/pl46-fonts)。
 
 若想直接在本仓库中测试字体，请参阅
 [`docs/tex/`](docs/tex/) 目录下的示例。
