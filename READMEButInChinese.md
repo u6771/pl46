@@ -63,7 +63,7 @@ PL46 是一族以端点坐标为整数的线段作为基本造型元素的 OpenT
 将 PL46 设为文档的正文、等距和数学字体。
 
 若不希望单独下载和安装 PL46 字体文件，则可改用 LaTeX 宏包 `pl46-fonts`。
-该宏包已被收录于 CTAN，并包含所需的字体文件，所以只需使用
+该宏包已被收录于 [TeX Live](https://tug.org/texlive/)，并包含所需的字体文件，所以只需使用
 ```tex
 \usepackage{pl46-fonts}
 ```

@@ -63,8 +63,8 @@ If the corresponding OTF files are installed on your system, you can use
 to set PL46 as the document's main text, monospaced, and mathematics fonts.
 
 If you prefer not to download and install the PL46 font files separately, you
-can load the `pl46-fonts` LaTeX package instead. The package is available from
-CTAN and includes the required font files, so simply using
+can load the `pl46-fonts` LaTeX package instead. The package is included in
+[TeX Live](https://tug.org/texlive/) and contains the required font files, so simply using
 ```tex
 \usepackage{pl46-fonts}
 ```
